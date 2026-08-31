@@ -107,7 +107,6 @@ export function ProveedorDialog({
                   setForm((f) => ({ ...f, nombre: e.target.value }))
                   if (errors.nombre) setErrors((err) => ({ ...err, nombre: '' }))
                 }}
-                placeholder="Ej. Proveedores ABC S.A."
                 required
                 autoFocus
                 className={errors.nombre ? 'border-red-500' : ''}
@@ -125,7 +124,6 @@ export function ProveedorDialog({
                   setForm((f) => ({ ...f, ruc: value }))
                   if (errors.ruc) setErrors((err) => ({ ...err, ruc: '' }))
                 }}
-                placeholder="Ej. 1234567890001"
                 maxLength={13}
                 className={errors.ruc ? 'border-red-500' : ''}
               />
@@ -142,7 +140,6 @@ export function ProveedorDialog({
                   setForm((f) => ({ ...f, contacto: e.target.value }))
                   if (errors.contacto) setErrors((err) => ({ ...err, contacto: '' }))
                 }}
-                placeholder="Ej. gerente@proveedor.com o +593-999-123456"
                 className={errors.contacto ? 'border-red-500' : ''}
               />
               {errors.contacto && <p className="text-sm text-red-500">{errors.contacto}</p>}
