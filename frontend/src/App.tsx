@@ -2,11 +2,13 @@ import { Routes, Route } from 'react-router-dom'
 import LoginPage from './pages/LoginPage'
 import DashboardPage from './pages/DashboardPage'
 import PlaceholderPage from './pages/PlaceholderPage'
+import ActivosPage from './pages/ActivosPage'
 import CategoriasPage from './pages/CategoriasPage'
 import UbicacionesPage from './pages/UbicacionesPage'
 import ProveedoresPage from './pages/ProveedoresPage'
 import ProtectedRoute from './components/ProtectedRoute'
 import DashboardLayout from './layouts/DashboardLayout'
+
 
 function App() {
   return (
@@ -21,7 +23,7 @@ function App() {
         }
       >
         <Route path="/" element={<DashboardPage />} />
-        <Route path="/activos" element={<PlaceholderPage titulo="Activos" />} />
+        <Route path="/activos" element={<ActivosPage />} />
         <Route path="/categorias" element={<CategoriasPage />} />
         <Route path="/ubicaciones" element={<UbicacionesPage />} />
         <Route path="/personas" element={<PlaceholderPage titulo="Custodios" />} />
