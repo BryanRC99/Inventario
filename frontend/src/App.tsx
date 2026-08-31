@@ -4,6 +4,7 @@ import DashboardPage from './pages/DashboardPage'
 import PlaceholderPage from './pages/PlaceholderPage'
 import CategoriasPage from './pages/CategoriasPage'
 import UbicacionesPage from './pages/UbicacionesPage'
+import ProveedoresPage from './pages/ProveedoresPage'
 import ProtectedRoute from './components/ProtectedRoute'
 import DashboardLayout from './layouts/DashboardLayout'
 
@@ -28,7 +29,7 @@ function App() {
         <Route path="/actas-entrega" element={<PlaceholderPage titulo="Actas de entrega" />} />
         <Route path="/movimientos" element={<PlaceholderPage titulo="Movimientos" />} />
         <Route path="/mantenimientos" element={<PlaceholderPage titulo="Mantenimientos" />} />
-        <Route path="/proveedores" element={<PlaceholderPage titulo="Proveedores" />} />
+        <Route path="/proveedores" element={<ProveedoresPage />} />
         <Route path="/usuarios" element={<PlaceholderPage titulo="Usuarios" />} />
   
       </Route>

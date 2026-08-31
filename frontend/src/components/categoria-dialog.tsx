@@ -16,7 +16,7 @@ import type { Categoria, CategoriaInput } from '@/api/categorias'
 interface CategoriaDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  categoria: Categoria | null // null = modo "crear", con valor = modo "editar"
+  categoria: Categoria | null
   onSubmit: (payload: CategoriaInput) => Promise<void>
 }
 
@@ -31,8 +31,6 @@ export function CategoriaDialog({
   const [form, setForm] = useState<CategoriaInput>(valoresVacios)
   const [submitting, setSubmitting] = useState(false)
 
-  // Cada vez que se abre el modal, carga los datos de la categoría a editar
-  // (o limpia el formulario si estamos creando una nueva).
   useEffect(() => {
     if (open) {
       setForm(
