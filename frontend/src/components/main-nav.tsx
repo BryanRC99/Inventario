@@ -55,20 +55,18 @@ function DropdownGroup({ label, items }: { label: string; items: NavItem[] }) {
         <ul className="grid w-36 gap-0 p-1">
           {items.map((item) => (
             <li key={item.url}>
-              <NavigationMenuLink asChild>
-                <NavLink
-                  to={item.url}
-                  className={({ isActive }) =>
-                    cn(
-                      'flex items-center gap-1.5 rounded-sm px-2 py-1 text-xs transition-colors hover:bg-accent hover:text-accent-foreground',
-                      isActive && 'bg-accent text-accent-foreground font-medium',
-                    )
-                  }
-                >
-                  <item.icon className="size-3" />
-                  {item.titulo}
-                </NavLink>
-              </NavigationMenuLink>
+              <NavLink
+                to={item.url}
+                className={({ isActive }) =>
+                  cn(
+                    'flex items-center gap-1.5 rounded-sm px-2 py-1 text-xs transition-colors hover:bg-accent hover:text-accent-foreground',
+                    isActive && 'bg-accent text-accent-foreground font-medium',
+                  )
+                }
+              >
+                <item.icon className="size-3" />
+                {item.titulo}
+              </NavLink>
             </li>
           ))}
         </ul>
@@ -79,18 +77,23 @@ function DropdownGroup({ label, items }: { label: string; items: NavItem[] }) {
 
 export function MainNav() {
   return (
-    <NavigationMenu viewport={false}>
+    <NavigationMenu>
       <NavigationMenuList className="gap-1">
         <NavigationMenuItem>
-          <NavigationMenuLink
-            asChild
-            className={cn(navigationMenuTriggerStyle(), 'h-7 px-2.5 text-xs')}
+          <NavLink
+            to="/"
+            end
+            className={({ isActive }) =>
+              cn(
+                navigationMenuTriggerStyle(),
+                'h-7 px-2.5 text-xs flex items-center gap-1.5',
+                isActive && 'bg-accent text-accent-foreground',
+              )
+            }
           >
-            <NavLink to="/" end className="flex items-center gap-1.5">
-              <LayoutDashboard className="size-3" />
-              Dashboard
-            </NavLink>
-          </NavigationMenuLink>
+            <LayoutDashboard className="size-3" />
+            Dashboard
+          </NavLink>
         </NavigationMenuItem>
 
         <DropdownGroup label="Inventario" items={navInventario} />

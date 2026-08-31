@@ -1,6 +1,5 @@
 import { LogOut } from 'lucide-react'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Button } from '@/components/ui/button'
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -8,6 +7,7 @@ import {
     DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
+    DropdownMenuGroup,
 } from '@/components/ui/dropdown-menu'
 import { useAuth } from '@/context/AuthContext'
 
@@ -30,17 +30,19 @@ export function UserMenu() {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex h-7 items-center gap-1.5 px-1.5">
+                <button className="inline-flex items-center gap-1.5 rounded-md hover:bg-accent px-1.5 py-1 text-sm transition-colors h-7 cursor-pointer">
                     <Avatar className="size-6">
                         <AvatarFallback className="text-[10px]">{getIniciales(nombreMostrado)}</AvatarFallback>
                     </Avatar>
                     <span className="hidden text-xs font-medium sm:inline">{nombreMostrado}</span>
-                </Button>
+                </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuLabel className="capitalize text-xs text-muted-foreground">
-                    {usuario.rol}
-                </DropdownMenuLabel>
+                <DropdownMenuGroup>
+                    <DropdownMenuLabel className="capitalize text-xs text-muted-foreground">
+                        {usuario.rol}
+                    </DropdownMenuLabel>
+                </DropdownMenuGroup>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={logout}>
                     <LogOut />

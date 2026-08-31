@@ -21,8 +21,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [usuario, setUsuario] = useState<Usuario | null>(null)
   const [loading, setLoading] = useState(true)
 
-  // Al montar la app, si hay un token guardado, valida la sesión
-  // contra /me/ para no perder el login al recargar la página.
   useEffect(() => {
     const token = localStorage.getItem('access_token')
     if (!token) {
@@ -47,6 +45,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     localStorage.clear()
     setUsuario(null)
+    // Redirige explícitamente a login para evitar pantalla negra
+    window.location.href = '/login'
   }
 
   return (
