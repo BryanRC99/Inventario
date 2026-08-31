@@ -2,21 +2,17 @@ from rest_framework import viewsets
 
 from usuarios.permissions import PermisoPorRol
 
-from .models import Categoria
-from .serializers import CategoriaSerializer
+from .models import Categoria, Ubicacion
+from .serializers import CategoriaSerializer, UbicacionSerializer
 
 
 class CategoriaViewSet(viewsets.ModelViewSet):
-    """
-    Expone automáticamente:
-    GET    /api/inventario/categorias/          -> listar
-    POST   /api/inventario/categorias/          -> crear
-    GET    /api/inventario/categorias/{id}/     -> detalle
-    PUT    /api/inventario/categorias/{id}/     -> actualizar completo
-    PATCH  /api/inventario/categorias/{id}/     -> actualizar parcial
-    DELETE /api/inventario/categorias/{id}/     -> borrar
-    """
-
     queryset = Categoria.objects.all()
     serializer_class = CategoriaSerializer
+    permission_classes = [PermisoPorRol]
+
+
+class UbicacionViewSet(viewsets.ModelViewSet):
+    queryset = Ubicacion.objects.select_related('ubicacion_padre').all()
+    serializer_class = UbicacionSerializer
     permission_classes = [PermisoPorRol]
