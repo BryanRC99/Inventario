@@ -3,6 +3,7 @@ import LoginPage from './pages/LoginPage'
 import DashboardPage from './pages/DashboardPage'
 import PlaceholderPage from './pages/PlaceholderPage'
 import CategoriasPage from './pages/CategoriasPage'
+import UbicacionesPage from './pages/UbicacionesPage'
 import ProtectedRoute from './components/ProtectedRoute'
 import DashboardLayout from './layouts/DashboardLayout'
 
@@ -21,7 +22,7 @@ function App() {
         <Route path="/" element={<DashboardPage />} />
         <Route path="/activos" element={<PlaceholderPage titulo="Activos" />} />
         <Route path="/categorias" element={<CategoriasPage />} />
-        <Route path="/ubicaciones" element={<PlaceholderPage titulo="Ubicaciones" />} />
+        <Route path="/ubicaciones" element={<UbicacionesPage />} />
         <Route path="/personas" element={<PlaceholderPage titulo="Custodios" />} />
         <Route path="/custodias" element={<PlaceholderPage titulo="Custodias" />} />
         <Route path="/actas-entrega" element={<PlaceholderPage titulo="Actas de entrega" />} />
