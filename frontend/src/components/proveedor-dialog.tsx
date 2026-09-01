@@ -31,8 +31,6 @@ export function ProveedorDialog({
   const [submitting, setSubmitting] = useState(false)
   const [errors, setErrors] = useState<{ [key: string]: string }>({})
 
-  // Cada vez que se abre el modal, carga los datos del proveedor a editar
-  // (o limpia el formulario si estamos creando uno nuevo).
   useEffect(() => {
     if (open) {
       if (proveedor) {

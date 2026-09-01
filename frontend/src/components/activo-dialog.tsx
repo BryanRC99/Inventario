@@ -59,8 +59,6 @@ export function ActivoDialog({
   onSubmit,
 }: ActivoDialogProps) {
   const [form, setForm] = useState<ActivoInput>(valoresVacios)
-  // El JSON de especificaciones se edita como texto plano y se valida
-  // solo al guardar, para no pelear con el usuario mientras escribe.
   const [especificacionesTexto, setEspecificacionesTexto] = useState('')
   const [errorJson, setErrorJson] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -96,7 +94,6 @@ export function ActivoDialog({
   const set = <K extends keyof ActivoInput>(key: K, value: ActivoInput[K]) =>
     setForm((f) => ({ ...f, [key]: value }))
 
-  // Búsquedas para mostrar el nombre en el trigger del Select en vez del id
   const categoriaSeleccionada = categorias.find((c) => c.id === form.categoria)
   const ubicacionSeleccionada = ubicaciones.find((u) => u.id === form.ubicacion)
   const proveedorSeleccionado = proveedores.find((p) => p.id === form.proveedor)
