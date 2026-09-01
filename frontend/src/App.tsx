@@ -2,10 +2,14 @@ import { Routes, Route } from 'react-router-dom'
 import LoginPage from './pages/LoginPage'
 import DashboardPage from './pages/DashboardPage'
 import PlaceholderPage from './pages/PlaceholderPage'
+import PersonasPage from './pages/PersonasPage'
 import ActivosPage from './pages/ActivosPage'
 import CategoriasPage from './pages/CategoriasPage'
 import UbicacionesPage from './pages/UbicacionesPage'
 import ProveedoresPage from './pages/ProveedoresPage'
+import CustodiasPage from './pages/CustodiasPage'
+import ActasEntregaPage from './pages/ActasEntregaPage'
+import MovimientosPage from './pages/MovimientosPage'
 import ProtectedRoute from './components/ProtectedRoute'
 import DashboardLayout from './layouts/DashboardLayout'
 
@@ -26,10 +30,10 @@ function App() {
         <Route path="/activos" element={<ActivosPage />} />
         <Route path="/categorias" element={<CategoriasPage />} />
         <Route path="/ubicaciones" element={<UbicacionesPage />} />
-        <Route path="/personas" element={<PlaceholderPage titulo="Custodios" />} />
-        <Route path="/custodias" element={<PlaceholderPage titulo="Custodias" />} />
-        <Route path="/actas-entrega" element={<PlaceholderPage titulo="Actas de entrega" />} />
-        <Route path="/movimientos" element={<PlaceholderPage titulo="Movimientos" />} />
+        <Route path="/personas" element={<PersonasPage />} />
+        <Route path="/custodias" element={<CustodiasPage />} />
+        <Route path="/actas-entrega" element={<ActasEntregaPage />} />
+        <Route path="/movimientos" element={<MovimientosPage />} />
         <Route path="/mantenimientos" element={<PlaceholderPage titulo="Mantenimientos" />} />
         <Route path="/proveedores" element={<ProveedoresPage />} />
         <Route path="/usuarios" element={<PlaceholderPage titulo="Usuarios" />} />

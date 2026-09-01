@@ -58,6 +58,22 @@ class ActivoSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['creado_por', 'fecha_creacion']
 
-    def create(self, validated_data):
-        validated_data['creado_por'] = self.context['request'].user
-        return super().create(validated_data)
+        def create(self, validated_data):
+           from trazabilidad.utils import registrar_movimiento
+
+           # El usuario que crea el activo se asigna automáticamente desde
+           # la petición autenticada, nunca lo manda el frontend a mano
+           # (evita que alguien se atribuya un activo creado por otro).
+           usuario = self.context['request'].user
+           validated_data['creado_por'] = usuario
+           activo = super().create(validated_data)
+
+           registrar_movimiento(
+            activo=activo,
+            tipo_evento='creacion',
+            usuario=usuario,
+            ubicacion_destino=activo.ubicacion,
+            observaciones='Registro inicial del activo en el sistema.',
+           )
+
+           return activo

@@ -30,6 +30,10 @@ INSTALLED_APPS = [
     'usuarios',
     'inventario',
     'proveedores',
+    'personas',
+    'custodia',
+    'actas',
+    'trazabilidad',
     'django_filters',
 ]
 
@@ -119,3 +123,7 @@ CORS_ALLOWED_ORIGINS = config(
     'CORS_ALLOWED_ORIGINS',
     default='http://localhost:5173,http://127.0.0.1:5173'
 ).split(',')
+
+# --- Archivos multimedia (PDFs de actas, adjuntos futuros) ---------
+MEDIA_URL = 'media/'
+MEDIA_ROOT = BASE_DIR / 'media'
