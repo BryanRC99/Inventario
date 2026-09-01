@@ -62,3 +62,17 @@ class MantenimientoSerializer(serializers.ModelSerializer):
             'repuestos_usados',
             'proxima_fecha_programada',
         ]
+
+    def create(self, validated_data):
+        from .utils import registrar_movimiento
+
+        mantenimiento = super().create(validated_data)
+
+        registrar_movimiento(
+            activo=mantenimiento.activo,
+            tipo_evento='mantenimiento',
+            usuario=self.context['request'].user,
+            observaciones=mantenimiento.descripcion_problema[:200],
+        )
+
+        return mantenimiento
