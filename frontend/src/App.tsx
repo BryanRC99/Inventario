@@ -10,6 +10,7 @@ import ProveedoresPage from './pages/ProveedoresPage'
 import CustodiasPage from './pages/CustodiasPage'
 import ActasEntregaPage from './pages/ActasEntregaPage'
 import MovimientosPage from './pages/MovimientosPage'
+import MantenimientosPage from './pages/MantenimientosPage'
 import ProtectedRoute from './components/ProtectedRoute'
 import DashboardLayout from './layouts/DashboardLayout'
 
@@ -34,7 +35,7 @@ function App() {
         <Route path="/custodias" element={<CustodiasPage />} />
         <Route path="/actas-entrega" element={<ActasEntregaPage />} />
         <Route path="/movimientos" element={<MovimientosPage />} />
-        <Route path="/mantenimientos" element={<PlaceholderPage titulo="Mantenimientos" />} />
+        <Route path="/mantenimientos" element={<MantenimientosPage />} />
         <Route path="/proveedores" element={<ProveedoresPage />} />
         <Route path="/usuarios" element={<PlaceholderPage titulo="Usuarios" />} />
   
