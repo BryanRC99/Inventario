@@ -4,62 +4,64 @@
 <meta charset="utf-8">
 <style>
   @page { size: A4; margin: 2.5cm; }
-  body { font-family: Helvetica, sans-serif; font-size: 11px; color: #1a1a1a; line-height: 1.5; }
-  h1 { font-size: 16px; text-align: center; margin-bottom: 2px; letter-spacing: 1px; }
-  .subtitulo { text-align: center; color: #666; margin-bottom: 4px; font-size: 10px; }
-  .folio { text-align: center; color: #999; margin-bottom: 28px; font-size: 9px; }
-  .parrafo { text-align: justify; margin-bottom: 18px; }
+  body { font-family: Helvetica, sans-serif; font-size: 11px; color: #1a1a1a; line-height: 1.6; }
+  .logo { text-align: center; margin-bottom: 10px; }
+  .logo img { max-height: 60px; max-width: 220px; }
+  .caja-titulo { border: 1px solid #333; padding: 10px 14px; margin-bottom: 22px; }
+  .caja-titulo h1 { font-size: 14px; text-align: center; margin: 0 0 4px 0; letter-spacing: 0.5px; }
+  .caja-titulo .subtitulo { text-align: center; font-size: 10px; font-weight: bold; margin: 0; }
+  .folio { text-align: center; color: #999; margin-bottom: 20px; font-size: 9px; }
+  .parrafo { text-align: justify; margin-bottom: 16px; }
   .seccion { margin-bottom: 18px; }
-  .seccion h2 { font-size: 12px; border-bottom: 1px solid #ccc; padding-bottom: 4px; margin-bottom: 8px; text-transform: uppercase; }
-  table.datos { width: 100%; border-collapse: collapse; }
-  table.datos td { padding: 3px 0; vertical-align: top; }
-  table.datos td.label { color: #666; width: 35%; }
+  .seccion h2 { font-size: 12px; margin-bottom: 8px; text-transform: uppercase; }
+  ul.lista-bienes { list-style: none; padding: 0; margin: 0; }
+  ul.lista-bienes li { padding: 3px 0; border-bottom: 1px dotted #ddd; }
+  ul.lista-bienes li .campo { color: #666; }
   .observaciones { margin-top: 8px; padding: 10px; background: #f7f7f7; border-radius: 4px; min-height: 30px; }
-  .declaracion { margin-top: 24px; padding: 12px; border: 1px solid #ccc; background: #fafafa; text-align: justify; }
-  table.firmas { width: 100%; margin-top: 70px; }
-  table.firmas td { width: 50%; text-align: center; padding-top: 4px; font-size: 10px; }
-  table.firmas .linea { border-top: 1px solid #333; padding-top: 6px; }
+  .declaracion { margin-top: 20px; padding: 12px; border: 1px solid #ccc; background: #fafafa; text-align: justify; }
+  .firma { width: 60%; margin: 80px auto 0 auto; text-align: center; }
+  .firma .linea { border-top: 1px solid #333; padding-top: 6px; }
+  .firma .nombre { font-weight: bold; }
+  .firma .rol { text-transform: uppercase; font-size: 9px; color: #444; }
   .pie { margin-top: 40px; text-align: center; color: #999; font-size: 8px; }
 </style>
 </head>
 <body>
-  <h1>ACTA DE {{ acta.get_tipo_display|upper }} DE EQUIPO</h1>
-  <p class="subtitulo">Sistema de Gestion de Inventario de Activos</p>
+
+  <div class="logo">
+    <img src="{{ logo_url }}" alt="Logo de la empresa">
+  </div>
+
+  <div class="caja-titulo">
+    <h1>ACTA DE {{ acta.get_tipo_display|upper }} DE EQUIPO</h1>
+    <p class="subtitulo">Sistema de Gestion de Inventario de Activos</p>
+  </div>
   <p class="folio">Acta N.&deg; {{ acta.id }} &middot; Emitida el {{ acta.fecha|date:"d/m/Y" }}</p>
 
   <p class="parrafo">
     Por medio del presente documento se deja constancia de la
     {% if acta.tipo == 'entrega' %}entrega{% elif acta.tipo == 'devolucion' %}devolucion{% else %}el traslado{% endif %}
-    del equipo detallado a continuacion a favor de
-    <strong>{{ acta.persona.nombre_completo }}</strong>, quien en adelante se denomina el custodio,
-    y quien declara recibir el bien en las condiciones descritas, asumiendo la responsabilidad
-    de su cuidado, buen uso y conservacion mientras se encuentre bajo su custodia.
+    del bien que se detalla a continuacion a favor de
+    <strong>{{ acta.persona.nombre_completo }}</strong>{% if acta.persona.cargo %}, quien desempena el cargo de {{ acta.persona.cargo }}{% endif %}{% if acta.persona.documento %}, identificado(a) con documento {{ acta.persona.documento }}{% endif %},
+    quien en adelante se denomina el custodio, y quien declara recibir el bien en las condiciones
+    descritas, asumiendo la responsabilidad de su cuidado, buen uso y conservacion mientras se
+    encuentre bajo su custodia.
   </p>
 
   <div class="seccion">
-    <h2>Datos del activo</h2>
-    <table class="datos">
-      <tr><td class="label">Codigo interno</td><td>{{ acta.activo.codigo_interno }}</td></tr>
-      <tr><td class="label">Nombre</td><td>{{ acta.activo.nombre }}</td></tr>
-      <tr><td class="label">Categoria</td><td>{{ acta.activo.categoria.nombre }}</td></tr>
-      <tr><td class="label">Marca / Modelo</td><td>{{ acta.activo.marca|default:"-" }} {{ acta.activo.modelo|default:"" }}</td></tr>
-      <tr><td class="label">Numero de serie</td><td>{{ acta.activo.numero_serie|default:"-" }}</td></tr>
-      <tr><td class="label">Ubicacion asignada</td><td>{{ acta.activo.ubicacion.nombre }}</td></tr>
-      <tr><td class="label">Estado al momento de la entrega</td><td>{{ acta.activo.get_estado_display }}</td></tr>
+    <h2>Lista de bienes {% if acta.tipo == 'entrega' %}para entrega{% else %}para devolucion{% endif %}</h2>
+    <ul class="lista-bienes">
+      <li><span class="campo">Codigo interno:</span> {{ acta.activo.codigo_interno }}</li>
+      <li><span class="campo">Nombre:</span> {{ acta.activo.nombre }}</li>
+      <li><span class="campo">Categoria:</span> {{ acta.activo.categoria.nombre }}</li>
+      <li><span class="campo">Marca / Modelo:</span> {{ acta.activo.marca|default:"-" }} {{ acta.activo.modelo|default:"" }}</li>
+      <li><span class="campo">Numero de serie:</span> {{ acta.activo.numero_serie|default:"-" }}</li>
+      <li><span class="campo">Ubicacion asignada:</span> {{ acta.activo.ubicacion.nombre }}</li>
+      <li><span class="campo">Estado al momento de la {{ acta.get_tipo_display|lower }}:</span> {{ acta.activo.get_estado_display }}</li>
       {% if acta.activo.fecha_fin_garantia %}
-      <tr><td class="label">Garantia vigente hasta</td><td>{{ acta.activo.fecha_fin_garantia|date:"d/m/Y" }}</td></tr>
+      <li><span class="campo">Garantia vigente hasta:</span> {{ acta.activo.fecha_fin_garantia|date:"d/m/Y" }}</li>
       {% endif %}
-    </table>
-  </div>
-
-  <div class="seccion">
-    <h2>Datos del custodio</h2>
-    <table class="datos">
-      <tr><td class="label">Nombre completo</td><td>{{ acta.persona.nombre_completo }}</td></tr>
-      <tr><td class="label">Documento de identidad</td><td>{{ acta.persona.documento }}</td></tr>
-      <tr><td class="label">Cargo</td><td>{{ acta.persona.cargo|default:"-" }}</td></tr>
-      <tr><td class="label">Area / Departamento</td><td>{{ acta.persona.area|default:"-" }}</td></tr>
-    </table>
+    </ul>
   </div>
 
   {% if acta.observaciones %}
@@ -70,20 +72,29 @@
   {% endif %}
 
   <div class="declaracion">
-    El custodio declara haber recibido el equipo antes descrito en optimas condiciones de
+    {% if acta.tipo == 'entrega' %}
+    El custodio declara haber recibido el bien antes descrito en optimas condiciones de
     funcionamiento, sin danos visibles ni faltantes, comprometiendose a reportar de forma
     inmediata cualquier falla, perdida o dano que se presente durante el periodo en que
     el bien se encuentre bajo su responsabilidad, asi como a devolverlo en las mismas
     condiciones en caso de traslado, cambio de funciones o finalizacion de la relacion
     con la institucion, salvo el desgaste propio de su uso normal.
+    {% else %}
+    Se deja constancia de que el bien antes descrito es devuelto por el custodio en las
+    condiciones que se detallan en las observaciones de esta acta, dando por finalizada
+    su responsabilidad sobre el mismo a partir de la fecha indicada.
+    {% endif %}
   </div>
 
-  <table class="firmas">
-    <tr>
-      <td class="linea">Entregado por</td>
-      <td class="linea">{{ acta.persona.nombre_completo }}<br/>Recibido por (custodio)</td>
-    </tr>
-  </table>
+  <div class="firma">
+    <div class="linea">
+      <div class="nombre">{{ acta.persona.nombre_completo }}</div>
+      <div class="rol">
+        {% if acta.persona.cargo %}{{ acta.persona.cargo }}{% else %}Custodio{% endif %}
+        ({% if acta.tipo == 'entrega' %}recibe{% else %}entrega{% endif %})
+      </div>
+    </div>
+  </div>
 
   <p class="pie">Documento generado automaticamente por el Sistema de Inventario &middot; {{ acta.fecha|date:"d/m/Y" }}</p>
 </body>
