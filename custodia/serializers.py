@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from .models import Custodia
-
+import copy
 
 class CustodiaSerializer(serializers.ModelSerializer):
     activo_nombre = serializers.CharField(source='activo.nombre', read_only=True)
@@ -30,11 +30,17 @@ class CustodiaSerializer(serializers.ModelSerializer):
     def get_activa(self, obj):
         return obj.fecha_fin is None
 
+
     def validate(self, attrs):
-        instance = Custodia(**{**(self.instance.__dict__ if self.instance else {}), **attrs})
-        instance.pk = self.instance.pk if self.instance else None
-        instance.clean()
-        return attrs
+      if self.instance:
+        instance = copy.copy(self.instance)
+        for attr, value in attrs.items():
+            setattr(instance, attr, value)
+      else:
+        instance = Custodia(**attrs)
+
+      instance.clean()
+      return attrs
 
     def create(self, validated_data):
         from trazabilidad.utils import registrar_movimiento
@@ -57,9 +63,6 @@ class CustodiaSerializer(serializers.ModelSerializer):
         tenia_fecha_fin_antes = instance.fecha_fin is not None
         custodia = super().update(instance, validated_data)
 
-        # Solo registra "devolución" el momento exacto en que se cierra
-        # la custodia (pasa de fecha_fin=None a tener una fecha), no en
-        # cada edición posterior del registro.
         if not tenia_fecha_fin_antes and custodia.fecha_fin is not None:
             titular = custodia.persona.nombre_completo if custodia.persona else custodia.area
             registrar_movimiento(
