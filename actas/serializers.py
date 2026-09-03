@@ -3,16 +3,23 @@ from io import BytesIO
 from django.core.files.base import ContentFile
 from django.template.loader import render_to_string
 from rest_framework import serializers
-from xhtml2pdf import pisa
+from pathlib import Path
+from django.conf import settings
+from django.core.files.base import ContentFile
+from django.template.loader import render_to_string
+from weasyprint import HTML
+
 
 from .models import ActaEntrega
 
 
 def generar_pdf_acta(acta):
-    html_string = render_to_string('actas/acta_pdf.html', {'acta': acta})
-    buffer = BytesIO()
-    pisa.CreatePDF(src=html_string, dest=buffer, encoding='utf-8')
-    acta.pdf.save(f'acta_{acta.id}.pdf', ContentFile(buffer.getvalue()), save=True)
+    logo_path = Path(settings.BASE_DIR) / 'static' / 'logovyv.png'
+    logo_uri = logo_path.as_uri() if logo_path.exists() else None
+
+    html_string = render_to_string('actas/acta_pdf.html', {'acta': acta, 'logo_uri': logo_uri})
+    pdf_bytes = HTML(string=html_string, base_url=str(settings.BASE_DIR)).write_pdf()
+    acta.pdf.save(f'acta_{acta.id}.pdf', ContentFile(pdf_bytes), save=True)
 
 
 class ActaEntregaSerializer(serializers.ModelSerializer):

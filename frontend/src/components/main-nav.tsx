@@ -12,17 +12,23 @@ import {
   Users,
   Wrench,
 } from 'lucide-react'
+
 import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-  navigationMenuTriggerStyle,
-} from '@/components/ui/navigation-menu'
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from '@/components/ui/sidebar'
+
 import { cn } from '@/lib/utils'
 
-type NavItem = { titulo: string; url: string; icon: typeof Boxes }
+type NavItem = {
+  titulo: string
+  url: string
+  icon: typeof Boxes
+}
 
 const navInventario: NavItem[] = [
   { titulo: 'Activos', url: '/activos', icon: Boxes },
@@ -46,60 +52,63 @@ const navAdmin: NavItem[] = [
   { titulo: 'Usuarios', url: '/usuarios', icon: UserCog },
 ]
 
-function DropdownGroup({ label, items }: { label: string; items: NavItem[] }) {
+function navLinkClassName({ isActive }: { isActive: boolean }) {
+  return cn(
+    isActive && 'bg-sidebar-accent text-sidebar-accent-foreground font-medium',
+  )
+}
+
+function NavSection({ label, items }: { label: string; items: NavItem[] }) {
   return (
-    <NavigationMenuItem>
-      <NavigationMenuTrigger className="h-7 px-2.5 text-xs">{label}</NavigationMenuTrigger>
-      <NavigationMenuContent>
-        <ul className="grid w-36 gap-0 p-1">
-          {items.map((item) => (
-            <li key={item.url}>
-              <NavLink
-                to={item.url}
-                className={({ isActive }) =>
-                  cn(
-                    'flex items-center gap-1.5 rounded-sm px-2 py-1 text-xs transition-colors hover:bg-accent hover:text-accent-foreground',
-                    isActive && 'bg-accent text-accent-foreground font-medium',
-                  )
-                }
-              >
-                <item.icon className="size-3" />
-                {item.titulo}
-              </NavLink>
-            </li>
-          ))}
-        </ul>
-      </NavigationMenuContent>
-    </NavigationMenuItem>
+    <SidebarGroup>
+      <SidebarGroupLabel>{label}</SidebarGroupLabel>
+
+      <SidebarGroupContent>
+        <SidebarMenu>
+          {items.map((item) => {
+            const Icon = item.icon
+
+            return (
+              <SidebarMenuItem key={item.url}>
+                <SidebarMenuButton
+                  tooltip={item.titulo}
+                  render={<NavLink to={item.url} className={navLinkClassName} />}
+                >
+                  <Icon />
+                  <span>{item.titulo}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            )
+          })}
+        </SidebarMenu>
+      </SidebarGroupContent>
+    </SidebarGroup>
   )
 }
 
 export function MainNav() {
   return (
-    <NavigationMenu>
-      <NavigationMenuList className="gap-1">
-        <NavigationMenuItem>
-          <NavLink
-            to="/"
-            end
-            className={({ isActive }) =>
-              cn(
-                navigationMenuTriggerStyle(),
-                'h-7 px-2.5 text-xs flex items-center gap-1.5',
-                isActive && 'bg-accent text-accent-foreground',
-              )
-            }
-          >
-            <LayoutDashboard className="size-3" />
-            Dashboard
-          </NavLink>
-        </NavigationMenuItem>
+    <>
+      <SidebarGroup>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                tooltip="Dashboard"
+                render={<NavLink to="/" end className={navLinkClassName} />}
+              >
+                <LayoutDashboard />
+                <span>Dashboard</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
 
-        <DropdownGroup label="Inventario" items={navInventario} />
-        <DropdownGroup label="Custodia" items={navCustodia} />
-        <DropdownGroup label="Trazabilidad" items={navTrazabilidad} />
-        <DropdownGroup label="Administración" items={navAdmin} />
-      </NavigationMenuList>
-    </NavigationMenu>
+      <NavSection label="Inventario" items={navInventario} />
+      <NavSection label="Custodia" items={navCustodia} />
+      <NavSection label="Trazabilidad" items={navTrazabilidad} />
+      <NavSection label="Administración" items={navAdmin} />
+    </>
   )
 }

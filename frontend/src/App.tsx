@@ -11,6 +11,7 @@ import CustodiasPage from './pages/CustodiasPage'
 import ActasEntregaPage from './pages/ActasEntregaPage'
 import MovimientosPage from './pages/MovimientosPage'
 import MantenimientosPage from './pages/MantenimientosPage'
+import UsuariosPage from './pages/UsuariosPage'
 import ProtectedRoute from './components/ProtectedRoute'
 import DashboardLayout from './layouts/DashboardLayout'
 
@@ -37,8 +38,8 @@ function App() {
         <Route path="/movimientos" element={<MovimientosPage />} />
         <Route path="/mantenimientos" element={<MantenimientosPage />} />
         <Route path="/proveedores" element={<ProveedoresPage />} />
-        <Route path="/usuarios" element={<PlaceholderPage titulo="Usuarios" />} />
-  
+        <Route path="/usuarios" element={<UsuariosPage />} />
+        
       </Route>
     </Routes>
   )

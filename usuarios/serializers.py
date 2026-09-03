@@ -36,3 +36,43 @@ class UsuarioSerializer(serializers.ModelSerializer):
         model = Usuario
         fields = ['id', 'username', 'first_name', 'last_name', 'email', 'rol']
         read_only_fields = ['id', 'rol']
+
+class UsuarioListaSerializer(serializers.ModelSerializer):
+    """Para listar/editar usuarios desde el panel de Administración."""
+
+    nombre_completo = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Usuario
+        fields = [
+            'id',
+            'username',
+            'first_name',
+            'last_name',
+            'nombre_completo',
+            'email',
+            'rol',
+            'is_active',
+            'date_joined',
+        ]
+        read_only_fields = ['date_joined']
+
+    def get_nombre_completo(self, obj):
+        return f'{obj.first_name} {obj.last_name}'.strip() or obj.username
+
+
+class UsuarioCreateSerializer(serializers.ModelSerializer):
+    """Para crear un usuario nuevo desde el panel de Administración."""
+
+    password = serializers.CharField(write_only=True, min_length=8)
+
+    class Meta:
+        model = Usuario
+        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'rol', 'password']
+
+    def create(self, validated_data):
+        password = validated_data.pop('password')
+        usuario = Usuario(**validated_data)
+        usuario.set_password(password)
+        usuario.save()
+        return usuario
