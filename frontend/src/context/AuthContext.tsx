@@ -45,7 +45,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     localStorage.clear()
     setUsuario(null)
-    // Redirige explícitamente a login para evitar pantalla negra
     window.location.href = '/login'
   }
 
