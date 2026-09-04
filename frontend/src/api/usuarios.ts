@@ -10,6 +10,8 @@ export interface Usuario {
   nombre_completo: string
   email: string
   rol: Rol
+  area: string | null
+  area_nombre: string | null
   is_active: boolean
   date_joined: string
 }
@@ -20,6 +22,7 @@ export type UsuarioCreateInput = {
   last_name: string
   email: string
   rol: Rol
+  area: string | null
   password: string
 }
 
@@ -28,6 +31,7 @@ export type UsuarioUpdateInput = {
   last_name: string
   email: string
   rol: Rol
+  area: string | null
   is_active: boolean
 }
 

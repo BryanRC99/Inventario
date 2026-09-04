@@ -7,7 +7,8 @@ export interface Persona {
   nombre_completo: string
   documento: string
   cargo: string
-  area: string
+  area: string | null
+  area_nombre: string | null
   email: string
 }
 
@@ -16,7 +17,7 @@ export type PersonaInput = {
   apellidos: string
   documento: string
   cargo: string
-  area: string
+  area: string | null
   email: string
 }
 

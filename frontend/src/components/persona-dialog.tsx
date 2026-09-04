@@ -10,12 +10,21 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import type { Persona, PersonaInput } from '@/api/personas'
+import type { Area } from '@/api/areas'
 
 interface PersonaDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   persona: Persona | null
+  areas: Area[]
   onSubmit: (payload: PersonaInput) => Promise<void>
 }
 
@@ -24,11 +33,11 @@ const valoresVacios: PersonaInput = {
   apellidos: '',
   documento: '',
   cargo: '',
-  area: '',
+  area: null,
   email: '',
 }
 
-export function PersonaDialog({ open, onOpenChange, persona, onSubmit }: PersonaDialogProps) {
+export function PersonaDialog({ open, onOpenChange, persona, areas, onSubmit }: PersonaDialogProps) {
   const [form, setForm] = useState<PersonaInput>(valoresVacios)
   const [submitting, setSubmitting] = useState(false)
 
@@ -51,6 +60,8 @@ export function PersonaDialog({ open, onOpenChange, persona, onSubmit }: Persona
 
   const set = <K extends keyof PersonaInput>(key: K, value: PersonaInput[K]) =>
     setForm((f) => ({ ...f, [key]: value }))
+
+  const areaSeleccionada = areas.find((a) => a.id === form.area)
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -129,12 +140,24 @@ export function PersonaDialog({ open, onOpenChange, persona, onSubmit }: Persona
 
             <div className="grid gap-2">
               <Label htmlFor="area">Área</Label>
-              <Input
-                id="area"
-                value={form.area}
-                onChange={(e) => set('area', e.target.value)}
-                placeholder="Ej. Sistemas"
-              />
+              <Select
+                value={form.area ?? 'none'}
+                onValueChange={(v) => set('area', v === 'none' ? null : v)}
+              >
+                <SelectTrigger id="area" className="w-full">
+                  <SelectValue placeholder="Sin área">
+                    {areaSeleccionada?.nombre ?? (form.area ? undefined : 'Sin área')}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Sin área</SelectItem>
+                  {areas.map((a) => (
+                    <SelectItem key={a.id} value={a.id}>
+                      {a.nombre}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 

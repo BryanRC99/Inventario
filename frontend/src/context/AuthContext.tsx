@@ -20,7 +20,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [usuario, setUsuario] = useState<Usuario | null>(null)
   const [loading, setLoading] = useState(true)
-
+  
   useEffect(() => {
     const token = localStorage.getItem('access_token')
     if (!token) {

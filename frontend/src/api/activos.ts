@@ -66,3 +66,10 @@ export async function actualizarActivo(id: string, payload: ActivoInput): Promis
 export async function eliminarActivo(id: string): Promise<void> {
   await api.delete(`/inventario/activos/${id}/`)
 }
+
+export async function obtenerEtiquetaPdf(activoId: string): Promise<Blob> {
+  const { data } = await api.get(`/inventario/activos/${activoId}/etiqueta/`, {
+    responseType: 'blob',
+  })
+  return data
+}

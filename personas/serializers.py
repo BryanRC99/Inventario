@@ -5,6 +5,7 @@ from .models import Persona
 
 class PersonaSerializer(serializers.ModelSerializer):
     nombre_completo = serializers.CharField(read_only=True)
+    area_nombre = serializers.CharField(source='area.nombre', read_only=True, default=None)
 
     class Meta:
         model = Persona
@@ -16,5 +17,6 @@ class PersonaSerializer(serializers.ModelSerializer):
             'documento',
             'cargo',
             'area',
+            'area_nombre',
             'email',
         ]

@@ -1,7 +1,6 @@
 import { Routes, Route } from 'react-router-dom'
 import LoginPage from './pages/LoginPage'
 import DashboardPage from './pages/DashboardPage'
-import PlaceholderPage from './pages/PlaceholderPage'
 import PersonasPage from './pages/PersonasPage'
 import ActivosPage from './pages/ActivosPage'
 import CategoriasPage from './pages/CategoriasPage'
@@ -12,6 +11,7 @@ import ActasEntregaPage from './pages/ActasEntregaPage'
 import MovimientosPage from './pages/MovimientosPage'
 import MantenimientosPage from './pages/MantenimientosPage'
 import UsuariosPage from './pages/UsuariosPage'
+import AreasPage from './pages/AreasPage'
 import ProtectedRoute from './components/ProtectedRoute'
 import DashboardLayout from './layouts/DashboardLayout'
 
@@ -39,6 +39,7 @@ function App() {
         <Route path="/mantenimientos" element={<MantenimientosPage />} />
         <Route path="/proveedores" element={<ProveedoresPage />} />
         <Route path="/usuarios" element={<UsuariosPage />} />
+        <Route path="/areas" element={<AreasPage />} />
         
       </Route>
     </Routes>

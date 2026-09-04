@@ -35,3 +35,20 @@ class SoloAdmin(BasePermission):
         if not user or not user.is_authenticated:
             return False
         return user.is_superuser or user.rol == 'admin'
+
+class LecturaTodosEscribeAdmin(BasePermission):
+    """
+    Cualquier usuario autenticado puede leer (para llenar selects de
+    formularios, por ejemplo el de Área en Persona/Usuario), pero solo
+    Admin puede crear, editar o borrar.
+    """
+
+    def has_permission(self, request, view):
+        user = request.user
+        if not user or not user.is_authenticated:
+            return False
+
+        if request.method in SAFE_METHODS:
+            return True
+
+        return user.is_superuser or user.rol == 'admin'

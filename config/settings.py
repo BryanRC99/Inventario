@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'custodia',
     'actas',
     'trazabilidad',
+    'areas',
     'django_filters',
 ]
 

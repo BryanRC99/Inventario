@@ -21,6 +21,7 @@ import {
   ROLES,
   type Usuario,
 } from '@/api/usuarios'
+import { listarAreas, type Area } from '@/api/areas'
 
 export default function UsuariosPage() {
   const { usuario: usuarioActual } = useAuth()
@@ -28,11 +29,14 @@ export default function UsuariosPage() {
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [usuarioEditando, setUsuarioEditando] = useState<Usuario | null>(null)
+  const [areas, setAreas] = useState<Area[]>([])
 
   const cargarUsuarios = async () => {
     setLoading(true)
     try {
-      setUsuarios(await listarUsuarios())
+      const [usuariosData, areasData] = await Promise.all([listarUsuarios(), listarAreas()])
+      setUsuarios(usuariosData)
+      setAreas(areasData)
     } catch {
       toast.error('No se pudieron cargar los usuarios')
     } finally {
@@ -89,6 +93,7 @@ export default function UsuariosPage() {
               <TableHead className="h-9 text-xs">Usuario</TableHead>
               <TableHead className="h-9 text-xs">Nombre</TableHead>
               <TableHead className="h-9 text-xs">Rol</TableHead>
+              <TableHead className="h-9 text-xs">Área</TableHead>
               <TableHead className="h-9 text-xs">Estado</TableHead>
               <TableHead className="h-9 w-20 text-right text-xs">Acciones</TableHead>
             </TableRow>
@@ -121,6 +126,7 @@ export default function UsuariosPage() {
                     {ROLES.find((r) => r.value === u.rol)?.label ?? u.rol}
                   </Badge>
                 </TableCell>
+                <TableCell className="py-2 text-sm text-muted-foreground">{u.area_nombre || '—'}</TableCell>
                 <TableCell className="py-2">
                   <Badge variant={u.is_active ? 'default' : 'secondary'} className="text-xs">
                     {u.is_active ? 'Activo' : 'Inactivo'}
@@ -154,6 +160,7 @@ export default function UsuariosPage() {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         usuario={usuarioEditando}
+        areas={areas}
         onSubmitCrear={async (payload) => {
           try {
             await crearUsuario(payload)

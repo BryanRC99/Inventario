@@ -20,9 +20,12 @@ class Custodia(models.Model):
         blank=True,
         related_name='custodias',
     )
-    area = models.CharField(
-        max_length=100,
+    area = models.ForeignKey(
+        'areas.Area',
+        on_delete=models.SET_NULL,
+        null=True,
         blank=True,
+        related_name='custodias',
         help_text='Úsalo en vez de persona cuando el custodio es un área completa, no alguien específico.',
     )
     fecha_inicio = models.DateField()

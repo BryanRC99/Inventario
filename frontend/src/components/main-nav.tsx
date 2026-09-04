@@ -11,6 +11,7 @@ import {
   UserCog,
   Users,
   Wrench,
+  Building2,
 } from 'lucide-react'
 
 import {
@@ -50,6 +51,7 @@ const navTrazabilidad: NavItem[] = [
 const navAdmin: NavItem[] = [
   { titulo: 'Proveedores', url: '/proveedores', icon: Truck },
   { titulo: 'Usuarios', url: '/usuarios', icon: UserCog },
+  { titulo: 'Áreas', url: '/areas', icon: Building2 },
 ]
 
 function navLinkClassName({ isActive }: { isActive: boolean }) {
@@ -60,7 +62,7 @@ function navLinkClassName({ isActive }: { isActive: boolean }) {
 
 function NavSection({ label, items }: { label: string; items: NavItem[] }) {
   return (
-    <SidebarGroup>
+    <SidebarGroup className="py-0">
       <SidebarGroupLabel>{label}</SidebarGroupLabel>
 
       <SidebarGroupContent>
@@ -88,27 +90,23 @@ function NavSection({ label, items }: { label: string; items: NavItem[] }) {
 
 export function MainNav() {
   return (
-    <>
-      <SidebarGroup>
-        <SidebarGroupContent>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                tooltip="Dashboard"
-                render={<NavLink to="/" end className={navLinkClassName} />}
-              >
-                <LayoutDashboard />
-                <span>Dashboard</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarGroupContent>
-      </SidebarGroup>
+    <div className="flex flex-col gap-0">
+      <SidebarMenu className="px-2 pt-2">
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            tooltip="Dashboard"
+            render={<NavLink to="/" end className={navLinkClassName} />}
+          >
+            <LayoutDashboard />
+            <span>Dashboard</span>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </SidebarMenu>
 
       <NavSection label="Inventario" items={navInventario} />
       <NavSection label="Custodia" items={navCustodia} />
       <NavSection label="Trazabilidad" items={navTrazabilidad} />
       <NavSection label="Administración" items={navAdmin} />
-    </>
+    </div>
   )
 }

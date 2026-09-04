@@ -45,7 +45,7 @@ export function CustodiaDetailDialog({ open, onOpenChange, custodia }: CustodiaD
 
   if (!custodia) return null
 
-  const titular = custodia.persona_nombre || custodia.area
+  const titular = custodia.persona_nombre || custodia.area_nombre
 
   return (
     <>
@@ -96,7 +96,7 @@ export function CustodiaDetailDialog({ open, onOpenChange, custodia }: CustodiaD
                 <p className="text-sm text-muted-foreground">
                   Todavía no se ha generado ningún acta para esta custodia.
                 </p>
-              )}
+              )}  
 
               {actas.map((acta) => (
                 <div

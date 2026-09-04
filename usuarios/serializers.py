@@ -41,6 +41,7 @@ class UsuarioListaSerializer(serializers.ModelSerializer):
     """Para listar/editar usuarios desde el panel de Administración."""
 
     nombre_completo = serializers.SerializerMethodField()
+    area_nombre = serializers.CharField(source='area.nombre', read_only=True, default=None)
 
     class Meta:
         model = Usuario
@@ -52,6 +53,8 @@ class UsuarioListaSerializer(serializers.ModelSerializer):
             'nombre_completo',
             'email',
             'rol',
+            'area',
+            'area_nombre',
             'is_active',
             'date_joined',
         ]
@@ -68,7 +71,7 @@ class UsuarioCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Usuario
-        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'rol', 'password']
+        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'rol', 'area', 'password']
 
     def create(self, validated_data):
         password = validated_data.pop('password')

@@ -9,7 +9,8 @@ export interface Custodia {
   activo_codigo: string
   persona: string | null
   persona_nombre: string | null
-  area: string
+  area: string | null
+  area_nombre: string | null
   fecha_inicio: string
   fecha_fin: string | null
   tipo: TipoCustodia
@@ -19,7 +20,7 @@ export interface Custodia {
 export type CustodiaInput = {
   activo: string
   persona: string | null
-  area: string
+  area: string | null
   fecha_inicio: string
   fecha_fin: string | null
   tipo: TipoCustodia

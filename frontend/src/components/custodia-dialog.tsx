@@ -21,6 +21,7 @@ import {
 import { extraerMensajeError, type Custodia, type CustodiaInput } from '@/api/custodias'
 import type { Activo } from '@/api/activos'
 import type { Persona } from '@/api/personas'
+import type { Area } from '@/api/areas'
 
 interface CustodiaDialogProps {
   open: boolean
@@ -29,6 +30,7 @@ interface CustodiaDialogProps {
   activoInicial?: string
   activos: Activo[]
   personas: Persona[]
+  areas: Area[]
   onSubmit: (payload: CustodiaInput) => Promise<void>
 }
 
@@ -39,7 +41,7 @@ const hoy = () => new Date().toISOString().slice(0, 10)
 const valoresVacios: CustodiaInput = {
   activo: '',
   persona: null,
-  area: '',
+  area: null,
   fecha_inicio: hoy(),
   fecha_fin: null,
   tipo: 'principal',
@@ -52,6 +54,7 @@ export function CustodiaDialog({
   activoInicial,
   activos,
   personas,
+  areas,
   onSubmit,
 }: CustodiaDialogProps) {
   const [form, setForm] = useState<CustodiaInput>(valoresVacios)
@@ -84,9 +87,7 @@ export function CustodiaDialog({
 
   const cambiarTitularTipo = (valor: TitularTipo) => {
     setTitularTipo(valor)
-    // Al cambiar de tipo, limpia el campo contrario para no mandar ambos
-    // (el backend rechaza persona Y área a la vez).
-    if (valor === 'persona') set('area', '')
+    if (valor === 'persona') set('area', null)
     else set('persona', null)
   }
 
@@ -106,6 +107,7 @@ export function CustodiaDialog({
 
   const activoSeleccionado = activos.find((a) => a.id === form.activo)
   const personaSeleccionada = personas.find((p) => p.id === form.persona)
+  const areaSeleccionada = areas.find((a) => a.id === form.area)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -191,13 +193,23 @@ export function CustodiaDialog({
             ) : (
               <div className="grid gap-2">
                 <Label htmlFor="area">Área</Label>
-                <Input
-                  id="area"
-                  value={form.area}
-                  onChange={(e) => set('area', e.target.value)}
-                  placeholder="Ej. Operaciones"
-                  required
-                />
+                <Select
+                  value={form.area ?? undefined}
+                  onValueChange={(v) => set('area', v)}
+                >
+                  <SelectTrigger id="area" className="w-full">
+                    <SelectValue placeholder="Selecciona un área">
+                      {areaSeleccionada?.nombre}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {areas.map((a) => (
+                      <SelectItem key={a.id} value={a.id}>
+                        {a.nombre}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             )}
 

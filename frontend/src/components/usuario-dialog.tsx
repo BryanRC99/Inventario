@@ -19,17 +19,20 @@ import {
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { ROLES, type Rol, type Usuario } from '@/api/usuarios'
+import type { Area } from '@/api/areas'
 
 interface UsuarioDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  usuario: Usuario | null // null = crear, con valor = editar
+  usuario: Usuario | null
+  areas: Area[]
   onSubmitCrear: (payload: {
     username: string
     first_name: string
     last_name: string
     email: string
     rol: Rol
+    area: string | null
     password: string
   }) => Promise<void>
   onSubmitEditar: (payload: {
@@ -37,6 +40,7 @@ interface UsuarioDialogProps {
     last_name: string
     email: string
     rol: Rol
+    area: string | null
     is_active: boolean
   }) => Promise<void>
 }
@@ -47,6 +51,7 @@ const vacioCrear = {
   last_name: '',
   email: '',
   rol: 'operador' as Rol,
+  area: null as string | null,
   password: '',
 }
 
@@ -54,6 +59,7 @@ export function UsuarioDialog({
   open,
   onOpenChange,
   usuario,
+  areas,
   onSubmitCrear,
   onSubmitEditar,
 }: UsuarioDialogProps) {
@@ -70,6 +76,7 @@ export function UsuarioDialog({
           last_name: usuario.last_name,
           email: usuario.email,
           rol: usuario.rol,
+          area: usuario.area,
           password: '',
         })
         setIsActive(usuario.is_active)
@@ -83,6 +90,8 @@ export function UsuarioDialog({
   const set = <K extends keyof typeof form>(key: K, value: (typeof form)[K]) =>
     setForm((f) => ({ ...f, [key]: value }))
 
+  const areaSeleccionada = areas.find((a) => a.id === form.area)
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setSubmitting(true)
@@ -93,6 +102,7 @@ export function UsuarioDialog({
           last_name: form.last_name,
           email: form.email,
           rol: form.rol,
+          area: form.area,
           is_active: isActive,
         })
       } else {
@@ -174,8 +184,30 @@ export function UsuarioDialog({
               </Select>
             </div>
 
+            <div className="grid gap-2">
+              <Label htmlFor="area">Área</Label>
+              <Select
+                value={form.area ?? 'none'}
+                onValueChange={(v) => set('area', v === 'none' ? null : v)}
+              >
+                <SelectTrigger id="area" className="w-full">
+                  <SelectValue placeholder="Sin área">
+                    {areaSeleccionada?.nombre ?? (form.area ? undefined : 'Sin área')}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Sin área</SelectItem>
+                  {areas.map((a) => (
+                    <SelectItem key={a.id} value={a.id}>
+                      {a.nombre}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             {!usuario && (
-              <div className="grid gap-2">
+              <div className="grid gap-2 sm:col-span-2">
                 <Label htmlFor="password">Contraseña</Label>
                 <Input
                   id="password"

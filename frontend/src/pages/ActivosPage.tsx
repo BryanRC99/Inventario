@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Plus, Pencil, Trash2 } from 'lucide-react'
+import { Plus, Pencil, Trash2, Tag } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -24,6 +24,8 @@ import {
 import { listarCategorias, type Categoria } from '@/api/categorias'
 import { listarUbicaciones, type Ubicacion } from '@/api/ubicaciones'
 import { listarProveedores, type Proveedor } from '@/api/proveedores'
+import { obtenerEtiquetaPdf } from '@/api/activos'
+
 
 const BADGE_POR_ESTADO: Record<EstadoActivo, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   activo: 'default',
@@ -105,6 +107,16 @@ export default function ActivosPage() {
     }
   }
 
+  const handleImprimirEtiqueta = async (activo: Activo) => {
+    try {
+      const blob = await obtenerEtiquetaPdf(activo.id)
+      const url = URL.createObjectURL(blob)
+      window.open(url, '_blank')
+    } catch {
+      toast.error('No se pudo generar la etiqueta')
+    }
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
@@ -163,6 +175,15 @@ export default function ActivosPage() {
                   </Badge>
                 </TableCell>
                 <TableCell className="py-2 text-right">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-7"
+                    onClick={() => handleImprimirEtiqueta(activo)}
+                    title="Imprimir etiqueta"
+                  >
+                    <Tag className="size-3.5" />
+                  </Button>
                   <Button
                     variant="ghost"
                     size="icon"

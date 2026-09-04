@@ -15,7 +15,9 @@ class Persona(models.Model):
     apellidos = models.CharField(max_length=100)
     documento = models.CharField(max_length=20, unique=True)
     cargo = models.CharField(max_length=100, blank=True)
-    area = models.CharField(max_length=100, blank=True)
+    area = models.ForeignKey(
+      'areas.Area', on_delete=models.SET_NULL, null=True, blank=True, related_name='personas'
+    )
     email = models.EmailField(blank=True)
 
     class Meta:

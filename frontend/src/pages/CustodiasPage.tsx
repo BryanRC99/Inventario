@@ -28,6 +28,7 @@ import { listarActivos, type Activo } from '@/api/activos'
 import { listarPersonas, type Persona } from '@/api/personas'
 import { ActaDialog } from '@/components/acta-dialog'
 import { crearActa } from '@/api/actas'
+import { listarAreas, type Area } from '@/api/areas'
 
 export default function CustodiasPage() {
   const [custodias, setCustodias] = useState<Custodia[]>([])
@@ -40,18 +41,21 @@ export default function CustodiasPage() {
   const [custodiaDetalle, setCustodiaDetalle] = useState<Custodia | null>(null)
   const [custodiaAFinalizar, setCustodiaAFinalizar] = useState<Custodia | null>(null)
   const [reasignandoActivoId, setReasignandoActivoId] = useState<string | null>(null)
+  const [areas, setAreas] = useState<Area[]>([])
 
   const cargarTodo = async () => {
     setLoading(true)
     try {
-      const [custodiasData, activosData, personasData] = await Promise.all([
+      const [custodiasData, activosData, personasData, areasData] = await Promise.all([
         listarCustodias(),
         listarActivos(),
         listarPersonas(),
+        listarAreas(),
       ])
       setCustodias(custodiasData)
       setActivos(activosData)
       setPersonas(personasData)
+      setAreas(areasData)
     } catch {
       toast.error('No se pudieron cargar las custodias')
     } finally {
@@ -96,7 +100,7 @@ export default function CustodiasPage() {
   }
 
   const handleEliminar = async (custodia: Custodia) => {
-    const titular = custodia.persona_nombre || custodia.area
+    const titular = custodia.persona_nombre || custodia.area_nombre
     if (!confirm(`¿Eliminar la custodia de "${custodia.activo_nombre}" a "${titular}"?`)) return
     try {
       await eliminarCustodia(custodia.id)
@@ -190,7 +194,7 @@ export default function CustodiasPage() {
                   {custodia.activo_nombre}
                 </TableCell>
                 <TableCell className="py-2 text-sm font-medium">
-                  {custodia.persona_nombre || custodia.area}
+                  {custodia.persona_nombre || custodia.area_nombre}
                 </TableCell>
                 <TableCell className="py-2 text-sm text-muted-foreground">
                   {custodia.fecha_inicio}
@@ -267,6 +271,7 @@ export default function CustodiasPage() {
         activoInicial={reasignandoActivoId ?? undefined}
         activos={activos}
         personas={personas}
+        areas={areas}
         onSubmit={handleSubmit}
       />
 

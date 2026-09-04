@@ -9,6 +9,7 @@ class CustodiaSerializer(serializers.ModelSerializer):
     persona_nombre = serializers.CharField(
         source='persona.nombre_completo', read_only=True, default=None
     )
+    area_nombre = serializers.CharField(source='area.nombre', read_only=True, default=None)
     activa = serializers.SerializerMethodField()
 
     class Meta:
@@ -21,6 +22,7 @@ class CustodiaSerializer(serializers.ModelSerializer):
             'persona',
             'persona_nombre',
             'area',
+            'area_nombre',
             'fecha_inicio',
             'fecha_fin',
             'tipo',

@@ -19,17 +19,21 @@ import {
   type Persona,
   type PersonaInput,
 } from '@/api/personas'
+import { listarAreas, type Area } from '@/api/areas'
 
 export default function PersonasPage() {
   const [personas, setPersonas] = useState<Persona[]>([])
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [personaEditando, setPersonaEditando] = useState<Persona | null>(null)
+  const [areas, setAreas] = useState<Area[]>([])
 
   const cargarPersonas = async () => {
     setLoading(true)
     try {
-      setPersonas(await listarPersonas())
+      const [personasData, areasData] = await Promise.all([listarPersonas(), listarAreas()])
+      setPersonas(personasData)
+      setAreas(areasData)
     } catch {
       toast.error('No se pudieron cargar las personas')
     } finally {
@@ -127,7 +131,7 @@ export default function PersonasPage() {
                 <TableCell className="py-2 text-sm font-medium">{persona.nombre_completo}</TableCell>
                 <TableCell className="py-2 text-sm text-muted-foreground">{persona.documento}</TableCell>
                 <TableCell className="py-2 text-sm text-muted-foreground">{persona.cargo || '—'}</TableCell>
-                <TableCell className="py-2 text-sm text-muted-foreground">{persona.area || '—'}</TableCell>
+                <TableCell className="py-2 text-sm text-muted-foreground">{persona.area_nombre || '—'}</TableCell>
                 <TableCell className="py-2 text-right">
                   <Button
                     variant="ghost"
@@ -156,6 +160,7 @@ export default function PersonasPage() {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         persona={personaEditando}
+        areas={areas}
         onSubmit={handleSubmit}
       />
     </div>
