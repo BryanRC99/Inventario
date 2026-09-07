@@ -17,7 +17,6 @@ def generar_qr_base64(data):
     img.save(buffer, format='PNG')
     return base64.b64encode(buffer.getvalue()).decode()
 
-
 def generar_pdf_etiqueta(activo):
     qr_base64 = generar_qr_base64(activo.codigo_interno)
 
