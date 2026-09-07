@@ -6,7 +6,10 @@ from .models import Activo, Categoria, Ubicacion
 class CategoriaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Categoria
-        fields = ['id', 'nombre', 'requiere_custodio_unico']
+        fields = ['id', 'nombre', 'prefijo', 'requiere_custodio_unico']
+
+    def validate_prefijo(self, value):
+        return value.strip().upper()
 
 
 class UbicacionSerializer(serializers.ModelSerializer):
@@ -56,24 +59,42 @@ class ActivoSerializer(serializers.ModelSerializer):
             'creado_por',
             'fecha_creacion',
         ]
-        read_only_fields = ['creado_por', 'fecha_creacion']
+        read_only_fields = ['codigo_interno', 'creado_por', 'fecha_creacion']
 
-        def create(self, validated_data):
-           from trazabilidad.utils import registrar_movimiento
+    def generar_codigo_interno(self, categoria):
+        prefijo = categoria.prefijo
+        ultimo = (
+            Activo.objects.filter(codigo_interno__startswith=f'{prefijo}-')
+            .order_by('-codigo_interno')
+            .first()
+        )
 
-           # El usuario que crea el activo se asigna automáticamente desde
-           # la petición autenticada, nunca lo manda el frontend a mano
-           # (evita que alguien se atribuya un activo creado por otro).
-           usuario = self.context['request'].user
-           validated_data['creado_por'] = usuario
-           activo = super().create(validated_data)
+        if ultimo:
+            try:
+                ultimo_numero = int(ultimo.codigo_interno.split('-')[-1])
+            except ValueError:
+                ultimo_numero = 0
+        else:
+            ultimo_numero = 0
 
-           registrar_movimiento(
+        siguiente_numero = ultimo_numero + 1
+        return f'{prefijo}-{siguiente_numero:03d}'
+
+    def create(self, validated_data):
+        from trazabilidad.utils import registrar_movimiento
+
+        usuario = self.context['request'].user
+        validated_data['creado_por'] = usuario
+        validated_data['codigo_interno'] = self.generar_codigo_interno(validated_data['categoria'])
+
+        activo = super().create(validated_data)
+
+        registrar_movimiento(
             activo=activo,
             tipo_evento='creacion',
             usuario=usuario,
             ubicacion_destino=activo.ubicacion,
             observaciones='Registro inicial del activo en el sistema.',
-           )
+        )
 
-           return activo
+        return activo

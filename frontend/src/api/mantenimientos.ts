@@ -45,3 +45,8 @@ export async function actualizarMantenimiento(
 export async function eliminarMantenimiento(id: string): Promise<void> {
   await api.delete(`/trazabilidad/mantenimientos/${id}/`)
 }
+
+export async function listarMantenimientosPorActivo(activoId: string): Promise<Mantenimiento[]> {
+  const { data } = await api.get('/trazabilidad/mantenimientos/', { params: { activo: activoId } })
+  return data
+}

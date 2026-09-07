@@ -33,7 +33,6 @@ interface UsuarioDialogProps {
     email: string
     rol: Rol
     area: string | null
-    password: string
   }) => Promise<void>
   onSubmitEditar: (payload: {
     first_name: string
@@ -52,7 +51,6 @@ const vacioCrear = {
   email: '',
   rol: 'operador' as Rol,
   area: null as string | null,
-  password: '',
 }
 
 export function UsuarioDialog({
@@ -77,7 +75,6 @@ export function UsuarioDialog({
           email: usuario.email,
           rol: usuario.rol,
           area: usuario.area,
-          password: '',
         })
         setIsActive(usuario.is_active)
       } else {
@@ -205,20 +202,6 @@ export function UsuarioDialog({
                 </SelectContent>
               </Select>
             </div>
-
-            {!usuario && (
-              <div className="grid gap-2 sm:col-span-2">
-                <Label htmlFor="password">Contraseña</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={form.password}
-                  onChange={(e) => set('password', e.target.value)}
-                  minLength={8}
-                  required
-                />
-              </div>
-            )}
 
             {usuario && (
               <div className="flex items-center justify-between rounded-lg border p-3 sm:col-span-2">

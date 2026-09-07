@@ -10,6 +10,11 @@ export interface Persona {
   area: string | null
   area_nombre: string | null
   email: string
+  tiene_acceso_consulta: boolean
+}
+
+export interface PersonaConPassword extends Persona {
+  password_generada?: string
 }
 
 export type PersonaInput = {
@@ -19,6 +24,7 @@ export type PersonaInput = {
   cargo: string
   area: string | null
   email: string
+  crear_acceso_consulta?: boolean
 }
 
 export async function listarPersonas(): Promise<Persona[]> {
@@ -26,7 +32,7 @@ export async function listarPersonas(): Promise<Persona[]> {
   return data
 }
 
-export async function crearPersona(payload: PersonaInput): Promise<Persona> {
+export async function crearPersona(payload: PersonaInput): Promise<PersonaConPassword> {
   const { data } = await api.post('/personas/personas/', payload)
   return data
 }

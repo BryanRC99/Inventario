@@ -20,6 +20,8 @@ import {
   type PersonaInput,
 } from '@/api/personas'
 import { listarAreas, type Area } from '@/api/areas'
+import { PasswordGeneradaDialog } from '@/components/password-generada-dialog'
+import type { PersonaConPassword } from '@/api/personas'
 
 export default function PersonasPage() {
   const [personas, setPersonas] = useState<Persona[]>([])
@@ -27,6 +29,7 @@ export default function PersonasPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [personaEditando, setPersonaEditando] = useState<Persona | null>(null)
   const [areas, setAreas] = useState<Area[]>([])
+  const [credencialesGeneradas, setCredencialesGeneradas] = useState<PersonaConPassword | null>(null)
 
   const cargarPersonas = async () => {
     setLoading(true)
@@ -61,8 +64,11 @@ export default function PersonasPage() {
         await actualizarPersona(personaEditando.id, payload)
         toast.success('Persona actualizada')
       } else {
-        await crearPersona(payload)
+        const creada = await crearPersona(payload)
         toast.success('Persona creada')
+        if (creada.password_generada) {
+          setCredencialesGeneradas(creada)
+        }
       }
       await cargarPersonas()
     } catch {
@@ -163,6 +169,15 @@ export default function PersonasPage() {
         areas={areas}
         onSubmit={handleSubmit}
       />
+
+      {credencialesGeneradas && (
+        <PasswordGeneradaDialog
+          open={!!credencialesGeneradas}
+          onOpenChange={(open) => !open && setCredencialesGeneradas(null)}
+          username={credencialesGeneradas.documento}
+          password={credencialesGeneradas.password_generada!}
+        />
+      )}
     </div>
   )
 }

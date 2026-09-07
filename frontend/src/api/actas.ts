@@ -47,3 +47,8 @@ export async function listarActasPorCustodia(custodiaId: string): Promise<ActaEn
   const { data } = await api.get('/actas/actas/', { params: { custodia: custodiaId } })
   return data
 }
+
+export async function listarActasPorActivoAsignado(activoId: string): Promise<ActaEntrega[]> {
+  const { data } = await api.get('/actas/actas/', { params: { activo: activoId } })
+  return data
+}

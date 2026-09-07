@@ -23,8 +23,8 @@ export type UsuarioCreateInput = {
   email: string
   rol: Rol
   area: string | null
-  password: string
 }
+
 
 export type UsuarioUpdateInput = {
   first_name: string
@@ -46,7 +46,7 @@ export async function listarUsuarios(): Promise<Usuario[]> {
   return data
 }
 
-export async function crearUsuario(payload: UsuarioCreateInput): Promise<Usuario> {
+export async function crearUsuario(payload: UsuarioCreateInput): Promise<UsuarioConPassword> {
   const { data } = await api.post('/auth/usuarios/', payload)
   return data
 }
@@ -61,4 +61,8 @@ export async function actualizarUsuario(
 
 export async function eliminarUsuario(id: string): Promise<void> {
   await api.delete(`/auth/usuarios/${id}/`)
+}
+
+export interface UsuarioConPassword extends Usuario {
+  password_generada?: string
 }

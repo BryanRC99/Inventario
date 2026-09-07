@@ -29,6 +29,7 @@ import { listarPersonas, type Persona } from '@/api/personas'
 import { ActaDialog } from '@/components/acta-dialog'
 import { crearActa } from '@/api/actas'
 import { listarAreas, type Area } from '@/api/areas'
+import { listarUbicaciones, type Ubicacion } from '@/api/ubicaciones'
 
 export default function CustodiasPage() {
   const [custodias, setCustodias] = useState<Custodia[]>([])
@@ -42,20 +43,24 @@ export default function CustodiasPage() {
   const [custodiaAFinalizar, setCustodiaAFinalizar] = useState<Custodia | null>(null)
   const [reasignandoActivoId, setReasignandoActivoId] = useState<string | null>(null)
   const [areas, setAreas] = useState<Area[]>([])
+  const [ubicaciones, setUbicaciones] = useState<Ubicacion[]>([])
 
   const cargarTodo = async () => {
     setLoading(true)
     try {
-      const [custodiasData, activosData, personasData, areasData] = await Promise.all([
-        listarCustodias(),
-        listarActivos(),
-        listarPersonas(),
-        listarAreas(),
-      ])
+      const [custodiasData, activosData, personasData, areasData, ubicacionesData] =
+        await Promise.all([
+          listarCustodias(),
+          listarActivos(),
+          listarPersonas(),
+          listarAreas(),
+          listarUbicaciones(),
+        ])
       setCustodias(custodiasData)
       setActivos(activosData)
       setPersonas(personasData)
       setAreas(areasData)
+      setUbicaciones(ubicacionesData)
     } catch {
       toast.error('No se pudieron cargar las custodias')
     } finally {
@@ -115,10 +120,10 @@ export default function CustodiasPage() {
     }
   }
 
-  const handleFinalizar = async (fechaFin: string) => {
+  const handleFinalizar = async (fechaFin: string, ubicacionDestino: string) => {
     if (!custodiaAFinalizar) return
     try {
-      await cerrarCustodia(custodiaAFinalizar.id, fechaFin)
+      await cerrarCustodia(custodiaAFinalizar.id, fechaFin, ubicacionDestino)
       toast.success('Custodia finalizada')
       await cargarTodo()
     } catch {
@@ -279,6 +284,8 @@ export default function CustodiasPage() {
         open={!!custodiaAFinalizar}
         onOpenChange={(open) => !open && setCustodiaAFinalizar(null)}
         custodia={custodiaAFinalizar}
+        activo={activos.find((a) => a.id === custodiaAFinalizar?.activo) ?? null}
+        ubicaciones={ubicaciones}
         onConfirm={handleFinalizar}
       />
 

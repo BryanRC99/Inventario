@@ -19,17 +19,21 @@ import {
   type Area,
   type AreaInput,
 } from '@/api/areas'
+import { listarUbicaciones, type Ubicacion } from '@/api/ubicaciones'
 
 export default function AreasPage() {
   const [areas, setAreas] = useState<Area[]>([])
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [areaEditando, setAreaEditando] = useState<Area | null>(null)
+  const [ubicaciones, setUbicaciones] = useState<Ubicacion[]>([])
 
   const cargarAreas = async () => {
     setLoading(true)
     try {
-      setAreas(await listarAreas())
+      const [areasData, ubicacionesData] = await Promise.all([listarAreas(), listarUbicaciones()])
+      setAreas(areasData)
+      setUbicaciones(ubicacionesData)
     } catch {
       toast.error('No se pudieron cargar las áreas')
     } finally {
@@ -147,6 +151,7 @@ export default function AreasPage() {
       </div>
 
       <AreaDialog
+        ubicaciones={ubicaciones}
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         area={areaEditando}

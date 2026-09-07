@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Plus, Pencil, Trash2, Tag } from 'lucide-react'
+import { Plus, Pencil, Trash2, Tag, Eye } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -12,6 +12,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { ActivoDialog } from '@/components/activo-dialog'
+import { ActivoDetailDialog } from '@/components/activo-detail-dialog'
 import {
   listarActivos,
   crearActivo,
@@ -25,7 +26,6 @@ import { listarCategorias, type Categoria } from '@/api/categorias'
 import { listarUbicaciones, type Ubicacion } from '@/api/ubicaciones'
 import { listarProveedores, type Proveedor } from '@/api/proveedores'
 import { obtenerEtiquetaPdf } from '@/api/activos'
-
 
 const BADGE_POR_ESTADO: Record<EstadoActivo, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   activo: 'default',
@@ -42,6 +42,7 @@ export default function ActivosPage() {
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [activoEditando, setActivoEditando] = useState<Activo | null>(null)
+  const [activoDetalle, setActivoDetalle] = useState<Activo | null>(null)
 
   const cargarTodo = async () => {
     setLoading(true)
@@ -196,6 +197,14 @@ export default function ActivosPage() {
                     variant="ghost"
                     size="icon"
                     className="size-7"
+                    onClick={() => setActivoDetalle(activo)}
+                  >
+                    <Eye className="size-3.5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-7"
                     onClick={() => handleEliminar(activo)}
                   >
                     <Trash2 className="size-3.5" />
@@ -215,6 +224,12 @@ export default function ActivosPage() {
         ubicaciones={ubicaciones}
         proveedores={proveedores}
         onSubmit={handleSubmit}
+      />
+
+      <ActivoDetailDialog
+        open={!!activoDetalle}
+        onOpenChange={(open) => !open && setActivoDetalle(null)}
+        activo={activoDetalle}
       />
     </div>
   )

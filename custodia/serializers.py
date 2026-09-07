@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from inventario.models import Ubicacion
 
 from .models import Custodia
 import copy
@@ -11,6 +12,9 @@ class CustodiaSerializer(serializers.ModelSerializer):
     )
     area_nombre = serializers.CharField(source='area.nombre', read_only=True, default=None)
     activa = serializers.SerializerMethodField()
+    ubicacion_destino = serializers.PrimaryKeyRelatedField(
+        queryset=Ubicacion.objects.all(), write_only=True, required=False
+    )
 
     class Meta:
         model = Custodia
@@ -27,6 +31,7 @@ class CustodiaSerializer(serializers.ModelSerializer):
             'fecha_fin',
             'tipo',
             'activa',
+            'ubicacion_destino',
         ]
 
     def get_activa(self, obj):
@@ -48,29 +53,65 @@ class CustodiaSerializer(serializers.ModelSerializer):
         from trazabilidad.utils import registrar_movimiento
 
         custodia = super().create(validated_data)
+        activo = custodia.activo
 
-        titular = custodia.persona.nombre_completo if custodia.persona else custodia.area
-        registrar_movimiento(
-            activo=custodia.activo,
-            tipo_evento='asignacion',
-            usuario=self.context['request'].user,
-            observaciones=f'Custodia asignada a {titular}.',
-        )
+        # Determina la ubicación por defecto del área del custodio
+        # (ya sea directamente el área, o el área de la persona).
+        area_referencia = custodia.area or (custodia.persona.area if custodia.persona else None)
+        nueva_ubicacion = area_referencia.ubicacion if area_referencia else None
+
+        titular = custodia.persona.nombre_completo if custodia.persona else custodia.area.nombre
+
+        if nueva_ubicacion and nueva_ubicacion != activo.ubicacion:
+            ubicacion_anterior = activo.ubicacion
+            activo.ubicacion = nueva_ubicacion
+            activo.save(update_fields=['ubicacion'])
+
+            registrar_movimiento(
+                activo=activo,
+                tipo_evento='asignacion',
+                usuario=self.context['request'].user,
+                ubicacion_origen=ubicacion_anterior,
+                ubicacion_destino=nueva_ubicacion,
+                observaciones=f'Custodia asignada a {titular}. Ubicación actualizada automáticamente.',
+            )
+        else:
+            registrar_movimiento(
+                activo=activo,
+                tipo_evento='asignacion',
+                usuario=self.context['request'].user,
+                observaciones=f'Custodia asignada a {titular}.',
+            )
 
         return custodia
 
     def update(self, instance, validated_data):
         from trazabilidad.utils import registrar_movimiento
 
+        # 'ubicacion_destino' no es un campo del modelo Custodia, así que
+        # lo sacamos antes de que super().update() intente guardarlo.
+        ubicacion_destino = validated_data.pop('ubicacion_destino', None)
+
         tenia_fecha_fin_antes = instance.fecha_fin is not None
         custodia = super().update(instance, validated_data)
 
         if not tenia_fecha_fin_antes and custodia.fecha_fin is not None:
-            titular = custodia.persona.nombre_completo if custodia.persona else custodia.area
+            titular = (
+                custodia.persona.nombre_completo if custodia.persona else custodia.area.nombre
+            )
+            activo = custodia.activo
+            ubicacion_anterior = activo.ubicacion
+
+            if ubicacion_destino and ubicacion_destino != activo.ubicacion:
+                activo.ubicacion = ubicacion_destino
+                activo.save(update_fields=['ubicacion'])
+
             registrar_movimiento(
-                activo=custodia.activo,
+                activo=activo,
                 tipo_evento='devolucion',
                 usuario=self.context['request'].user,
+                ubicacion_origen=ubicacion_anterior,
+                ubicacion_destino=ubicacion_destino or ubicacion_anterior,
                 observaciones=f'Custodia finalizada, devuelto por {titular}.',
             )
 

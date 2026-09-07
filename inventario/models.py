@@ -7,6 +7,11 @@ from django.db import models
 class Categoria(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     nombre = models.CharField(max_length=100, unique=True)
+    prefijo = models.CharField(
+        max_length=5,
+        unique=True,
+        help_text='Prefijo para códigos de activo de esta categoría, ej. "LAP" genera LAP-001, LAP-002...',
+    )
     requiere_custodio_unico = models.BooleanField(
         default=True,
         help_text='Si está desactivado, este tipo de activo puede tener varios custodios a la vez (ej. proyector de sala).',

@@ -20,7 +20,7 @@ interface CategoriaDialogProps {
   onSubmit: (payload: CategoriaInput) => Promise<void>
 }
 
-const valoresVacios: CategoriaInput = { nombre: '', requiere_custodio_unico: true }
+const valoresVacios: CategoriaInput = { nombre: '', prefijo: '', requiere_custodio_unico: true }
 
 export function CategoriaDialog({
   open,
@@ -35,7 +35,11 @@ export function CategoriaDialog({
     if (open) {
       setForm(
         categoria
-          ? { nombre: categoria.nombre, requiere_custodio_unico: categoria.requiere_custodio_unico }
+          ? {
+            nombre: categoria.nombre,
+            prefijo: categoria.prefijo,
+            requiere_custodio_unico: categoria.requiere_custodio_unico,
+          }
           : valoresVacios,
       )
     }
@@ -74,6 +78,23 @@ export function CategoriaDialog({
                 required
                 autoFocus
               />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="prefijo">Prefijo para códigos</Label>
+              <Input
+                id="prefijo"
+                value={form.prefijo}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, prefijo: e.target.value.toUpperCase() }))
+                }
+                placeholder="Ej. LAP"
+                maxLength={5}
+                required
+              />
+              <p className="text-xs text-muted-foreground">
+                Generará códigos como {form.prefijo || 'LAP'}-001, {form.prefijo || 'LAP'}-002...
+              </p>
             </div>
 
             <div className="flex items-center justify-between rounded-lg border p-3">

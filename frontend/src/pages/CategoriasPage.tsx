@@ -103,6 +103,7 @@ export default function CategoriasPage() {
           <TableHeader>
             <TableRow>
               <TableHead className="h-9 text-xs">Nombre</TableHead>
+              <TableHead className="h-9 text-xs">Prefijo</TableHead>
               <TableHead className="h-9 text-xs">Custodio único</TableHead>
               <TableHead className="h-9 w-20 text-right text-xs">Acciones</TableHead>
             </TableRow>
@@ -127,6 +128,9 @@ export default function CategoriasPage() {
             {categorias.map((categoria) => (
               <TableRow key={categoria.id}>
                 <TableCell className="py-2 text-sm font-medium">{categoria.nombre}</TableCell>
+                <TableCell className="py-2 text-sm font-mono text-muted-foreground">
+                  {categoria.prefijo}
+                </TableCell>
                 <TableCell className="py-2">
                   <Badge
                     variant={categoria.requiere_custodio_unico ? 'default' : 'secondary'}

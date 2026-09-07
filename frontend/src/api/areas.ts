@@ -4,11 +4,14 @@ export interface Area {
   id: string
   nombre: string
   descripcion: string
+  ubicacion: string | null
+  ubicacion_nombre: string | null
 }
 
 export type AreaInput = {
   nombre: string
   descripcion: string
+  ubicacion: string | null
 }
 
 export async function listarAreas(): Promise<Area[]> {

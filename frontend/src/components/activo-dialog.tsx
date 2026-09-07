@@ -17,7 +17,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Textarea } from '@/components/ui/textarea'
 import { ESTADOS_ACTIVO, type Activo, type ActivoInput } from '@/api/activos'
 import type { Categoria } from '@/api/categorias'
 import type { Ubicacion } from '@/api/ubicaciones'
@@ -34,7 +33,6 @@ interface ActivoDialogProps {
 }
 
 const valoresVacios: ActivoInput = {
-  codigo_interno: '',
   categoria: '',
   nombre: '',
   numero_serie: '',
@@ -59,35 +57,28 @@ export function ActivoDialog({
   onSubmit,
 }: ActivoDialogProps) {
   const [form, setForm] = useState<ActivoInput>(valoresVacios)
-  const [especificacionesTexto, setEspecificacionesTexto] = useState('')
-  const [errorJson, setErrorJson] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     if (open) {
-      const inicial = activo
-        ? {
-            codigo_interno: activo.codigo_interno,
-            categoria: activo.categoria,
-            nombre: activo.nombre,
-            numero_serie: activo.numero_serie,
-            marca: activo.marca,
-            modelo: activo.modelo,
-            fecha_adquisicion: activo.fecha_adquisicion,
-            valor_adquisicion: activo.valor_adquisicion,
-            proveedor: activo.proveedor,
-            fecha_fin_garantia: activo.fecha_fin_garantia,
-            estado: activo.estado,
-            ubicacion: activo.ubicacion,
-            especificaciones: activo.especificaciones,
-          }
-        : valoresVacios
-
-      setForm(inicial)
-      setEspecificacionesTexto(
-        inicial.especificaciones ? JSON.stringify(inicial.especificaciones, null, 2) : '',
+      setForm(
+        activo
+          ? {
+              categoria: activo.categoria,
+              nombre: activo.nombre,
+              numero_serie: activo.numero_serie,
+              marca: activo.marca,
+              modelo: activo.modelo,
+              fecha_adquisicion: activo.fecha_adquisicion,
+              valor_adquisicion: activo.valor_adquisicion,
+              proveedor: activo.proveedor,
+              fecha_fin_garantia: activo.fecha_fin_garantia,
+              estado: activo.estado,
+              ubicacion: activo.ubicacion,
+              especificaciones: activo.especificaciones,
+            }
+          : valoresVacios,
       )
-      setErrorJson('')
     }
   }, [open, activo])
 
@@ -100,21 +91,9 @@ export function ActivoDialog({
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
-
-    let especificaciones: Record<string, unknown> | null = null
-    if (especificacionesTexto.trim()) {
-      try {
-        especificaciones = JSON.parse(especificacionesTexto)
-        setErrorJson('')
-      } catch {
-        setErrorJson('El JSON no es válido. Revisa comillas y llaves.')
-        return
-      }
-    }
-
     setSubmitting(true)
     try {
-      await onSubmit({ ...form, especificaciones })
+      await onSubmit({ ...form, especificaciones: activo?.especificaciones ?? null })
       onOpenChange(false)
     } finally {
       setSubmitting(false)
@@ -123,44 +102,40 @@ export function ActivoDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+      <DialogContent className="max-h-[90vh] w-full max-w-3xl overflow-x-hidden overflow-y-auto">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>{activo ? 'Editar activo' : 'Nuevo activo'}</DialogTitle>
             <DialogDescription>
-              Completa los datos del equipo. Solo código, categoría, nombre y ubicación son obligatorios.
+              Solo código, categoría, nombre y ubicación son obligatorios.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid grid-cols-1 gap-4 py-4 sm:grid-cols-2">
-            <div className="grid gap-2">
-              <Label htmlFor="codigo_interno">Código interno</Label>
+          {!activo && (
+            <p className="rounded-md bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+              El código se generará automáticamente según la categoría.
+            </p>
+          )}
+
+          <div className="grid grid-cols-2 gap-x-4 gap-y-4 py-4">
+            <div className="col-span-2 grid min-w-0 gap-2 sm:col-span-1">
+              <Label htmlFor="nombre">Nombre</Label>
               <Input
-                id="codigo_interno"
-                value={form.codigo_interno}
-                onChange={(e) => set('codigo_interno', e.target.value)}
-                placeholder="Ej. LAP-0001"
+                id="nombre"
+                className="w-full"
+                value={form.nombre}
+                onChange={(e) => set('nombre', e.target.value)}
+                placeholder="Laptop Dell 5440"
                 required
                 autoFocus
               />
             </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="nombre">Nombre</Label>
-              <Input
-                id="nombre"
-                value={form.nombre}
-                onChange={(e) => set('nombre', e.target.value)}
-                placeholder="Ej. Laptop Dell Latitude 5440"
-                required
-              />
-            </div>
-
-            <div className="grid gap-2">
+            <div className="col-span-2 grid min-w-0 gap-2 sm:col-span-1">
               <Label htmlFor="categoria">Categoría</Label>
               <Select value={form.categoria} onValueChange={(v) => set('categoria', v)}>
                 <SelectTrigger id="categoria" className="w-full">
-                  <SelectValue placeholder="Selecciona una categoría">
+                  <SelectValue placeholder="Selecciona">
                     {categoriaSeleccionada?.nombre}
                   </SelectValue>
                 </SelectTrigger>
@@ -174,11 +149,11 @@ export function ActivoDialog({
               </Select>
             </div>
 
-            <div className="grid gap-2">
+            <div className="col-span-2 grid min-w-0 gap-2 sm:col-span-1">
               <Label htmlFor="ubicacion">Ubicación</Label>
               <Select value={form.ubicacion} onValueChange={(v) => set('ubicacion', v)}>
                 <SelectTrigger id="ubicacion" className="w-full">
-                  <SelectValue placeholder="Selecciona una ubicación">
+                  <SelectValue placeholder="Selecciona">
                     {ubicacionSeleccionada?.nombre}
                   </SelectValue>
                 </SelectTrigger>
@@ -192,38 +167,44 @@ export function ActivoDialog({
               </Select>
             </div>
 
-            <div className="grid gap-2">
+            <div className="col-span-2 grid min-w-0 gap-2 sm:col-span-1">
               <Label htmlFor="marca">Marca</Label>
               <Input
                 id="marca"
+                className="w-full"
                 value={form.marca}
                 onChange={(e) => set('marca', e.target.value)}
-                placeholder="Ej. Dell"
+                placeholder="Dell"
               />
             </div>
 
-            <div className="grid gap-2">
+            <div className="col-span-2 grid min-w-0 gap-2 sm:col-span-1">
               <Label htmlFor="modelo">Modelo</Label>
               <Input
                 id="modelo"
+                className="w-full"
                 value={form.modelo}
                 onChange={(e) => set('modelo', e.target.value)}
-                placeholder="Ej. Latitude 5440"
+                placeholder="Latitude 5440"
               />
             </div>
 
-            <div className="grid gap-2">
+            <div className="col-span-2 grid min-w-0 gap-2 sm:col-span-1">
               <Label htmlFor="numero_serie">Número de serie</Label>
               <Input
                 id="numero_serie"
+                className="w-full"
                 value={form.numero_serie}
                 onChange={(e) => set('numero_serie', e.target.value)}
               />
             </div>
 
-            <div className="grid gap-2">
+            <div className="col-span-2 grid min-w-0 gap-2 sm:col-span-1">
               <Label htmlFor="estado">Estado</Label>
-              <Select value={form.estado} onValueChange={(v) => set('estado', v as ActivoInput['estado'])}>
+              <Select
+                value={form.estado}
+                onValueChange={(v) => set('estado', v as ActivoInput['estado'])}
+              >
                 <SelectTrigger id="estado" className="w-full">
                   <SelectValue>
                     {ESTADOS_ACTIVO.find((e) => e.value === form.estado)?.label}
@@ -239,8 +220,8 @@ export function ActivoDialog({
               </Select>
             </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="proveedor">Proveedor (opcional)</Label>
+            <div className="col-span-2 grid min-w-0 gap-2 sm:col-span-1">
+              <Label htmlFor="proveedor">Proveedor</Label>
               <Select
                 value={form.proveedor ?? 'none'}
                 onValueChange={(v) => set('proveedor', v === 'none' ? null : v)}
@@ -261,10 +242,11 @@ export function ActivoDialog({
               </Select>
             </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="valor_adquisicion">Valor de adquisición (USD)</Label>
+            <div className="col-span-2 grid min-w-0 gap-2 sm:col-span-1">
+              <Label htmlFor="valor_adquisicion">Valor (USD)</Label>
               <Input
                 id="valor_adquisicion"
+                className="w-full"
                 type="number"
                 step="0.01"
                 min="0"
@@ -274,37 +256,26 @@ export function ActivoDialog({
               />
             </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="fecha_adquisicion">Fecha de adquisición</Label>
+            <div className="col-span-2 grid min-w-0 gap-2 sm:col-span-1">
+              <Label htmlFor="fecha_adquisicion">Fecha adquisición</Label>
               <Input
                 id="fecha_adquisicion"
+                className="w-full"
                 type="date"
                 value={form.fecha_adquisicion ?? ''}
                 onChange={(e) => set('fecha_adquisicion', e.target.value || null)}
               />
             </div>
 
-            <div className="grid gap-2">
+            <div className="col-span-2 grid min-w-0 gap-2 sm:col-span-1">
               <Label htmlFor="fecha_fin_garantia">Fin de garantía</Label>
               <Input
                 id="fecha_fin_garantia"
+                className="w-full"
                 type="date"
                 value={form.fecha_fin_garantia ?? ''}
                 onChange={(e) => set('fecha_fin_garantia', e.target.value || null)}
               />
-            </div>
-
-            <div className="grid gap-2 sm:col-span-2">
-              <Label htmlFor="especificaciones">Especificaciones (opcional, formato JSON)</Label>
-              <Textarea
-                id="especificaciones"
-                value={especificacionesTexto}
-                onChange={(e) => setEspecificacionesTexto(e.target.value)}
-                placeholder='Ej. {"ram_gb": 16, "procesador": "Intel i5"}'
-                rows={3}
-                className="font-mono text-xs"
-              />
-              {errorJson && <p className="text-xs text-destructive">{errorJson}</p>}
             </div>
           </div>
 

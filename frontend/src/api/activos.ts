@@ -26,7 +26,6 @@ export interface Activo {
 }
 
 export type ActivoInput = {
-  codigo_interno: string
   categoria: string
   nombre: string
   numero_serie: string

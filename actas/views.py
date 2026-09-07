@@ -19,6 +19,12 @@ class ActaEntregaViewSet(viewsets.ModelViewSet):
         if user.is_superuser or user.rol == 'admin':
             return base.all()
 
+        if user.rol == 'consulta':
+            persona = getattr(user, 'persona_vinculada', None)
+            if not persona:
+                return base.none()
+            return base.filter(persona=persona)
+
         return base.filter(
             Q(generado_por=user) | Q(persona__area=user.area) | Q(activo__creado_por=user)
         ).distinct()

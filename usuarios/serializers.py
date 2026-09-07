@@ -65,17 +65,48 @@ class UsuarioListaSerializer(serializers.ModelSerializer):
 
 
 class UsuarioCreateSerializer(serializers.ModelSerializer):
-    """Para crear un usuario nuevo desde el panel de Administración."""
-
-    password = serializers.CharField(write_only=True, min_length=8)
+    """Para crear un usuario nuevo desde el panel de Administración.
+    La contraseña se genera automáticamente y se devuelve UNA VEZ en la
+    respuesta (ver to_representation) para que el Admin la copie."""
 
     class Meta:
         model = Usuario
-        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'rol', 'area', 'password']
+        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'rol', 'area']
 
     def create(self, validated_data):
-        password = validated_data.pop('password')
+        from .utils import generar_password_aleatoria
+
+        password = generar_password_aleatoria()
         usuario = Usuario(**validated_data)
         usuario.set_password(password)
         usuario.save()
+        usuario._password_generada = password
         return usuario
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        password_generada = getattr(instance, '_password_generada', None)
+        if password_generada:
+            data['password_generada'] = password_generada
+        return data
+
+class PerfilSerializer(serializers.ModelSerializer):
+    """Para que el propio usuario edite SU perfil. Deliberadamente no
+    incluye username, rol, area ni is_active — esos solo los cambia Admin
+    desde el módulo de Usuarios."""
+
+    class Meta:
+        model = Usuario
+        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'rol']
+        read_only_fields = ['id', 'username', 'rol']
+
+
+class CambiarPasswordSerializer(serializers.Serializer):
+    password_actual = serializers.CharField(write_only=True)
+    password_nueva = serializers.CharField(write_only=True, min_length=8)
+
+    def validate_password_actual(self, value):
+        user = self.context['request'].user
+        if not user.check_password(value):
+            raise serializers.ValidationError('La contraseña actual no es correcta.')
+        return value

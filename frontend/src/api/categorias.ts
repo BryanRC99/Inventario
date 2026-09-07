@@ -3,9 +3,9 @@ import { api } from './client'
 export interface Categoria {
   id: string
   nombre: string
+  prefijo: string
   requiere_custodio_unico: boolean
 }
-
 export type CategoriaInput = Omit<Categoria, 'id'>
 
 export async function listarCategorias(): Promise<Categoria[]> {

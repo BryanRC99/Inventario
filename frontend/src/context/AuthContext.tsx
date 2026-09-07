@@ -4,6 +4,9 @@ import { api } from '../api/client'
 interface Usuario {
   id: string
   username: string
+  first_name: string
+  last_name: string
+  email: string
   rol: string
   nombre_completo: string
 }
@@ -13,6 +16,7 @@ interface AuthContextType {
   loading: boolean
   login: (username: string, password: string) => Promise<void>
   logout: () => void
+  refrescarUsuario: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -20,7 +24,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [usuario, setUsuario] = useState<Usuario | null>(null)
   const [loading, setLoading] = useState(true)
-  
+
   useEffect(() => {
     const token = localStorage.getItem('access_token')
     if (!token) {
@@ -39,7 +43,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data } = await api.post('/auth/login/', { username, password })
     localStorage.setItem('access_token', data.access)
     localStorage.setItem('refresh_token', data.refresh)
-    setUsuario(data.usuario)
+    const { data: perfilCompleto } = await api.get('/auth/me/')
+    setUsuario(perfilCompleto)
   }
 
   const logout = () => {
@@ -48,8 +53,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     window.location.href = '/login'
   }
 
+  const refrescarUsuario = async () => {
+    const { data } = await api.get('/auth/me/')
+    setUsuario(data)
+  }
+
   return (
-    <AuthContext.Provider value={{ usuario, loading, login, logout }}>
+    <AuthContext.Provider value={{ usuario, loading, login, logout, refrescarUsuario }}>
       {children}
     </AuthContext.Provider>
   )

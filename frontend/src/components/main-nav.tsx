@@ -22,6 +22,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar'
+import { useAuth } from '@/context/AuthContext'
 
 import { cn } from '@/lib/utils'
 
@@ -61,6 +62,8 @@ function navLinkClassName({ isActive }: { isActive: boolean }) {
 }
 
 function NavSection({ label, items }: { label: string; items: NavItem[] }) {
+  if (items.length === 0) return null
+
   return (
     <SidebarGroup className="py-0">
       <SidebarGroupLabel>{label}</SidebarGroupLabel>
@@ -89,6 +92,32 @@ function NavSection({ label, items }: { label: string; items: NavItem[] }) {
 }
 
 export function MainNav() {
+  const { usuario } = useAuth()
+  const esAdmin = usuario?.rol === 'admin'
+  const esConsulta = usuario?.rol === 'consulta'
+
+  // Un usuario de solo consulta tiene un menú mínimo: nada más que
+  // "Mis Activos". No ve Dashboard ni ningún módulo de gestión.
+  if (esConsulta) {
+    return (
+      <SidebarMenu className="px-2 pt-2">
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            tooltip="Mis Activos"
+            render={<NavLink to="/mis-activos" className={navLinkClassName} />}
+          >
+            <Boxes />
+            <span>Mis Activos</span>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    )
+  }
+
+  const navAdminVisible = esAdmin
+    ? navAdmin
+    : navAdmin.filter((item) => item.url !== '/usuarios' && item.url !== '/areas')
+
   return (
     <div className="flex flex-col gap-0">
       <SidebarMenu className="px-2 pt-2">
@@ -106,7 +135,7 @@ export function MainNav() {
       <NavSection label="Inventario" items={navInventario} />
       <NavSection label="Custodia" items={navCustodia} />
       <NavSection label="Trazabilidad" items={navTrazabilidad} />
-      <NavSection label="Administración" items={navAdmin} />
+      <NavSection label="Administración" items={navAdminVisible} />
     </div>
   )
 }

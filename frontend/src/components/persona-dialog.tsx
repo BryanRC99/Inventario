@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Dialog,
   DialogContent,
@@ -35,6 +36,7 @@ const valoresVacios: PersonaInput = {
   cargo: '',
   area: null,
   email: '',
+  crear_acceso_consulta: false,
 }
 
 export function PersonaDialog({ open, onOpenChange, persona, areas, onSubmit }: PersonaDialogProps) {
@@ -159,6 +161,25 @@ export function PersonaDialog({ open, onOpenChange, persona, areas, onSubmit }: 
                 </SelectContent>
               </Select>
             </div>
+
+            {!persona && (
+              <div className="flex items-start gap-2 rounded-lg border p-3 sm:col-span-2">
+                <Checkbox
+                  id="crear_acceso_consulta"
+                  checked={form.crear_acceso_consulta}
+                  onCheckedChange={(checked) => set('crear_acceso_consulta', checked === true)}
+                />
+                <div className="grid gap-1">
+                  <Label htmlFor="crear_acceso_consulta" className="font-normal">
+                    Crear acceso de consulta
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Genera un usuario (con el documento como nombre de usuario) para que esta
+                    persona pueda entrar a ver solo sus activos asignados.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
 
           <DialogFooter>

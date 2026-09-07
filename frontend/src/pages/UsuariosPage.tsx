@@ -22,6 +22,8 @@ import {
   type Usuario,
 } from '@/api/usuarios'
 import { listarAreas, type Area } from '@/api/areas'
+import { PasswordGeneradaDialog } from '@/components/password-generada-dialog'
+import type { UsuarioConPassword } from '@/api/usuarios'
 
 export default function UsuariosPage() {
   const { usuario: usuarioActual } = useAuth()
@@ -30,6 +32,7 @@ export default function UsuariosPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [usuarioEditando, setUsuarioEditando] = useState<Usuario | null>(null)
   const [areas, setAreas] = useState<Area[]>([])
+  const [credencialesGeneradas, setCredencialesGeneradas] = useState<UsuarioConPassword | null>(null)
 
   const cargarUsuarios = async () => {
     setLoading(true)
@@ -163,12 +166,15 @@ export default function UsuariosPage() {
         areas={areas}
         onSubmitCrear={async (payload) => {
           try {
-            await crearUsuario(payload)
+            const creado = await crearUsuario(payload)
             toast.success('Usuario creado')
             await cargarUsuarios()
+            if (creado.password_generada) {
+              setCredencialesGeneradas(creado)
+            }
           } catch (err: any) {
             const data = err?.response?.data
-            const mensaje = data?.username?.[0] || data?.password?.[0] || 'Error al crear usuario'
+            const mensaje = data?.username?.[0] || 'Error al crear usuario'
             toast.error(mensaje)
             throw err
           }
@@ -185,6 +191,15 @@ export default function UsuariosPage() {
           }
         }}
       />
+
+      {credencialesGeneradas && (
+        <PasswordGeneradaDialog
+          open={!!credencialesGeneradas}
+          onOpenChange={(open) => !open && setCredencialesGeneradas(null)}
+          username={credencialesGeneradas.username}
+          password={credencialesGeneradas.password_generada!}
+        />
+      )}
     </div>
   )
 }

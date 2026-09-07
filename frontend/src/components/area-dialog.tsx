@@ -10,26 +10,41 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import type { Area, AreaInput } from '@/api/areas'
+import type { Ubicacion } from '@/api/ubicaciones'
 
 interface AreaDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   area: Area | null
+  ubicaciones: Ubicacion[]
   onSubmit: (payload: AreaInput) => Promise<void>
 }
 
-const valoresVacios: AreaInput = { nombre: '', descripcion: '' }
+const valoresVacios: AreaInput = { nombre: '', descripcion: '', ubicacion: null }
 
-export function AreaDialog({ open, onOpenChange, area, onSubmit }: AreaDialogProps) {
+export function AreaDialog({ open, onOpenChange, area, ubicaciones, onSubmit }: AreaDialogProps) {
   const [form, setForm] = useState<AreaInput>(valoresVacios)
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     if (open) {
-      setForm(area ? { nombre: area.nombre, descripcion: area.descripcion } : valoresVacios)
+      setForm(
+        area
+          ? { nombre: area.nombre, descripcion: area.descripcion, ubicacion: area.ubicacion }
+          : valoresVacios,
+      )
     }
   }, [open, area])
+
+  const ubicacionSeleccionada = ubicaciones.find((u) => u.id === form.ubicacion)
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -71,6 +86,31 @@ export function AreaDialog({ open, onOpenChange, area, onSubmit }: AreaDialogPro
                 value={form.descripcion}
                 onChange={(e) => setForm((f) => ({ ...f, descripcion: e.target.value }))}
               />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="ubicacion">Ubicación por defecto (opcional)</Label>
+              <Select
+                value={form.ubicacion ?? 'none'}
+                onValueChange={(v) => setForm((f) => ({ ...f, ubicacion: v === 'none' ? null : v }))}
+              >
+                <SelectTrigger id="ubicacion" className="w-full">
+                  <SelectValue placeholder="Sin ubicación por defecto">
+                    {ubicacionSeleccionada?.nombre ?? (form.ubicacion ? undefined : 'Sin ubicación por defecto')}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Sin ubicación por defecto</SelectItem>
+                  {ubicaciones.map((u) => (
+                    <SelectItem key={u.id} value={u.id}>
+                      {u.nombre}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Al asignar un activo a alguien de esta área, su ubicación se actualizará a esta automáticamente.
+              </p>
             </div>
           </div>
 

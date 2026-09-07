@@ -52,7 +52,19 @@ export function extraerMensajeError(err: any): string {
   return 'Ocurrió un error al guardar la custodia'
 }
 
-export async function cerrarCustodia(id: string, fecha_fin: string): Promise<Custodia> {
-  const { data } = await api.patch(`/custodia/custodias/${id}/`, { fecha_fin })
+export async function cerrarCustodia(
+  id: string,
+  fecha_fin: string,
+  ubicacion_destino?: string,
+): Promise<Custodia> {
+  const { data } = await api.patch(`/custodia/custodias/${id}/`, {
+    fecha_fin,
+    ...(ubicacion_destino ? { ubicacion_destino } : {}),
+  })
+  return data
+}
+
+export async function listarCustodiasPorActivo(activoId: string): Promise<Custodia[]> {
+  const { data } = await api.get('/custodia/custodias/', { params: { activo: activoId } })
   return data
 }

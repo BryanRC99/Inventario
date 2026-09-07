@@ -1,5 +1,8 @@
 from rest_framework import viewsets
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from usuarios.permissions import PermisoPorRol
 
@@ -25,21 +28,10 @@ class ActivoViewSet(viewsets.ModelViewSet):
     filterset_fields = ['estado', 'categoria', 'ubicacion']
 
     def get_queryset(self):
-        from django.db.models import Q
+        from .scoping import activos_visibles
 
         base = Activo.objects.select_related('categoria', 'ubicacion', 'proveedor')
-        user = self.request.user
-
-        if user.is_superuser or user.rol == 'admin':
-            return base.all()
-
-        # Ve activos que él mismo creó, o que están (o estuvieron) bajo
-        # custodia de alguien de su misma área.
-        return base.filter(
-            Q(creado_por=user)
-            | Q(custodias__area=user.area)
-            | Q(custodias__persona__area=user.area)
-        ).distinct()
+        return activos_visibles(self.request.user, base)
 
     @action(detail=True, methods=['get'])
     def etiqueta(self, request, pk=None):
@@ -53,3 +45,62 @@ class ActivoViewSet(viewsets.ModelViewSet):
         response = HttpResponse(pdf_bytes, content_type='application/pdf')
         response['Content-Disposition'] = f'inline; filename="etiqueta_{activo.codigo_interno}.pdf"'
         return response
+
+class DashboardView(APIView):
+    """GET /api/inventario/dashboard/ -> números y gráficas del panel principal."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from datetime import date, timedelta
+
+        from django.db.models import Count
+
+        from custodia.models import Custodia
+        from custodia.scoping import custodias_visibles
+
+        from .scoping import activos_visibles
+
+        activos = activos_visibles(request.user, Activo.objects.all())
+        custodias = custodias_visibles(request.user, Custodia.objects.all())
+
+        limite_garantia = date.today() + timedelta(days=30)
+
+        estado_labels = dict(Activo.Estado.choices)
+
+        por_estado_raw = activos.values('estado').annotate(total=Count('id')).order_by('-total')
+        por_categoria_raw = (
+            activos.values('categoria__nombre').annotate(total=Count('id')).order_by('-total')
+        )
+        por_ubicacion_raw = (
+            activos.values('ubicacion__nombre').annotate(total=Count('id')).order_by('-total')
+        )
+
+        return Response(
+            {
+                'total_activos': activos.count(),
+                'custodias_activas': custodias.filter(fecha_fin__isnull=True).count(),
+                'en_mantenimiento': activos.filter(estado='en_mantenimiento').count(),
+                'garantias_por_vencer': activos.filter(
+                    fecha_fin_garantia__isnull=False,
+                    fecha_fin_garantia__gte=date.today(),
+                    fecha_fin_garantia__lte=limite_garantia,
+                ).count(),
+                'por_estado': [
+                    {
+                        'estado': item['estado'],
+                        'label': estado_labels.get(item['estado'], item['estado']),
+                        'total': item['total'],
+                    }
+                    for item in por_estado_raw
+                ],
+                'por_categoria': [
+                    {'categoria': item['categoria__nombre'], 'total': item['total']}
+                    for item in por_categoria_raw
+                ],
+                'por_ubicacion': [
+                    {'ubicacion': item['ubicacion__nombre'], 'total': item['total']}
+                    for item in por_ubicacion_raw
+                ],
+            }
+        )

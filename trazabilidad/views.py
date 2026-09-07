@@ -21,6 +21,12 @@ class MovimientoViewSet(viewsets.ModelViewSet):
         if user.is_superuser or user.rol == 'admin':
             return base.all()
 
+        if user.rol == 'consulta':
+            persona = getattr(user, 'persona_vinculada', None)
+            if not persona:
+                return base.none()
+            return base.filter(activo__custodias__persona=persona).distinct()
+
         return base.filter(
             Q(activo__creado_por=user)
             | Q(activo__custodias__area=user.area)
@@ -39,6 +45,12 @@ class MantenimientoViewSet(viewsets.ModelViewSet):
 
         if user.is_superuser or user.rol == 'admin':
             return base.all()
+
+        if user.rol == 'consulta':
+            persona = getattr(user, 'persona_vinculada', None)
+            if not persona:
+                return base.none()
+            return base.filter(activo__custodias__persona=persona).distinct()
 
         return base.filter(
             Q(activo__creado_por=user)
