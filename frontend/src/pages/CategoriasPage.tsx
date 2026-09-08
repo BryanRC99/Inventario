@@ -12,6 +12,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { CategoriaDialog } from '@/components/categoria-dialog'
+import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog'
 import {
   listarCategorias,
   crearCategoria,
@@ -26,6 +27,7 @@ export default function CategoriasPage() {
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [categoriaEditando, setCategoriaEditando] = useState<Categoria | null>(null)
+  const [categoriaAEliminar, setCategoriaAEliminar] = useState<Categoria | null>(null)
 
   const cargarCategorias = async () => {
     setLoading(true)
@@ -68,12 +70,10 @@ export default function CategoriasPage() {
     }
   }
 
-  const handleEliminar = async (categoria: Categoria) => {
-    if (!confirm(`¿Eliminar la categoría "${categoria.nombre}"? Esta acción no se puede deshacer.`)) {
-      return
-    }
+  const confirmarEliminar = async () => {
+    if (!categoriaAEliminar) return
     try {
-      await eliminarCategoria(categoria.id)
+      await eliminarCategoria(categoriaAEliminar.id)
       toast.success('Categoría eliminada')
       await cargarCategorias()
     } catch (err: any) {
@@ -82,6 +82,8 @@ export default function CategoriasPage() {
       } else {
         toast.error('No se pudo eliminar. Puede que tenga activos asociados.')
       }
+    } finally {
+      setCategoriaAEliminar(null)
     }
   }
 
@@ -152,7 +154,7 @@ export default function CategoriasPage() {
                     variant="ghost"
                     size="icon"
                     className="size-7"
-                    onClick={() => handleEliminar(categoria)}
+                    onClick={() => setCategoriaAEliminar(categoria)}
                   >
                     <Trash2 className="size-3.5" />
                   </Button>
@@ -168,6 +170,14 @@ export default function CategoriasPage() {
         onOpenChange={setDialogOpen}
         categoria={categoriaEditando}
         onSubmit={handleSubmit}
+      />
+
+      <ConfirmDeleteDialog
+        open={!!categoriaAEliminar}
+        onOpenChange={(open) => !open && setCategoriaAEliminar(null)}
+        titulo="¿Eliminar esta categoría?"
+        descripcion={`Vas a eliminar "${categoriaAEliminar?.nombre}".`}
+        onConfirm={confirmarEliminar}
       />
     </div>
   )
