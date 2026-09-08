@@ -18,7 +18,7 @@ import {
   crearActivo,
   actualizarActivo,
   eliminarActivo,
-  type Activo,
+  type Activo,  
   type ActivoInput,
   type EstadoActivo,
 } from '@/api/activos'
@@ -43,7 +43,7 @@ export default function ActivosPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [activoEditando, setActivoEditando] = useState<Activo | null>(null)
   const [activoDetalle, setActivoDetalle] = useState<Activo | null>(null)
-
+  
   const cargarTodo = async () => {
     setLoading(true)
     try {
