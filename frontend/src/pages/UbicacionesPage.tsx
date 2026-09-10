@@ -12,6 +12,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { UbicacionDialog } from '@/components/ubicacion-dialog'
+import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog'
 import {
   listarUbicaciones,
   crearUbicacion,
@@ -22,7 +23,6 @@ import {
   type UbicacionInput,
 } from '@/api/ubicaciones'
 
-// Colores distintos por tipo para que la jerarquía se lea rápido en la tabla
 const badgeVariantPorTipo: Record<Ubicacion['tipo'], 'default' | 'secondary' | 'outline'> = {
   sede: 'default',
   piso: 'secondary',
@@ -35,6 +35,7 @@ export default function UbicacionesPage() {
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [ubicacionEditando, setUbicacionEditando] = useState<Ubicacion | null>(null)
+  const [ubicacionAEliminar, setUbicacionAEliminar] = useState<Ubicacion | null>(null)
 
   const cargarUbicaciones = async () => {
     setLoading(true)
@@ -78,16 +79,10 @@ export default function UbicacionesPage() {
     }
   }
 
-  const handleEliminar = async (ubicacion: Ubicacion) => {
-    if (
-      !confirm(
-        `¿Eliminar la ubicación "${ubicacion.nombre}"? Las sub-ubicaciones quedarán sin padre.`,
-      )
-    ) {
-      return
-    }
+  const confirmarEliminar = async () => {
+    if (!ubicacionAEliminar) return
     try {
-      await eliminarUbicacion(ubicacion.id)
+      await eliminarUbicacion(ubicacionAEliminar.id)
       toast.success('Ubicación eliminada')
       await cargarUbicaciones()
     } catch (err: any) {
@@ -96,6 +91,8 @@ export default function UbicacionesPage() {
       } else {
         toast.error('No se pudo eliminar. Puede que tenga activos asociados.')
       }
+    } finally {
+      setUbicacionAEliminar(null)
     }
   }
 
@@ -168,7 +165,7 @@ export default function UbicacionesPage() {
                     variant="ghost"
                     size="icon"
                     className="size-7"
-                    onClick={() => handleEliminar(ubicacion)}
+                    onClick={() => setUbicacionAEliminar(ubicacion)}
                   >
                     <Trash2 className="size-3.5" />
                   </Button>
@@ -185,6 +182,14 @@ export default function UbicacionesPage() {
         ubicacion={ubicacionEditando}
         ubicaciones={ubicaciones}
         onSubmit={handleSubmit}
+      />
+
+      <ConfirmDeleteDialog
+        open={!!ubicacionAEliminar}
+        onOpenChange={(open) => !open && setUbicacionAEliminar(null)}
+        titulo="¿Eliminar esta ubicación?"
+        descripcion={`Vas a eliminar "${ubicacionAEliminar?.nombre}". Las sub-ubicaciones quedarán sin padre.`}
+        onConfirm={confirmarEliminar}
       />
     </div>
   )

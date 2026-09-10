@@ -11,6 +11,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { MantenimientoDialog } from '@/components/mantenimiento-dialog'
+import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog'
 import {
   listarMantenimientos,
   crearMantenimiento,
@@ -29,6 +30,7 @@ export default function MantenimientosPage() {
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [mantenimientoEditando, setMantenimientoEditando] = useState<Mantenimiento | null>(null)
+  const [mantenimientoAEliminar, setMantenimientoAEliminar] = useState<Mantenimiento | null>(null)
 
   const cargarTodo = async () => {
     setLoading(true)
@@ -77,10 +79,10 @@ export default function MantenimientosPage() {
     }
   }
 
-  const handleEliminar = async (mantenimiento: Mantenimiento) => {
-    if (!confirm(`¿Eliminar el registro de mantenimiento de "${mantenimiento.activo_nombre}"?`)) return
+  const confirmarEliminar = async () => {
+    if (!mantenimientoAEliminar) return
     try {
-      await eliminarMantenimiento(mantenimiento.id)
+      await eliminarMantenimiento(mantenimientoAEliminar.id)
       toast.success('Mantenimiento eliminado')
       await cargarTodo()
     } catch (err: any) {
@@ -89,6 +91,8 @@ export default function MantenimientosPage() {
       } else {
         toast.error('No se pudo eliminar')
       }
+    } finally {
+      setMantenimientoAEliminar(null)
     }
   }
 
@@ -163,7 +167,7 @@ export default function MantenimientosPage() {
                     variant="ghost"
                     size="icon"
                     className="size-7"
-                    onClick={() => handleEliminar(m)}
+                    onClick={() => setMantenimientoAEliminar(m)}
                   >
                     <Trash2 className="size-3.5" />
                   </Button>
@@ -181,6 +185,14 @@ export default function MantenimientosPage() {
         activos={activos}
         proveedores={proveedores}
         onSubmit={handleSubmit}
+      />
+
+      <ConfirmDeleteDialog
+        open={!!mantenimientoAEliminar}
+        onOpenChange={(open) => !open && setMantenimientoAEliminar(null)}
+        titulo="¿Eliminar este registro de mantenimiento?"
+        descripcion={`Vas a eliminar el mantenimiento de "${mantenimientoAEliminar?.activo_nombre}".`}
+        onConfirm={confirmarEliminar}
       />
     </div>
   )

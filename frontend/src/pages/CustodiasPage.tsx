@@ -3,9 +3,6 @@ import { Plus, Pencil, Trash2, Eye, CheckCircle2, RefreshCw } from 'lucide-react
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { CustodiaDetailDialog } from '@/components/custodia-detail-dialog'
-import { FinalizarCustodiaDialog } from '@/components/finalizar-custodia-dialog'
-import { cerrarCustodia } from '@/api/custodias'
 import {
   Table,
   TableBody,
@@ -15,26 +12,32 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { CustodiaDialog } from '@/components/custodia-dialog'
+import { CustodiaDetailDialog } from '@/components/custodia-detail-dialog'
+import { ActaDialog } from '@/components/acta-dialog'
+import { FinalizarCustodiaDialog } from '@/components/finalizar-custodia-dialog'
+import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog'
 import {
   listarCustodias,
   crearCustodia,
   actualizarCustodia,
   eliminarCustodia,
+  cerrarCustodia,
   extraerMensajeError,
   type Custodia,
   type CustodiaInput,
 } from '@/api/custodias'
 import { listarActivos, type Activo } from '@/api/activos'
 import { listarPersonas, type Persona } from '@/api/personas'
-import { ActaDialog } from '@/components/acta-dialog'
-import { crearActa } from '@/api/actas'
 import { listarAreas, type Area } from '@/api/areas'
 import { listarUbicaciones, type Ubicacion } from '@/api/ubicaciones'
+import { crearActa } from '@/api/actas'
 
 export default function CustodiasPage() {
   const [custodias, setCustodias] = useState<Custodia[]>([])
   const [activos, setActivos] = useState<Activo[]>([])
   const [personas, setPersonas] = useState<Persona[]>([])
+  const [areas, setAreas] = useState<Area[]>([])
+  const [ubicaciones, setUbicaciones] = useState<Ubicacion[]>([])
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [custodiaEditando, setCustodiaEditando] = useState<Custodia | null>(null)
@@ -42,8 +45,7 @@ export default function CustodiasPage() {
   const [custodiaDetalle, setCustodiaDetalle] = useState<Custodia | null>(null)
   const [custodiaAFinalizar, setCustodiaAFinalizar] = useState<Custodia | null>(null)
   const [reasignandoActivoId, setReasignandoActivoId] = useState<string | null>(null)
-  const [areas, setAreas] = useState<Area[]>([])
-  const [ubicaciones, setUbicaciones] = useState<Ubicacion[]>([])
+  const [custodiaAEliminar, setCustodiaAEliminar] = useState<Custodia | null>(null)
 
   const cargarTodo = async () => {
     setLoading(true)
@@ -104,11 +106,10 @@ export default function CustodiasPage() {
     }
   }
 
-  const handleEliminar = async (custodia: Custodia) => {
-    const titular = custodia.persona_nombre || custodia.area_nombre
-    if (!confirm(`¿Eliminar la custodia de "${custodia.activo_nombre}" a "${titular}"?`)) return
+  const confirmarEliminar = async () => {
+    if (!custodiaAEliminar) return
     try {
-      await eliminarCustodia(custodia.id)
+      await eliminarCustodia(custodiaAEliminar.id)
       toast.success('Custodia eliminada')
       await cargarTodo()
     } catch (err: any) {
@@ -117,6 +118,8 @@ export default function CustodiasPage() {
       } else {
         toast.error('No se pudo eliminar la custodia')
       }
+    } finally {
+      setCustodiaAEliminar(null)
     }
   }
 
@@ -134,9 +137,6 @@ export default function CustodiasPage() {
   const handleReasignar = async (custodia: Custodia) => {
     const hoy = new Date().toISOString().slice(0, 10)
     try {
-      // Cierra la custodia actual antes de abrir el formulario de la
-      // nueva, así el activo queda libre y no choca con la regla de
-      // custodio único al crear la siguiente.
       await cerrarCustodia(custodia.id, hoy)
       toast.success('Custodia anterior cerrada, asigna al nuevo custodio')
       await cargarTodo()
@@ -170,7 +170,7 @@ export default function CustodiasPage() {
               <TableHead className="h-9 text-xs">Desde</TableHead>
               <TableHead className="h-9 text-xs">Hasta</TableHead>
               <TableHead className="h-9 text-xs">Estado</TableHead>
-              <TableHead className="h-9 w-20 text-right text-xs">Acciones</TableHead>
+              <TableHead className="h-9 w-36 text-right text-xs">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -255,7 +255,7 @@ export default function CustodiasPage() {
                     variant="ghost"
                     size="icon"
                     className="size-7"
-                    onClick={() => handleEliminar(custodia)}
+                    onClick={() => setCustodiaAEliminar(custodia)}
                   >
                     <Trash2 className="size-3.5" />
                   </Button>
@@ -289,6 +289,12 @@ export default function CustodiasPage() {
         onConfirm={handleFinalizar}
       />
 
+      <CustodiaDetailDialog
+        open={!!custodiaDetalle}
+        onOpenChange={(open) => !open && setCustodiaDetalle(null)}
+        custodia={custodiaDetalle}
+      />
+
       {custodiaParaActa && (
         <ActaDialog
           open={!!custodiaParaActa}
@@ -302,18 +308,18 @@ export default function CustodiasPage() {
           onSubmit={async (payload) => {
             const acta = await crearActa(payload)
             toast.success('Acta generada')
-            if (acta.pdf) {
-              window.open(acta.pdf, '_blank')
-            }
+            if (acta.pdf) window.open(acta.pdf, '_blank')
           }}
           onSkip={() => setCustodiaParaActa(null)}
         />
       )}
 
-      <CustodiaDetailDialog
-        open={!!custodiaDetalle}
-        onOpenChange={(open) => !open && setCustodiaDetalle(null)}
-        custodia={custodiaDetalle}
+      <ConfirmDeleteDialog
+        open={!!custodiaAEliminar}
+        onOpenChange={(open) => !open && setCustodiaAEliminar(null)}
+        titulo="¿Eliminar esta custodia?"
+        descripcion={`Vas a eliminar la custodia de "${custodiaAEliminar?.activo_nombre}".`}
+        onConfirm={confirmarEliminar}
       />
     </div>
   )

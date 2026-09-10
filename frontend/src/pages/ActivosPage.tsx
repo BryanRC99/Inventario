@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Plus, Pencil, Trash2, Tag, Eye } from 'lucide-react'
+import { Plus, Pencil, Trash2, Eye } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -13,19 +13,19 @@ import {
 } from '@/components/ui/table'
 import { ActivoDialog } from '@/components/activo-dialog'
 import { ActivoDetailDialog } from '@/components/activo-detail-dialog'
+import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog'
 import {
   listarActivos,
   crearActivo,
   actualizarActivo,
   eliminarActivo,
-  type Activo,  
+  type Activo,
   type ActivoInput,
   type EstadoActivo,
 } from '@/api/activos'
 import { listarCategorias, type Categoria } from '@/api/categorias'
 import { listarUbicaciones, type Ubicacion } from '@/api/ubicaciones'
 import { listarProveedores, type Proveedor } from '@/api/proveedores'
-import { obtenerEtiquetaPdf } from '@/api/activos'
 
 const BADGE_POR_ESTADO: Record<EstadoActivo, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   activo: 'default',
@@ -43,7 +43,8 @@ export default function ActivosPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [activoEditando, setActivoEditando] = useState<Activo | null>(null)
   const [activoDetalle, setActivoDetalle] = useState<Activo | null>(null)
-  
+  const [activoAEliminar, setActivoAEliminar] = useState<Activo | null>(null)
+
   const cargarTodo = async () => {
     setLoading(true)
     try {
@@ -93,10 +94,10 @@ export default function ActivosPage() {
     }
   }
 
-  const handleEliminar = async (activo: Activo) => {
-    if (!confirm(`¿Eliminar el activo "${activo.nombre}" (${activo.codigo_interno})?`)) return
+  const confirmarEliminar = async () => {
+    if (!activoAEliminar) return
     try {
-      await eliminarActivo(activo.id)
+      await eliminarActivo(activoAEliminar.id)
       toast.success('Activo eliminado')
       await cargarTodo()
     } catch (err: any) {
@@ -105,16 +106,8 @@ export default function ActivosPage() {
       } else {
         toast.error('No se pudo eliminar el activo')
       }
-    }
-  }
-
-  const handleImprimirEtiqueta = async (activo: Activo) => {
-    try {
-      const blob = await obtenerEtiquetaPdf(activo.id)
-      const url = URL.createObjectURL(blob)
-      window.open(url, '_blank')
-    } catch {
-      toast.error('No se pudo generar la etiqueta')
+    } finally {
+      setActivoAEliminar(null)
     }
   }
 
@@ -140,7 +133,7 @@ export default function ActivosPage() {
               <TableHead className="h-9 text-xs">Categoría</TableHead>
               <TableHead className="h-9 text-xs">Ubicación</TableHead>
               <TableHead className="h-9 text-xs">Estado</TableHead>
-              <TableHead className="h-9 w-20 text-right text-xs">Acciones</TableHead>
+              <TableHead className="h-9 w-28 text-right text-xs">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -180,10 +173,9 @@ export default function ActivosPage() {
                     variant="ghost"
                     size="icon"
                     className="size-7"
-                    onClick={() => handleImprimirEtiqueta(activo)}
-                    title="Imprimir etiqueta"
+                    onClick={() => setActivoDetalle(activo)}
                   >
-                    <Tag className="size-3.5" />
+                    <Eye className="size-3.5" />
                   </Button>
                   <Button
                     variant="ghost"
@@ -197,15 +189,7 @@ export default function ActivosPage() {
                     variant="ghost"
                     size="icon"
                     className="size-7"
-                    onClick={() => setActivoDetalle(activo)}
-                  >
-                    <Eye className="size-3.5" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="size-7"
-                    onClick={() => handleEliminar(activo)}
+                    onClick={() => setActivoAEliminar(activo)}
                   >
                     <Trash2 className="size-3.5" />
                   </Button>
@@ -230,6 +214,14 @@ export default function ActivosPage() {
         open={!!activoDetalle}
         onOpenChange={(open) => !open && setActivoDetalle(null)}
         activo={activoDetalle}
+      />
+
+      <ConfirmDeleteDialog
+        open={!!activoAEliminar}
+        onOpenChange={(open) => !open && setActivoAEliminar(null)}
+        titulo="¿Eliminar este activo?"
+        descripcion={`Vas a eliminar "${activoAEliminar?.nombre}" (${activoAEliminar?.codigo_interno}).`}
+        onConfirm={confirmarEliminar}
       />
     </div>
   )

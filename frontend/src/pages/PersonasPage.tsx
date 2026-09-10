@@ -11,6 +11,8 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { PersonaDialog } from '@/components/persona-dialog'
+import { PasswordGeneradaDialog } from '@/components/password-generada-dialog'
+import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog'
 import {
   listarPersonas,
   crearPersona,
@@ -18,17 +20,17 @@ import {
   eliminarPersona,
   type Persona,
   type PersonaInput,
+  type PersonaConPassword,
 } from '@/api/personas'
 import { listarAreas, type Area } from '@/api/areas'
-import { PasswordGeneradaDialog } from '@/components/password-generada-dialog'
-import type { PersonaConPassword } from '@/api/personas'
 
 export default function PersonasPage() {
   const [personas, setPersonas] = useState<Persona[]>([])
+  const [areas, setAreas] = useState<Area[]>([])
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [personaEditando, setPersonaEditando] = useState<Persona | null>(null)
-  const [areas, setAreas] = useState<Area[]>([])
+  const [personaAEliminar, setPersonaAEliminar] = useState<Persona | null>(null)
   const [credencialesGeneradas, setCredencialesGeneradas] = useState<PersonaConPassword | null>(null)
 
   const cargarPersonas = async () => {
@@ -76,10 +78,10 @@ export default function PersonasPage() {
     }
   }
 
-  const handleEliminar = async (persona: Persona) => {
-    if (!confirm(`¿Eliminar a "${persona.nombre_completo}"?`)) return
+  const confirmarEliminar = async () => {
+    if (!personaAEliminar) return
     try {
-      await eliminarPersona(persona.id)
+      await eliminarPersona(personaAEliminar.id)
       toast.success('Persona eliminada')
       await cargarPersonas()
     } catch (err: any) {
@@ -88,6 +90,8 @@ export default function PersonasPage() {
       } else {
         toast.error('No se pudo eliminar. Puede que tenga custodias asociadas.')
       }
+    } finally {
+      setPersonaAEliminar(null)
     }
   }
 
@@ -137,7 +141,9 @@ export default function PersonasPage() {
                 <TableCell className="py-2 text-sm font-medium">{persona.nombre_completo}</TableCell>
                 <TableCell className="py-2 text-sm text-muted-foreground">{persona.documento}</TableCell>
                 <TableCell className="py-2 text-sm text-muted-foreground">{persona.cargo || '—'}</TableCell>
-                <TableCell className="py-2 text-sm text-muted-foreground">{persona.area_nombre || '—'}</TableCell>
+                <TableCell className="py-2 text-sm text-muted-foreground">
+                  {persona.area_nombre || '—'}
+                </TableCell>
                 <TableCell className="py-2 text-right">
                   <Button
                     variant="ghost"
@@ -151,7 +157,7 @@ export default function PersonasPage() {
                     variant="ghost"
                     size="icon"
                     className="size-7"
-                    onClick={() => handleEliminar(persona)}
+                    onClick={() => setPersonaAEliminar(persona)}
                   >
                     <Trash2 className="size-3.5" />
                   </Button>
@@ -178,6 +184,14 @@ export default function PersonasPage() {
           password={credencialesGeneradas.password_generada!}
         />
       )}
+
+      <ConfirmDeleteDialog
+        open={!!personaAEliminar}
+        onOpenChange={(open) => !open && setPersonaAEliminar(null)}
+        titulo="¿Eliminar esta persona?"
+        descripcion={`Vas a eliminar a "${personaAEliminar?.nombre_completo}".`}
+        onConfirm={confirmarEliminar}
+      />
     </div>
   )
 }

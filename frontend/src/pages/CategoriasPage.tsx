@@ -28,6 +28,7 @@ export default function CategoriasPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [categoriaEditando, setCategoriaEditando] = useState<Categoria | null>(null)
   const [categoriaAEliminar, setCategoriaAEliminar] = useState<Categoria | null>(null)
+  
 
   const cargarCategorias = async () => {
     setLoading(true)

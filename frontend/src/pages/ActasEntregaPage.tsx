@@ -21,7 +21,7 @@ const BADGE_POR_TIPO: Record<TipoActa, 'default' | 'secondary' | 'outline'> = {
 
 export default function ActasEntregaPage() {
   const [actas, setActas] = useState<ActaEntrega[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(true)  
 
   useEffect(() => {
     listarActas()

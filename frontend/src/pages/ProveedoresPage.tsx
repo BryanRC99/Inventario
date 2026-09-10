@@ -11,6 +11,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { ProveedorDialog } from '@/components/proveedor-dialog'
+import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog'
 import {
   listarProveedores,
   crearProveedor,
@@ -25,6 +26,7 @@ export default function ProveedoresPage() {
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [proveedorEditando, setProveedorEditando] = useState<Proveedor | null>(null)
+  const [proveedorAEliminar, setProveedorAEliminar] = useState<Proveedor | null>(null)
 
   const cargarProveedores = async () => {
     setLoading(true)
@@ -68,12 +70,10 @@ export default function ProveedoresPage() {
     }
   }
 
-  const handleEliminar = async (proveedor: Proveedor) => {
-    if (!confirm(`¿Eliminar el proveedor "${proveedor.nombre}"?`)) {
-      return
-    }
+  const confirmarEliminar = async () => {
+    if (!proveedorAEliminar) return
     try {
-      await eliminarProveedor(proveedor.id)
+      await eliminarProveedor(proveedorAEliminar.id)
       toast.success('Proveedor eliminado')
       await cargarProveedores()
     } catch (err: any) {
@@ -82,6 +82,8 @@ export default function ProveedoresPage() {
       } else {
         toast.error('No se pudo eliminar. Puede que tenga activos asociados.')
       }
+    } finally {
+      setProveedorAEliminar(null)
     }
   }
 
@@ -147,7 +149,7 @@ export default function ProveedoresPage() {
                     variant="ghost"
                     size="icon"
                     className="size-7"
-                    onClick={() => handleEliminar(proveedor)}
+                    onClick={() => setProveedorAEliminar(proveedor)}
                   >
                     <Trash2 className="size-3.5" />
                   </Button>
@@ -163,6 +165,14 @@ export default function ProveedoresPage() {
         onOpenChange={setDialogOpen}
         proveedor={proveedorEditando}
         onSubmit={handleSubmit}
+      />
+
+      <ConfirmDeleteDialog
+        open={!!proveedorAEliminar}
+        onOpenChange={(open) => !open && setProveedorAEliminar(null)}
+        titulo="¿Eliminar este proveedor?"
+        descripcion={`Vas a eliminar el proveedor "${proveedorAEliminar?.nombre}".`}
+        onConfirm={confirmarEliminar}
       />
     </div>
   )

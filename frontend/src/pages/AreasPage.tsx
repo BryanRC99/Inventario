@@ -11,6 +11,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { AreaDialog } from '@/components/area-dialog'
+import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog'
 import {
   listarAreas,
   crearArea,
@@ -23,10 +24,11 @@ import { listarUbicaciones, type Ubicacion } from '@/api/ubicaciones'
 
 export default function AreasPage() {
   const [areas, setAreas] = useState<Area[]>([])
+  const [ubicaciones, setUbicaciones] = useState<Ubicacion[]>([])
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [areaEditando, setAreaEditando] = useState<Area | null>(null)
-  const [ubicaciones, setUbicaciones] = useState<Ubicacion[]>([])
+  const [areaAEliminar, setAreaAEliminar] = useState<Area | null>(null)
 
   const cargarAreas = async () => {
     setLoading(true)
@@ -70,14 +72,16 @@ export default function AreasPage() {
     }
   }
 
-  const handleEliminar = async (area: Area) => {
-    if (!confirm(`¿Eliminar el área "${area.nombre}"?`)) return
+  const confirmarEliminar = async () => {
+    if (!areaAEliminar) return
     try {
-      await eliminarArea(area.id)
+      await eliminarArea(areaAEliminar.id)
       toast.success('Área eliminada')
       await cargarAreas()
     } catch {
       toast.error('No se pudo eliminar. Puede que esté en uso.')
+    } finally {
+      setAreaAEliminar(null)
     }
   }
 
@@ -99,6 +103,7 @@ export default function AreasPage() {
           <TableHeader>
             <TableRow>
               <TableHead className="h-9 text-xs">Nombre</TableHead>
+              <TableHead className="h-9 text-xs">Ubicación por defecto</TableHead>
               <TableHead className="h-9 text-xs">Descripción</TableHead>
               <TableHead className="h-9 w-20 text-right text-xs">Acciones</TableHead>
             </TableRow>
@@ -106,7 +111,7 @@ export default function AreasPage() {
           <TableBody>
             {loading && (
               <TableRow>
-                <TableCell colSpan={3} className="py-6 text-center text-sm text-muted-foreground">
+                <TableCell colSpan={4} className="py-6 text-center text-sm text-muted-foreground">
                   Cargando...
                 </TableCell>
               </TableRow>
@@ -114,7 +119,7 @@ export default function AreasPage() {
 
             {!loading && areas.length === 0 && (
               <TableRow>
-                <TableCell colSpan={3} className="py-6 text-center text-sm text-muted-foreground">
+                <TableCell colSpan={4} className="py-6 text-center text-sm text-muted-foreground">
                   No hay áreas todavía. Crea la primera.
                 </TableCell>
               </TableRow>
@@ -123,6 +128,9 @@ export default function AreasPage() {
             {areas.map((area) => (
               <TableRow key={area.id}>
                 <TableCell className="py-2 text-sm font-medium">{area.nombre}</TableCell>
+                <TableCell className="py-2 text-sm text-muted-foreground">
+                  {area.ubicacion_nombre || '—'}
+                </TableCell>
                 <TableCell className="py-2 text-sm text-muted-foreground">
                   {area.descripcion || '—'}
                 </TableCell>
@@ -139,7 +147,7 @@ export default function AreasPage() {
                     variant="ghost"
                     size="icon"
                     className="size-7"
-                    onClick={() => handleEliminar(area)}
+                    onClick={() => setAreaAEliminar(area)}
                   >
                     <Trash2 className="size-3.5" />
                   </Button>
@@ -151,11 +159,19 @@ export default function AreasPage() {
       </div>
 
       <AreaDialog
-        ubicaciones={ubicaciones}
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         area={areaEditando}
+        ubicaciones={ubicaciones}
         onSubmit={handleSubmit}
+      />
+
+      <ConfirmDeleteDialog
+        open={!!areaAEliminar}
+        onOpenChange={(open) => !open && setAreaAEliminar(null)}
+        titulo="¿Eliminar esta área?"
+        descripcion={`Vas a eliminar el área "${areaAEliminar?.nombre}".`}
+        onConfirm={confirmarEliminar}
       />
     </div>
   )

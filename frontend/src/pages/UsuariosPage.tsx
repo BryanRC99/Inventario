@@ -12,6 +12,8 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { UsuarioDialog } from '@/components/usuario-dialog'
+import { PasswordGeneradaDialog } from '@/components/password-generada-dialog'
+import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog'
 import { useAuth } from '@/context/AuthContext'
 import {
   listarUsuarios,
@@ -20,18 +22,18 @@ import {
   eliminarUsuario,
   ROLES,
   type Usuario,
+  type UsuarioConPassword,
 } from '@/api/usuarios'
 import { listarAreas, type Area } from '@/api/areas'
-import { PasswordGeneradaDialog } from '@/components/password-generada-dialog'
-import type { UsuarioConPassword } from '@/api/usuarios'
 
 export default function UsuariosPage() {
   const { usuario: usuarioActual } = useAuth()
   const [usuarios, setUsuarios] = useState<Usuario[]>([])
+  const [areas, setAreas] = useState<Area[]>([])
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [usuarioEditando, setUsuarioEditando] = useState<Usuario | null>(null)
-  const [areas, setAreas] = useState<Area[]>([])
+  const [usuarioAEliminar, setUsuarioAEliminar] = useState<Usuario | null>(null)
   const [credencialesGeneradas, setCredencialesGeneradas] = useState<UsuarioConPassword | null>(null)
 
   const cargarUsuarios = async () => {
@@ -61,18 +63,24 @@ export default function UsuariosPage() {
     setDialogOpen(true)
   }
 
-  const handleEliminar = async (usuario: Usuario) => {
+  const handleEliminarClick = (usuario: Usuario) => {
     if (usuario.id === usuarioActual?.id) {
       toast.error('No puedes eliminar tu propio usuario')
       return
     }
-    if (!confirm(`¿Eliminar al usuario "${usuario.username}"?`)) return
+    setUsuarioAEliminar(usuario)
+  }
+
+  const confirmarEliminar = async () => {
+    if (!usuarioAEliminar) return
     try {
-      await eliminarUsuario(usuario.id)
+      await eliminarUsuario(usuarioAEliminar.id)
       toast.success('Usuario eliminado')
       await cargarUsuarios()
     } catch {
       toast.error('No se pudo eliminar el usuario')
+    } finally {
+      setUsuarioAEliminar(null)
     }
   }
 
@@ -104,7 +112,7 @@ export default function UsuariosPage() {
           <TableBody>
             {loading && (
               <TableRow>
-                <TableCell colSpan={5} className="py-6 text-center text-sm text-muted-foreground">
+                <TableCell colSpan={6} className="py-6 text-center text-sm text-muted-foreground">
                   Cargando...
                 </TableCell>
               </TableRow>
@@ -112,7 +120,7 @@ export default function UsuariosPage() {
 
             {!loading && usuarios.length === 0 && (
               <TableRow>
-                <TableCell colSpan={5} className="py-6 text-center text-sm text-muted-foreground">
+                <TableCell colSpan={6} className="py-6 text-center text-sm text-muted-foreground">
                   No hay usuarios todavía.
                 </TableCell>
               </TableRow>
@@ -129,7 +137,9 @@ export default function UsuariosPage() {
                     {ROLES.find((r) => r.value === u.rol)?.label ?? u.rol}
                   </Badge>
                 </TableCell>
-                <TableCell className="py-2 text-sm text-muted-foreground">{u.area_nombre || '—'}</TableCell>
+                <TableCell className="py-2 text-sm text-muted-foreground">
+                  {u.area_nombre || '—'}
+                </TableCell>
                 <TableCell className="py-2">
                   <Badge variant={u.is_active ? 'default' : 'secondary'} className="text-xs">
                     {u.is_active ? 'Activo' : 'Inactivo'}
@@ -148,7 +158,7 @@ export default function UsuariosPage() {
                     variant="ghost"
                     size="icon"
                     className="size-7"
-                    onClick={() => handleEliminar(u)}
+                    onClick={() => handleEliminarClick(u)}
                   >
                     <Trash2 className="size-3.5" />
                   </Button>
@@ -200,6 +210,14 @@ export default function UsuariosPage() {
           password={credencialesGeneradas.password_generada!}
         />
       )}
+
+      <ConfirmDeleteDialog
+        open={!!usuarioAEliminar}
+        onOpenChange={(open) => !open && setUsuarioAEliminar(null)}
+        titulo="¿Eliminar este usuario?"
+        descripcion={`Vas a eliminar al usuario "${usuarioAEliminar?.username}".`}
+        onConfirm={confirmarEliminar}
+      />
     </div>
   )
 }
