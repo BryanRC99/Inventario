@@ -5,11 +5,6 @@ from django.db import models
 
 
 class Usuario(AbstractUser):
-    """
-    Extiende el usuario base de Django agregando 'rol', que usamos
-    para controlar permisos en el sistema (admin, operador, consulta),
-    y 'area', que determina qué datos puede ver si no es Admin.
-    """
 
     class Rol(models.TextChoices):
         ADMIN = "admin", "Administrador"

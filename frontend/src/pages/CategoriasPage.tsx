@@ -21,6 +21,8 @@ import {
   type Categoria,
   type CategoriaInput,
 } from '@/api/categorias'
+import { SearchInput } from '@/components/search-input'
+import { coincide } from '@/lib/normalizar-texto'
 
 export default function CategoriasPage() {
   const [categorias, setCategorias] = useState<Categoria[]>([])
@@ -28,7 +30,7 @@ export default function CategoriasPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [categoriaEditando, setCategoriaEditando] = useState<Categoria | null>(null)
   const [categoriaAEliminar, setCategoriaAEliminar] = useState<Categoria | null>(null)
-  
+  const [busqueda, setBusqueda] = useState('')
 
   const cargarCategorias = async () => {
     setLoading(true)
@@ -45,6 +47,10 @@ export default function CategoriasPage() {
   useEffect(() => {
     cargarCategorias()
   }, [])
+
+  const categoriasFiltradas = categorias.filter(
+    (c) => coincide(c.nombre, busqueda) || coincide(c.prefijo, busqueda),
+  )
 
   const abrirCrear = () => {
     setCategoriaEditando(null)
@@ -101,6 +107,12 @@ export default function CategoriasPage() {
         </Button>
       </div>
 
+      <SearchInput
+        value={busqueda}
+        onChange={setBusqueda}
+        placeholder="Buscar por nombre o prefijo..."
+      />
+
       <div className="max-w-2xl rounded-md border">
         <Table>
           <TableHeader>
@@ -114,21 +126,23 @@ export default function CategoriasPage() {
           <TableBody>
             {loading && (
               <TableRow>
-                <TableCell colSpan={3} className="py-6 text-center text-sm text-muted-foreground">
+                <TableCell colSpan={4} className="py-6 text-center text-sm text-muted-foreground">
                   Cargando...
                 </TableCell>
               </TableRow>
             )}
 
-            {!loading && categorias.length === 0 && (
+            {!loading && categoriasFiltradas.length === 0 && (
               <TableRow>
-                <TableCell colSpan={3} className="py-6 text-center text-sm text-muted-foreground">
-                  No hay categorías todavía. Crea la primera.
+                <TableCell colSpan={4} className="py-6 text-center text-sm text-muted-foreground">
+                  {busqueda
+                    ? 'No se encontraron categorías con ese criterio.'
+                    : 'No hay categorías todavía. Crea la primera.'}
                 </TableCell>
               </TableRow>
             )}
 
-            {categorias.map((categoria) => (
+            {categoriasFiltradas.map((categoria) => (
               <TableRow key={categoria.id}>
                 <TableCell className="py-2 text-sm font-medium">{categoria.nombre}</TableCell>
                 <TableCell className="py-2 text-sm font-mono text-muted-foreground">

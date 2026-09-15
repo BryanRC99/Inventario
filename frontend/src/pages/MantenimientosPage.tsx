@@ -22,6 +22,8 @@ import {
 } from '@/api/mantenimientos'
 import { listarActivos, type Activo } from '@/api/activos'
 import { listarProveedores, type Proveedor } from '@/api/proveedores'
+import { SearchInput } from '@/components/search-input'
+import { coincide } from '@/lib/normalizar-texto'
 
 export default function MantenimientosPage() {
   const [mantenimientos, setMantenimientos] = useState<Mantenimiento[]>([])
@@ -31,6 +33,7 @@ export default function MantenimientosPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [mantenimientoEditando, setMantenimientoEditando] = useState<Mantenimiento | null>(null)
   const [mantenimientoAEliminar, setMantenimientoAEliminar] = useState<Mantenimiento | null>(null)
+  const [busqueda, setBusqueda] = useState('')
 
   const cargarTodo = async () => {
     setLoading(true)
@@ -53,6 +56,13 @@ export default function MantenimientosPage() {
   useEffect(() => {
     cargarTodo()
   }, [])
+
+  const mantenimientosFiltrados = mantenimientos.filter(
+    (m) =>
+      coincide(m.activo_nombre, busqueda) ||
+      coincide(m.activo_codigo, busqueda) ||
+      coincide(m.descripcion_problema, busqueda),
+  )
 
   const abrirCrear = () => {
     setMantenimientoEditando(null)
@@ -109,6 +119,12 @@ export default function MantenimientosPage() {
         </Button>
       </div>
 
+      <SearchInput
+        value={busqueda}
+        onChange={setBusqueda}
+        placeholder="Buscar por activo o problema..."
+      />
+
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -130,15 +146,17 @@ export default function MantenimientosPage() {
               </TableRow>
             )}
 
-            {!loading && mantenimientos.length === 0 && (
+            {!loading && mantenimientosFiltrados.length === 0 && (
               <TableRow>
                 <TableCell colSpan={6} className="py-6 text-center text-sm text-muted-foreground">
-                  No hay mantenimientos registrados.
+                  {busqueda
+                    ? 'No se encontraron mantenimientos con ese criterio.'
+                    : 'No hay mantenimientos registrados.'}
                 </TableCell>
               </TableRow>
             )}
 
-            {mantenimientos.map((m) => (
+            {mantenimientosFiltrados.map((m) => (
               <TableRow key={m.id}>
                 <TableCell className="py-2 text-sm">
                   <span className="font-mono text-xs text-muted-foreground">{m.activo_codigo}</span>{' '}

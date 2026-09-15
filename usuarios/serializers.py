@@ -7,9 +7,8 @@ from .models import Usuario
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     """
     Extiende el serializer de login estándar para incluir datos
-    útiles del usuario directamente en el token (evita que el
-    frontend tenga que hacer una segunda llamada solo para saber
-    el rol o el nombre apenas loguea).
+    útiles del usuario directamente en el token, y para registrar
+    en auditoría tanto los logins exitosos como los fallidos.
     """
 
     @classmethod
@@ -21,7 +20,29 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         return token
 
     def validate(self, attrs):
-        data = super().validate(attrs)
+        from auditoria.utils import registrar_auditoria
+
+        try:
+            data = super().validate(attrs)
+        except Exception:
+            # Login fallido: guardamos el username que se intentó usar,
+            # aunque no exista o la contraseña esté mal, para poder
+            # detectar intentos de fuerza bruta después.
+            registrar_auditoria(
+                accion='login_fallido',
+                modelo='Usuario',
+                objeto_repr=attrs.get('username', ''),
+            )
+            raise
+
+        registrar_auditoria(
+            accion='login',
+            modelo='Usuario',
+            objeto_id=self.user.id,
+            objeto_repr=self.user.username,
+            usuario=self.user,
+        )
+
         data['usuario'] = {
             'id': str(self.user.id),
             'username': self.user.username,
@@ -29,7 +50,6 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             'nombre_completo': f"{self.user.first_name} {self.user.last_name}".strip(),
         }
         return data
-
 
 class UsuarioSerializer(serializers.ModelSerializer):
     class Meta:

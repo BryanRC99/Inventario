@@ -10,6 +10,8 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { listarMovimientos, type Movimiento, type TipoEvento } from '@/api/movimientos'
+import { SearchInput } from '@/components/search-input'
+import { coincide } from '@/lib/normalizar-texto'
 
 const BADGE_POR_EVENTO: Record<TipoEvento, 'default' | 'secondary' | 'outline' | 'destructive'> = {
   creacion: 'outline',
@@ -24,6 +26,7 @@ const BADGE_POR_EVENTO: Record<TipoEvento, 'default' | 'secondary' | 'outline' |
 export default function MovimientosPage() {
   const [movimientos, setMovimientos] = useState<Movimiento[]>([])
   const [loading, setLoading] = useState(true)
+  const [busqueda, setBusqueda] = useState('')
 
   useEffect(() => {
     listarMovimientos()
@@ -31,6 +34,14 @@ export default function MovimientosPage() {
       .catch(() => toast.error('No se pudieron cargar los movimientos'))
       .finally(() => setLoading(false))
   }, [])
+
+  const movimientosFiltrados = movimientos.filter(
+    (mov) =>
+      coincide(mov.activo_nombre, busqueda) ||
+      coincide(mov.activo_codigo, busqueda) ||
+      coincide(mov.tipo_evento_display, busqueda) ||
+      coincide(mov.usuario_username, busqueda),
+  )
 
   return (
     <div className="flex flex-col gap-4">
@@ -40,6 +51,12 @@ export default function MovimientosPage() {
           Historial automático de eventos de cada activo
         </p>
       </div>
+
+      <SearchInput
+        value={busqueda}
+        onChange={setBusqueda}
+        placeholder="Buscar por activo, evento o usuario..."
+      />
 
       <div className="rounded-md border">
         <Table>
@@ -61,15 +78,17 @@ export default function MovimientosPage() {
               </TableRow>
             )}
 
-            {!loading && movimientos.length === 0 && (
+            {!loading && movimientosFiltrados.length === 0 && (
               <TableRow>
                 <TableCell colSpan={5} className="py-6 text-center text-sm text-muted-foreground">
-                  Todavía no hay movimientos registrados.
+                  {busqueda
+                    ? 'No se encontraron movimientos con ese criterio.'
+                    : 'Todavía no hay movimientos registrados.'}
                 </TableCell>
               </TableRow>
             )}
 
-            {movimientos.map((mov) => (
+            {movimientosFiltrados.map((mov) => (
               <TableRow key={mov.id}>
                 <TableCell className="py-2 text-sm text-muted-foreground">
                   {new Date(mov.fecha_hora).toLocaleString('es-EC', {

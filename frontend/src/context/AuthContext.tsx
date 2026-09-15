@@ -47,10 +47,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUsuario(perfilCompleto)
   }
 
+
   const logout = () => {
+    api.post('/auth/logout/').catch(() => { })
     localStorage.clear()
     setUsuario(null)
-    window.location.href = '/login'
   }
 
   const refrescarUsuario = async () => {

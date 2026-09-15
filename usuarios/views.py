@@ -60,3 +60,19 @@ class UsuarioViewSet(viewsets.ModelViewSet):
         if self.action == 'create':
             return UsuarioCreateSerializer
         return UsuarioListaSerializer
+
+class LogoutView(APIView):
+    """POST /api/auth/logout/ -> solo registra el evento en auditoría."""
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        from auditoria.utils import registrar_auditoria
+
+        registrar_auditoria(
+            accion='logout',
+            modelo='Usuario',
+            objeto_id=request.user.id,
+            objeto_repr=request.user.username,
+        )
+        return Response({'detail': 'Sesión cerrada.'})

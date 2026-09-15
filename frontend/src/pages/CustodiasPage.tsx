@@ -31,6 +31,8 @@ import { listarPersonas, type Persona } from '@/api/personas'
 import { listarAreas, type Area } from '@/api/areas'
 import { listarUbicaciones, type Ubicacion } from '@/api/ubicaciones'
 import { crearActa } from '@/api/actas'
+import { SearchInput } from '@/components/search-input'
+import { coincide } from '@/lib/normalizar-texto'
 
 export default function CustodiasPage() {
   const [custodias, setCustodias] = useState<Custodia[]>([])
@@ -46,6 +48,7 @@ export default function CustodiasPage() {
   const [custodiaAFinalizar, setCustodiaAFinalizar] = useState<Custodia | null>(null)
   const [reasignandoActivoId, setReasignandoActivoId] = useState<string | null>(null)
   const [custodiaAEliminar, setCustodiaAEliminar] = useState<Custodia | null>(null)
+  const [busqueda, setBusqueda] = useState('')
 
   const cargarTodo = async () => {
     setLoading(true)
@@ -73,6 +76,14 @@ export default function CustodiasPage() {
   useEffect(() => {
     cargarTodo()
   }, [])
+
+  const custodiasFiltradas = custodias.filter(
+    (c) =>
+      coincide(c.activo_nombre, busqueda) ||
+      coincide(c.activo_codigo, busqueda) ||
+      coincide(c.persona_nombre, busqueda) ||
+      coincide(c.area_nombre, busqueda),
+  )
 
   const abrirCrear = () => {
     setCustodiaEditando(null)
@@ -161,6 +172,12 @@ export default function CustodiasPage() {
         </Button>
       </div>
 
+      <SearchInput
+        value={busqueda}
+        onChange={setBusqueda}
+        placeholder="Buscar por activo o custodio..."
+      />
+
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -182,15 +199,17 @@ export default function CustodiasPage() {
               </TableRow>
             )}
 
-            {!loading && custodias.length === 0 && (
+            {!loading && custodiasFiltradas.length === 0 && (
               <TableRow>
                 <TableCell colSpan={6} className="py-6 text-center text-sm text-muted-foreground">
-                  No hay custodias todavía.
+                  {busqueda
+                    ? 'No se encontraron custodias con ese criterio.'
+                    : 'No hay custodias todavía.'}
                 </TableCell>
               </TableRow>
             )}
 
-            {custodias.map((custodia) => (
+            {custodiasFiltradas.map((custodia) => (
               <TableRow key={custodia.id}>
                 <TableCell className="py-2 text-sm">
                   <span className="font-mono text-xs text-muted-foreground">

@@ -26,6 +26,8 @@ import {
 import { listarCategorias, type Categoria } from '@/api/categorias'
 import { listarUbicaciones, type Ubicacion } from '@/api/ubicaciones'
 import { listarProveedores, type Proveedor } from '@/api/proveedores'
+import { SearchInput } from '@/components/search-input'
+import { coincide } from '@/lib/normalizar-texto'
 
 const BADGE_POR_ESTADO: Record<EstadoActivo, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   activo: 'default',
@@ -44,6 +46,7 @@ export default function ActivosPage() {
   const [activoEditando, setActivoEditando] = useState<Activo | null>(null)
   const [activoDetalle, setActivoDetalle] = useState<Activo | null>(null)
   const [activoAEliminar, setActivoAEliminar] = useState<Activo | null>(null)
+  const [busqueda, setBusqueda] = useState('')
 
   const cargarTodo = async () => {
     setLoading(true)
@@ -64,6 +67,13 @@ export default function ActivosPage() {
       setLoading(false)
     }
   }
+
+  const activosFiltrados = activos.filter(
+    (a) =>
+      coincide(a.codigo_interno, busqueda) ||
+      coincide(a.nombre, busqueda) ||
+      coincide(a.categoria_nombre, busqueda),
+  )
 
   useEffect(() => {
     cargarTodo()
@@ -124,6 +134,12 @@ export default function ActivosPage() {
         </Button>
       </div>
 
+      <SearchInput
+        value={busqueda}
+        onChange={setBusqueda}
+        placeholder="Buscar por código, nombre o categoría..."
+      />
+
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -145,15 +161,17 @@ export default function ActivosPage() {
               </TableRow>
             )}
 
-            {!loading && activos.length === 0 && (
+            {!loading && activosFiltrados.length === 0 && (
               <TableRow>
                 <TableCell colSpan={6} className="py-6 text-center text-sm text-muted-foreground">
-                  No hay activos todavía. Registra el primero.
+                  {busqueda
+                    ? 'No se encontraron activos con ese criterio.'
+                    : 'No hay activos todavía. Registra el primero.'}
                 </TableCell>
               </TableRow>
             )}
 
-            {activos.map((activo) => (
+            {activosFiltrados.map((activo) => (
               <TableRow key={activo.id}>
                 <TableCell className="py-2 text-sm font-mono">{activo.codigo_interno}</TableCell>
                 <TableCell className="py-2 text-sm font-medium">{activo.nombre}</TableCell>

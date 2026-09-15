@@ -23,6 +23,8 @@ import {
   type PersonaConPassword,
 } from '@/api/personas'
 import { listarAreas, type Area } from '@/api/areas'
+import { SearchInput } from '@/components/search-input'
+import { coincide } from '@/lib/normalizar-texto'
 
 export default function PersonasPage() {
   const [personas, setPersonas] = useState<Persona[]>([])
@@ -32,6 +34,7 @@ export default function PersonasPage() {
   const [personaEditando, setPersonaEditando] = useState<Persona | null>(null)
   const [personaAEliminar, setPersonaAEliminar] = useState<Persona | null>(null)
   const [credencialesGeneradas, setCredencialesGeneradas] = useState<PersonaConPassword | null>(null)
+  const [busqueda, setBusqueda] = useState('')
 
   const cargarPersonas = async () => {
     setLoading(true)
@@ -49,6 +52,13 @@ export default function PersonasPage() {
   useEffect(() => {
     cargarPersonas()
   }, [])
+
+  const personasFiltradas = personas.filter(
+    (p) =>
+      coincide(p.nombre_completo, busqueda) ||
+      coincide(p.documento, busqueda) ||
+      coincide(p.area_nombre, busqueda),
+  )
 
   const abrirCrear = () => {
     setPersonaEditando(null)
@@ -108,6 +118,12 @@ export default function PersonasPage() {
         </Button>
       </div>
 
+      <SearchInput
+        value={busqueda}
+        onChange={setBusqueda}
+        placeholder="Buscar por nombre, documento o área..."
+      />
+
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -128,15 +144,17 @@ export default function PersonasPage() {
               </TableRow>
             )}
 
-            {!loading && personas.length === 0 && (
+            {!loading && personasFiltradas.length === 0 && (
               <TableRow>
                 <TableCell colSpan={5} className="py-6 text-center text-sm text-muted-foreground">
-                  No hay personas todavía. Crea la primera.
+                  {busqueda
+                    ? 'No se encontraron personas con ese criterio.'
+                    : 'No hay personas todavía. Crea la primera.'}
                 </TableCell>
               </TableRow>
             )}
 
-            {personas.map((persona) => (
+            {personasFiltradas.map((persona) => (
               <TableRow key={persona.id}>
                 <TableCell className="py-2 text-sm font-medium">{persona.nombre_completo}</TableCell>
                 <TableCell className="py-2 text-sm text-muted-foreground">{persona.documento}</TableCell>

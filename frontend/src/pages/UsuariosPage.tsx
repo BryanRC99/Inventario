@@ -25,6 +25,8 @@ import {
   type UsuarioConPassword,
 } from '@/api/usuarios'
 import { listarAreas, type Area } from '@/api/areas'
+import { SearchInput } from '@/components/search-input'
+import { coincide } from '@/lib/normalizar-texto'
 
 export default function UsuariosPage() {
   const { usuario: usuarioActual } = useAuth()
@@ -35,6 +37,7 @@ export default function UsuariosPage() {
   const [usuarioEditando, setUsuarioEditando] = useState<Usuario | null>(null)
   const [usuarioAEliminar, setUsuarioAEliminar] = useState<Usuario | null>(null)
   const [credencialesGeneradas, setCredencialesGeneradas] = useState<UsuarioConPassword | null>(null)
+  const [busqueda, setBusqueda] = useState('')
 
   const cargarUsuarios = async () => {
     setLoading(true)
@@ -52,6 +55,13 @@ export default function UsuariosPage() {
   useEffect(() => {
     cargarUsuarios()
   }, [])
+
+  const usuariosFiltrados = usuarios.filter(
+    (u) =>
+      coincide(u.username, busqueda) ||
+      coincide(u.nombre_completo, busqueda) ||
+      coincide(u.area_nombre, busqueda),
+  )
 
   const abrirCrear = () => {
     setUsuarioEditando(null)
@@ -97,6 +107,12 @@ export default function UsuariosPage() {
         </Button>
       </div>
 
+      <SearchInput
+        value={busqueda}
+        onChange={setBusqueda}
+        placeholder="Buscar por usuario, nombre o área..."
+      />
+
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -118,15 +134,17 @@ export default function UsuariosPage() {
               </TableRow>
             )}
 
-            {!loading && usuarios.length === 0 && (
+            {!loading && usuariosFiltrados.length === 0 && (
               <TableRow>
                 <TableCell colSpan={6} className="py-6 text-center text-sm text-muted-foreground">
-                  No hay usuarios todavía.
+                  {busqueda
+                    ? 'No se encontraron usuarios con ese criterio.'
+                    : 'No hay usuarios todavía.'}
                 </TableCell>
               </TableRow>
             )}
 
-            {usuarios.map((u) => (
+            {usuariosFiltrados.map((u) => (
               <TableRow key={u.id}>
                 <TableCell className="py-2 text-sm font-mono">{u.username}</TableCell>
                 <TableCell className="py-2 text-sm text-muted-foreground">

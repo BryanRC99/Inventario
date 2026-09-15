@@ -13,6 +13,8 @@ import {
 } from '@/components/ui/table'
 import { MiActivoDetailDialog } from '@/components/mi-activo-detail-dialog'
 import { listarActivos, type Activo, type EstadoActivo } from '@/api/activos'
+import { SearchInput } from '@/components/search-input'
+import { coincide } from '@/lib/normalizar-texto'
 
 const BADGE_POR_ESTADO: Record<EstadoActivo, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   activo: 'default',
@@ -25,6 +27,7 @@ export default function MisActivosPage() {
   const [activos, setActivos] = useState<Activo[]>([])
   const [loading, setLoading] = useState(true)
   const [detalle, setDetalle] = useState<Activo | null>(null)
+  const [busqueda, setBusqueda] = useState('')
 
   useEffect(() => {
     listarActivos()
@@ -33,12 +36,25 @@ export default function MisActivosPage() {
       .finally(() => setLoading(false))
   }, [])
 
+  const activosFiltrados = activos.filter(
+    (a) =>
+      coincide(a.codigo_interno, busqueda) ||
+      coincide(a.nombre, busqueda) ||
+      coincide(a.categoria_nombre, busqueda),
+  )
+
   return (
     <div className="flex flex-col gap-4">
       <div>
         <h1 className="text-lg font-semibold">Mis Activos</h1>
         <p className="text-sm text-muted-foreground">Equipos actualmente asignados a tu nombre</p>
       </div>
+
+      <SearchInput
+        value={busqueda}
+        onChange={setBusqueda}
+        placeholder="Buscar por código, nombre o categoría..."
+      />
 
       <div className="max-w-3xl rounded-md border">
         <Table>
@@ -60,15 +76,17 @@ export default function MisActivosPage() {
               </TableRow>
             )}
 
-            {!loading && activos.length === 0 && (
+            {!loading && activosFiltrados.length === 0 && (
               <TableRow>
                 <TableCell colSpan={5} className="py-6 text-center text-sm text-muted-foreground">
-                  No tienes activos asignados actualmente.
+                  {busqueda
+                    ? 'No se encontraron activos con ese criterio.'
+                    : 'No tienes activos asignados actualmente.'}
                 </TableCell>
               </TableRow>
             )}
 
-            {activos.map((activo) => (
+            {activosFiltrados.map((activo) => (
               <TableRow key={activo.id}>
                 <TableCell className="py-2 text-sm font-mono">{activo.codigo_interno}</TableCell>
                 <TableCell className="py-2 text-sm font-medium">{activo.nombre}</TableCell>

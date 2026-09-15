@@ -12,6 +12,8 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { listarActas, type ActaEntrega, type TipoActa } from '@/api/actas'
+import { SearchInput } from '@/components/search-input'
+import { coincide } from '@/lib/normalizar-texto'
 
 const BADGE_POR_TIPO: Record<TipoActa, 'default' | 'secondary' | 'outline'> = {
   entrega: 'default',
@@ -21,7 +23,8 @@ const BADGE_POR_TIPO: Record<TipoActa, 'default' | 'secondary' | 'outline'> = {
 
 export default function ActasEntregaPage() {
   const [actas, setActas] = useState<ActaEntrega[]>([])
-  const [loading, setLoading] = useState(true)  
+  const [loading, setLoading] = useState(true)
+  const [busqueda, setBusqueda] = useState('')
 
   useEffect(() => {
     listarActas()
@@ -29,6 +32,13 @@ export default function ActasEntregaPage() {
       .catch(() => toast.error('No se pudieron cargar las actas'))
       .finally(() => setLoading(false))
   }, [])
+
+  const actasFiltradas = actas.filter(
+    (a) =>
+      coincide(a.activo_nombre, busqueda) ||
+      coincide(a.activo_codigo, busqueda) ||
+      coincide(a.persona_nombre, busqueda),
+  )
 
   return (
     <div className="flex flex-col gap-4">
@@ -38,6 +48,12 @@ export default function ActasEntregaPage() {
           Historial de documentos generados por asignación de activos
         </p>
       </div>
+
+      <SearchInput
+        value={busqueda}
+        onChange={setBusqueda}
+        placeholder="Buscar por activo o custodio..."
+      />
 
       <div className="rounded-md border">
         <Table>
@@ -59,15 +75,17 @@ export default function ActasEntregaPage() {
               </TableRow>
             )}
 
-            {!loading && actas.length === 0 && (
+            {!loading && actasFiltradas.length === 0 && (
               <TableRow>
                 <TableCell colSpan={5} className="py-6 text-center text-sm text-muted-foreground">
-                  Todavía no se ha generado ninguna acta.
+                  {busqueda
+                    ? 'No se encontraron actas con ese criterio.'
+                    : 'Todavía no se ha generado ninguna acta.'}
                 </TableCell>
               </TableRow>
             )}
 
-            {actas.map((acta) => (
+            {actasFiltradas.map((acta) => (
               <TableRow key={acta.id}>
                 <TableCell className="py-2 text-sm">
                   <span className="font-mono text-xs text-muted-foreground">

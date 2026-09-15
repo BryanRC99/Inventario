@@ -21,6 +21,8 @@ import {
   type AreaInput,
 } from '@/api/areas'
 import { listarUbicaciones, type Ubicacion } from '@/api/ubicaciones'
+import { SearchInput } from '@/components/search-input'
+import { coincide } from '@/lib/normalizar-texto'
 
 export default function AreasPage() {
   const [areas, setAreas] = useState<Area[]>([])
@@ -29,6 +31,7 @@ export default function AreasPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [areaEditando, setAreaEditando] = useState<Area | null>(null)
   const [areaAEliminar, setAreaAEliminar] = useState<Area | null>(null)
+  const [busqueda, setBusqueda] = useState('')
 
   const cargarAreas = async () => {
     setLoading(true)
@@ -46,6 +49,10 @@ export default function AreasPage() {
   useEffect(() => {
     cargarAreas()
   }, [])
+
+  const areasFiltradas = areas.filter(
+    (a) => coincide(a.nombre, busqueda) || coincide(a.ubicacion_nombre, busqueda),
+  )
 
   const abrirCrear = () => {
     setAreaEditando(null)
@@ -98,6 +105,12 @@ export default function AreasPage() {
         </Button>
       </div>
 
+      <SearchInput
+        value={busqueda}
+        onChange={setBusqueda}
+        placeholder="Buscar por nombre o ubicación..."
+      />
+
       <div className="max-w-2xl rounded-md border">
         <Table>
           <TableHeader>
@@ -117,15 +130,17 @@ export default function AreasPage() {
               </TableRow>
             )}
 
-            {!loading && areas.length === 0 && (
+            {!loading && areasFiltradas.length === 0 && (
               <TableRow>
                 <TableCell colSpan={4} className="py-6 text-center text-sm text-muted-foreground">
-                  No hay áreas todavía. Crea la primera.
+                  {busqueda
+                    ? 'No se encontraron áreas con ese criterio.'
+                    : 'No hay áreas todavía. Crea la primera.'}
                 </TableCell>
               </TableRow>
             )}
 
-            {areas.map((area) => (
+            {areasFiltradas.map((area) => (
               <TableRow key={area.id}>
                 <TableCell className="py-2 text-sm font-medium">{area.nombre}</TableCell>
                 <TableCell className="py-2 text-sm text-muted-foreground">

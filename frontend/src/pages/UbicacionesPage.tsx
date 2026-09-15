@@ -22,6 +22,8 @@ import {
   type Ubicacion,
   type UbicacionInput,
 } from '@/api/ubicaciones'
+import { SearchInput } from '@/components/search-input'
+import { coincide } from '@/lib/normalizar-texto'
 
 const badgeVariantPorTipo: Record<Ubicacion['tipo'], 'default' | 'secondary' | 'outline'> = {
   sede: 'default',
@@ -36,6 +38,7 @@ export default function UbicacionesPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [ubicacionEditando, setUbicacionEditando] = useState<Ubicacion | null>(null)
   const [ubicacionAEliminar, setUbicacionAEliminar] = useState<Ubicacion | null>(null)
+  const [busqueda, setBusqueda] = useState('')
 
   const cargarUbicaciones = async () => {
     setLoading(true)
@@ -52,6 +55,10 @@ export default function UbicacionesPage() {
   useEffect(() => {
     cargarUbicaciones()
   }, [])
+
+  const ubicacionesFiltradas = ubicaciones.filter(
+    (u) => coincide(u.nombre, busqueda) || coincide(u.ubicacion_padre_nombre, busqueda),
+  )
 
   const abrirCrear = () => {
     setUbicacionEditando(null)
@@ -114,6 +121,12 @@ export default function UbicacionesPage() {
         </Button>
       </div>
 
+      <SearchInput
+        value={busqueda}
+        onChange={setBusqueda}
+        placeholder="Buscar por nombre o ubicación padre..."
+      />
+
       <div className="max-w-3xl rounded-md border">
         <Table>
           <TableHeader>
@@ -133,15 +146,17 @@ export default function UbicacionesPage() {
               </TableRow>
             )}
 
-            {!loading && ubicaciones.length === 0 && (
+            {!loading && ubicacionesFiltradas.length === 0 && (
               <TableRow>
                 <TableCell colSpan={4} className="py-6 text-center text-sm text-muted-foreground">
-                  No hay ubicaciones todavía. Crea la primera.
+                  {busqueda
+                    ? 'No se encontraron ubicaciones con ese criterio.'
+                    : 'No hay ubicaciones todavía. Crea la primera.'}
                 </TableCell>
               </TableRow>
             )}
 
-            {ubicaciones.map((ubicacion) => (
+            {ubicacionesFiltradas.map((ubicacion) => (
               <TableRow key={ubicacion.id}>
                 <TableCell className="py-2 text-sm font-medium">{ubicacion.nombre}</TableCell>
                 <TableCell className="py-2">

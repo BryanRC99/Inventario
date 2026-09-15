@@ -13,6 +13,7 @@ import ProveedoresPage from './pages/ProveedoresPage'
 import UsuariosPage from './pages/UsuariosPage'
 import AreasPage from './pages/AreasPage'
 import MisActivosPage from './pages/MisActivosPage'
+import AuditoriaPage from './pages/AuditoriaPage'
 import ProtectedRoute from './components/ProtectedRoute'
 import { RoleGuard } from './components/admin-route'
 import DashboardLayout from './layouts/DashboardLayout'
@@ -126,6 +127,14 @@ function App() {
           element={
             <RoleGuard rolesPermitidos={['admin']} redirectTo="/mis-activos">
               <AreasPage />
+            </RoleGuard>
+          }
+        />
+        <Route
+          path="/auditoria"
+          element={
+            <RoleGuard rolesPermitidos={['admin']} redirectTo="/mis-activos">
+              <AuditoriaPage />
             </RoleGuard>
           }
         />

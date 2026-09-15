@@ -20,6 +20,8 @@ import {
   type Proveedor,
   type ProveedorInput,
 } from '@/api/proveedores'
+import { SearchInput } from '@/components/search-input'
+import { coincide } from '@/lib/normalizar-texto'
 
 export default function ProveedoresPage() {
   const [proveedores, setProveedores] = useState<Proveedor[]>([])
@@ -27,6 +29,7 @@ export default function ProveedoresPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [proveedorEditando, setProveedorEditando] = useState<Proveedor | null>(null)
   const [proveedorAEliminar, setProveedorAEliminar] = useState<Proveedor | null>(null)
+  const [busqueda, setBusqueda] = useState('')
 
   const cargarProveedores = async () => {
     setLoading(true)
@@ -43,6 +46,10 @@ export default function ProveedoresPage() {
   useEffect(() => {
     cargarProveedores()
   }, [])
+
+  const proveedoresFiltrados = proveedores.filter(
+    (p) => coincide(p.nombre, busqueda) || coincide(p.ruc, busqueda) || coincide(p.contacto, busqueda),
+  )
 
   const abrirCrear = () => {
     setProveedorEditando(null)
@@ -102,6 +109,12 @@ export default function ProveedoresPage() {
         </Button>
       </div>
 
+      <SearchInput
+        value={busqueda}
+        onChange={setBusqueda}
+        placeholder="Buscar por nombre, RUC o contacto..."
+      />
+
       <div className="max-w-5xl rounded-md border">
         <Table>
           <TableHeader>
@@ -121,15 +134,17 @@ export default function ProveedoresPage() {
               </TableRow>
             )}
 
-            {!loading && proveedores.length === 0 && (
+            {!loading && proveedoresFiltrados.length === 0 && (
               <TableRow>
                 <TableCell colSpan={4} className="py-6 text-center text-sm text-muted-foreground">
-                  No hay proveedores todavía. Crea el primero.
+                  {busqueda
+                    ? 'No se encontraron proveedores con ese criterio.'
+                    : 'No hay proveedores todavía. Crea el primero.'}
                 </TableCell>
               </TableRow>
             )}
 
-            {proveedores.map((proveedor) => (
+            {proveedoresFiltrados.map((proveedor) => (
               <TableRow key={proveedor.id}>
                 <TableCell className="py-2 text-sm font-medium">{proveedor.nombre}</TableCell>
                 <TableCell className="py-2 text-sm font-mono text-muted-foreground">

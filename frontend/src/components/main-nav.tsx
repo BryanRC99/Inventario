@@ -12,6 +12,7 @@ import {
   Users,
   Wrench,
   Building2,
+  ShieldCheck,
 } from 'lucide-react'
 
 import {
@@ -53,6 +54,7 @@ const navAdmin: NavItem[] = [
   { titulo: 'Proveedores', url: '/proveedores', icon: Truck },
   { titulo: 'Usuarios', url: '/usuarios', icon: UserCog },
   { titulo: 'Áreas', url: '/areas', icon: Building2 },
+  { titulo: 'Auditoría', url: '/auditoria', icon: ShieldCheck },
 ]
 
 function navLinkClassName({ isActive }: { isActive: boolean }) {
@@ -116,7 +118,9 @@ export function MainNav() {
 
   const navAdminVisible = esAdmin
     ? navAdmin
-    : navAdmin.filter((item) => item.url !== '/usuarios' && item.url !== '/areas')
+    : navAdmin.filter(
+      (item) => item.url !== '/usuarios' && item.url !== '/areas' && item.url !== '/auditoria',
+    )
 
   return (
     <div className="flex flex-col gap-0">
