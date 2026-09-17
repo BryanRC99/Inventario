@@ -22,7 +22,7 @@ class Categoria(models.Model):
         verbose_name = 'Categoría'
         verbose_name_plural = 'Categorías'
 
-    def _str_(self):
+    def __str__(self):
         return self.nombre
 
 
@@ -50,7 +50,7 @@ class Ubicacion(models.Model):
         verbose_name = 'Ubicación'
         verbose_name_plural = 'Ubicaciones'
 
-    def _str_(self):
+    def __str__(self):
         return self.nombre
 
 
@@ -95,5 +95,5 @@ class Activo(models.Model):
         verbose_name = 'Activo'
         verbose_name_plural = 'Activos'
 
-    def _str_(self):
+    def __str__(self):
         return f'{self.codigo_interno} - {self.nombre}'
