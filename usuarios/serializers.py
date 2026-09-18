@@ -27,7 +27,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         except Exception:
             # Login fallido: guardamos el username que se intentó usar,
             # aunque no exista o la contraseña esté mal, para poder
-            # detectar intentos de fuerza bruta después.
+            # detectar ataques de fuerza bruta despues
             registrar_auditoria(
                 accion='login_fallido',
                 modelo='Usuario',

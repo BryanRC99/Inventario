@@ -3,7 +3,7 @@ from django.db.models.signals import post_delete, post_save, pre_save
 from .utils import calcular_cambios, registrar_auditoria
 
 # Guarda temporalmente el estado "antes" de un objeto entre pre_save y
-# post_save, para poder calcular qué campos cambiaron.
+# post_save, para poder saber que campos cambiaron
 _ESTADOS_PREVIOS = {}
 
 

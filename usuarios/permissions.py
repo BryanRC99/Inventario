@@ -8,7 +8,7 @@ class PermisoPorRol(BasePermission):
     - Crear/editar (POST, PUT, PATCH): Admin y Operador.
     - Borrar (DELETE): solo Admin (o superusuario de Django).
     """
-
+    
     def has_permission(self, request, view):
         user = request.user
         if not user or not user.is_authenticated:
