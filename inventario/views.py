@@ -15,7 +15,7 @@ class CategoriaViewSet(viewsets.ModelViewSet):
     serializer_class = CategoriaSerializer
     permission_classes = [PermisoPorRol]
 
-
+    
 class UbicacionViewSet(viewsets.ModelViewSet):
     queryset = Ubicacion.objects.select_related('ubicacion_padre').all()
     serializer_class = UbicacionSerializer
