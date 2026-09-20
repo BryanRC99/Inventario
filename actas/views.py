@@ -26,5 +26,8 @@ class ActaEntregaViewSet(viewsets.ModelViewSet):
             return base.filter(persona=persona)
 
         return base.filter(
-            Q(generado_por=user) | Q(persona__area=user.area) | Q(activo__creado_por=user)
+            Q(generado_por=user)
+            | Q(persona__area=user.area)
+            | Q(activo__creado_por=user)
+            | Q(activo__area_creador=user.area)
         ).distinct()

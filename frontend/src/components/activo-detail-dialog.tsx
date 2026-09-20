@@ -81,6 +81,15 @@ export function ActivoDetailDialog({ open, onOpenChange, activo }: ActivoDetailD
                 </Badge>
               </span>
 
+              {activo.estado === 'dado_de_baja' && (
+                <>
+                  <span className="text-muted-foreground">Fecha de baja</span>
+                  <span>{activo.fecha_baja}</span>
+                  <span className="text-muted-foreground">Motivo de baja</span>
+                  <span>{activo.motivo_baja}</span>
+                </>
+              )}
+
               <span className="text-muted-foreground">Proveedor</span>
               <span>{activo.proveedor_nombre || '—'}</span>
 

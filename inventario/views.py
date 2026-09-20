@@ -3,6 +3,8 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework import status
+from rest_framework.response import Response
 
 from usuarios.permissions import PermisoPorRol
 
@@ -33,6 +35,23 @@ class ActivoViewSet(viewsets.ModelViewSet):
         base = Activo.objects.select_related('categoria', 'ubicacion', 'proveedor')
         return activos_visibles(self.request.user, base)
 
+    def destroy(self, request, *args, **kwargs):
+        from django.db.models import ProtectedError
+
+        try:
+            return super().destroy(request, *args, **kwargs)
+        except ProtectedError:
+            return Response(
+                {
+                    'detail': (
+                        'No se puede eliminar este activo porque tiene custodias, '
+                        'movimientos, mantenimientos o actas asociadas. '
+                        'Si ya no está en uso, cambia su estado a "Dado de baja" en su lugar.'
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
     @action(detail=True, methods=['get'])
     def etiqueta(self, request, pk=None):
         from django.http import HttpResponse
@@ -45,6 +64,58 @@ class ActivoViewSet(viewsets.ModelViewSet):
         response = HttpResponse(pdf_bytes, content_type='application/pdf')
         response['Content-Disposition'] = f'inline; filename="etiqueta_{activo.codigo_interno}.pdf"'
         return response
+
+    @action(detail=True, methods=['post'])
+    def dar_de_baja(self, request, pk=None):
+        from datetime import date
+
+        from custodia.models import Custodia
+        from trazabilidad.utils import registrar_movimiento
+
+        activo = self.get_object()
+
+        if activo.estado == Activo.Estado.DADO_DE_BAJA:
+            return Response(
+                {'detail': 'Este activo ya está dado de baja.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        motivo = request.data.get('motivo', '').strip()
+        if not motivo:
+            return Response(
+                {'detail': 'Debes indicar un motivo para dar de baja el activo.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        hoy = date.today()
+
+        # Cierra automáticamente cualquier custodia activa: un activo dado
+        # de baja no puede seguir figurando como asignado a alguien.
+        custodias_activas = Custodia.objects.filter(activo=activo, fecha_fin__isnull=True)
+        for custodia in custodias_activas:
+            custodia.fecha_fin = hoy
+            custodia.save(update_fields=['fecha_fin'])
+            titular = custodia.persona.nombre_completo if custodia.persona else custodia.area.nombre
+            registrar_movimiento(
+                activo=activo,
+                tipo_evento='devolucion',
+                usuario=request.user,
+                observaciones=f'Custodia finalizada automáticamente por baja del activo (custodio: {titular}).',
+            )
+
+        activo.estado = Activo.Estado.DADO_DE_BAJA
+        activo.motivo_baja = motivo
+        activo.fecha_baja = hoy
+        activo.save(update_fields=['estado', 'motivo_baja', 'fecha_baja'])
+
+        registrar_movimiento(
+            activo=activo,
+            tipo_evento='baja',
+            usuario=request.user,
+            observaciones=motivo,
+        )
+
+        return Response(self.get_serializer(activo).data)
 
 class DashboardView(APIView):
     """GET /api/inventario/dashboard/ -> números y gráficas del panel principal."""

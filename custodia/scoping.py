@@ -12,5 +12,8 @@ def custodias_visibles(user, queryset):
         return queryset.filter(persona=persona)
 
     return queryset.filter(
-        Q(area=user.area) | Q(persona__area=user.area) | Q(activo__creado_por=user)
+        Q(area=user.area)
+        | Q(persona__area=user.area)
+        | Q(activo__creado_por=user)
+        | Q(activo__area_creador=user.area)
     ).distinct()

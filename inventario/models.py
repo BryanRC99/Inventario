@@ -79,6 +79,16 @@ class Activo(models.Model):
     )
     fecha_fin_garantia = models.DateField(null=True, blank=True)
     estado = models.CharField(max_length=20, choices=Estado.choices, default=Estado.ACTIVO)
+    motivo_baja = models.CharField(max_length=255, blank=True)
+    fecha_baja = models.DateField(null=True, blank=True)
+    area_creador = models.ForeignKey(
+        'areas.Area',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='activos',
+        help_text='Área del usuario que creó este activo. Todos los de esa área pueden verlo.',
+    )
     ubicacion = models.ForeignKey(Ubicacion, on_delete=models.PROTECT, related_name='activos')
     especificaciones = models.JSONField(null=True, blank=True)
     creado_por = models.ForeignKey(

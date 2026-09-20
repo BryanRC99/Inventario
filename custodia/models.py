@@ -11,7 +11,7 @@ class Custodia(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     activo = models.ForeignKey(
-        'inventario.Activo', on_delete=models.CASCADE, related_name='custodias'
+        'inventario.Activo', on_delete=models.PROTECT, related_name='custodias'
     )
     persona = models.ForeignKey(
         'personas.Persona',
@@ -50,9 +50,6 @@ class Custodia(models.Model):
         if self.persona and self.area:
             raise ValidationError('Elige solo persona O área, no ambos a la vez.')
 
-        # La regla central del sistema: si la categoría del activo exige
-        # custodio único, no puede haber dos custodias activas (fecha_fin
-        # vacía) al mismo tiempo para ese mismo activo.
         if self.activo_id and self.fecha_fin is None:
             categoria = self.activo.categoria
             if categoria.requiere_custodio_unico:

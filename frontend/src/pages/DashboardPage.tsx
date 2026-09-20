@@ -44,27 +44,35 @@ export default function DashboardPage() {
   const resumen = [
     {
       titulo: 'Activos totales',
+      descripcion: 'Equipos registrados en el sistema',
       valor: data?.total_activos ?? '—',
       icon: Boxes,
-      color: 'bg-blue-500/10 text-blue-500',
+      barra: 'bg-blue-500',
+      icono: 'bg-blue-500/10 text-blue-500',
     },
     {
       titulo: 'Custodias activas',
+      descripcion: 'Activos actualmente asignados',
       valor: data?.custodias_activas ?? '—',
       icon: ClipboardList,
-      color: 'bg-emerald-500/10 text-emerald-500',
+      barra: 'bg-emerald-500',
+      icono: 'bg-emerald-500/10 text-emerald-500',
     },
     {
       titulo: 'En mantenimiento',
+      descripcion: 'Equipos fuera de servicio temporal',
       valor: data?.en_mantenimiento ?? '—',
       icon: Wrench,
-      color: 'bg-amber-500/10 text-amber-500',
+      barra: 'bg-amber-500',
+      icono: 'bg-amber-500/10 text-amber-500',
     },
     {
       titulo: 'Garantías por vencer',
+      descripcion: 'Próximos 30 días',
       valor: data?.garantias_por_vencer ?? '—',
       icon: AlertTriangle,
-      color: 'bg-red-500/10 text-red-500',
+      barra: 'bg-red-500',
+      icono: 'bg-red-500/10 text-red-500',
     },
   ]
 
@@ -79,15 +87,19 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {resumen.map((item) => (
-          <Card key={item.titulo}>
-            <CardContent className="flex items-center gap-4">
-              <div className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${item.color}`}>
-                <item.icon className="size-5" />
+          <Card key={item.titulo} className="relative overflow-hidden pt-0">
+            <div className={`absolute inset-x-0 top-0 h-1 ${item.barra}`} />
+            <CardHeader className="flex flex-row items-center justify-between pt-5 pb-0">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                {item.titulo}
+              </CardTitle>
+              <div className={`flex size-9 shrink-0 items-center justify-center rounded-lg ${item.icono}`}>
+                <item.icon className="size-4.5" />
               </div>
-              <div>
-                <p className="text-2xl font-semibold leading-none">{item.valor}</p>
-                <p className="text-sm text-muted-foreground">{item.titulo}</p>
-              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold tracking-tight">{item.valor}</div>
+              <p className="mt-1 text-xs text-muted-foreground">{item.descripcion}</p>
             </CardContent>
           </Card>
         ))}

@@ -16,7 +16,7 @@ class Movimiento(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     activo = models.ForeignKey(
-        'inventario.Activo', on_delete=models.CASCADE, related_name='movimientos'
+        'inventario.Activo', on_delete=models.PROTECT, related_name='movimientos'
     )
     tipo_evento = models.CharField(max_length=30, choices=TipoEvento.choices)
     usuario = models.ForeignKey(
@@ -55,7 +55,7 @@ class Movimiento(models.Model):
 class Mantenimiento(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     activo = models.ForeignKey(
-        'inventario.Activo', on_delete=models.CASCADE, related_name='mantenimientos'
+        'inventario.Activo', on_delete=models.PROTECT, related_name='mantenimientos'
     )
     proveedor = models.ForeignKey(
         'proveedores.Proveedor',

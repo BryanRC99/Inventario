@@ -29,6 +29,7 @@ class MovimientoViewSet(viewsets.ModelViewSet):
 
         return base.filter(
             Q(activo__creado_por=user)
+            | Q(activo__area_creador=user.area)
             | Q(activo__custodias__area=user.area)
             | Q(activo__custodias__persona__area=user.area)
         ).distinct()
@@ -54,6 +55,7 @@ class MantenimientoViewSet(viewsets.ModelViewSet):
 
         return base.filter(
             Q(activo__creado_por=user)
+            | Q(activo__area_creador=user.area)
             | Q(activo__custodias__area=user.area)
             | Q(activo__custodias__persona__area=user.area)
         ).distinct()

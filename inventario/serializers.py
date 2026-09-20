@@ -25,7 +25,7 @@ class UbicacionSerializer(serializers.ModelSerializer):
         if self.instance and value and value.id == self.instance.id:
             raise serializers.ValidationError('Una ubicación no puede ser su propio padre.')
         return value
-    
+
 
 class ActivoSerializer(serializers.ModelSerializer):
     categoria_nombre = serializers.CharField(source='categoria.nombre', read_only=True)
@@ -34,6 +34,9 @@ class ActivoSerializer(serializers.ModelSerializer):
         source='proveedor.nombre', read_only=True, default=None
     )
     estado_display = serializers.CharField(source='get_estado_display', read_only=True)
+    area_creador_nombre = serializers.CharField(
+        source='area_creador.nombre', read_only=True, default=None
+    )
 
     class Meta:
         model = Activo
@@ -57,9 +60,10 @@ class ActivoSerializer(serializers.ModelSerializer):
             'ubicacion_nombre',
             'especificaciones',
             'creado_por',
+            'area_creador_nombre',
             'fecha_creacion',
         ]
-        read_only_fields = ['codigo_interno', 'creado_por', 'fecha_creacion']
+        read_only_fields = ['codigo_interno', 'creado_por', 'fecha_creacion', 'motivo_baja', 'fecha_baja']
 
     def generar_codigo_interno(self, categoria):
         prefijo = categoria.prefijo
@@ -85,6 +89,7 @@ class ActivoSerializer(serializers.ModelSerializer):
 
         usuario = self.context['request'].user
         validated_data['creado_por'] = usuario
+        validated_data['area_creador'] = usuario.area
         validated_data['codigo_interno'] = self.generar_codigo_interno(validated_data['categoria'])
 
         activo = super().create(validated_data)

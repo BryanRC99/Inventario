@@ -23,6 +23,8 @@ export interface Activo {
   especificaciones: Record<string, unknown> | null
   creado_por: string | null
   fecha_creacion: string
+  motivo_baja: string
+  fecha_baja: string | null
 }
 
 export type ActivoInput = {
@@ -70,5 +72,10 @@ export async function obtenerEtiquetaPdf(activoId: string): Promise<Blob> {
   const { data } = await api.get(`/inventario/activos/${activoId}/etiqueta/`, {
     responseType: 'blob',
   })
+  return data
+}
+
+export async function darDeBajaActivo(id: string, motivo: string): Promise<Activo> {
+  const { data } = await api.post(`/inventario/activos/${id}/dar_de_baja/`, { motivo })
   return data
 }

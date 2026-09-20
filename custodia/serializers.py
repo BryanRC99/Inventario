@@ -39,15 +39,16 @@ class CustodiaSerializer(serializers.ModelSerializer):
 
 
     def validate(self, attrs):
-      if self.instance:
-        instance = copy.copy(self.instance)
-        for attr, value in attrs.items():
-            setattr(instance, attr, value)
-      else:
-        instance = Custodia(**attrs)
+        activo = attrs.get('activo') or (self.instance.activo if self.instance else None)
+        if activo and activo.estado == 'dado_de_baja' and not attrs.get('fecha_fin'):
+            raise serializers.ValidationError(
+                'No se puede asignar una custodia activa a un activo dado de baja.'
+            )
 
-      instance.clean()
-      return attrs
+        instance = Custodia(**{**(self.instance.__dict__ if self.instance else {}), **attrs})
+        instance.pk = self.instance.pk if self.instance else None
+        instance.clean()
+        return attrs
 
     def create(self, validated_data):
         from trazabilidad.utils import registrar_movimiento
