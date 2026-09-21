@@ -52,6 +52,98 @@ class ActivoViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+    @action(detail=False, methods=['get'])
+    def plantilla_importacion(self, request):
+        from django.http import HttpResponse
+
+        from .importacion import generar_plantilla_excel
+
+        contenido = generar_plantilla_excel()
+        response = HttpResponse(
+            contenido,
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+        response['Content-Disposition'] = 'attachment; filename="plantilla_activos.xlsx"'
+        return response
+
+    @action(detail=False, methods=['post'])
+    def validar_importacion(self, request):
+        from .importacion import validar_archivo
+
+        archivo = request.FILES.get('archivo')
+        if not archivo:
+            return Response({'detail': 'Debes subir un archivo.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            filas = validar_archivo(archivo)
+        except Exception:
+            return Response(
+                {'detail': 'No se pudo leer el archivo. Verifica que sea el formato de la plantilla.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Guardamos temporalmente los datos ya validados en sesión-less
+        # token: en vez de eso, devolvemos todo al frontend y que nos lo
+        # reenvíe en confirmar_importacion (más simple, sin estado en servidor).
+        return Response(
+            {
+                'total': len(filas),
+                'validas': sum(1 for f in filas if f['valido']),
+                'invalidas': sum(1 for f in filas if not f['valido']),
+                'filas': [
+                    {'fila': f['fila'], 'valido': f['valido'], 'errores': f['errores'], 'datos_mostrar': f['datos_mostrar']}
+                    for f in filas
+                ],
+            }
+        )
+
+    @action(detail=False, methods=['post'])
+    def confirmar_importacion(self, request):
+        from .importacion import validar_archivo
+
+        archivo = request.FILES.get('archivo')
+        if not archivo:
+            return Response({'detail': 'Debes subir un archivo.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        filas = validar_archivo(archivo)
+        creados = []
+        errores_finales = []
+
+        for f in filas:
+            if not f['valido']:
+                errores_finales.append({'fila': f['fila'], 'errores': f['errores']})
+                continue
+
+            datos = f['datos']
+            serializer = ActivoSerializer(
+                data={
+                    'nombre': datos['nombre'],
+                    'categoria': datos['categoria'].id,
+                    'ubicacion': datos['ubicacion'].id,
+                    'marca': datos['marca'],
+                    'modelo': datos['modelo'],
+                    'numero_serie': datos['numero_serie'],
+                    'estado': datos['estado'],
+                    'proveedor': datos['proveedor'].id if datos.get('proveedor') else None,
+                    'fecha_adquisicion': datos['fecha_adquisicion'],
+                    'fecha_fin_garantia': datos['fecha_fin_garantia'],
+                    'valor_adquisicion': datos.get('valor_adquisicion'),
+                },
+                context={'request': request},
+            )
+            if serializer.is_valid():
+                serializer.save()
+                creados.append(f['fila'])
+            else:
+                errores_finales.append({'fila': f['fila'], 'errores': list(serializer.errors.values())})
+
+        return Response(
+            {
+                'creados': len(creados),
+                'errores': errores_finales,
+            }
+        )
+
     @action(detail=True, methods=['get'])
     def etiqueta(self, request, pk=None):
         from django.http import HttpResponse

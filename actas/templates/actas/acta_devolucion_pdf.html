@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+
+<style>
+  @page { size: A4; margin: 1.6cm 1.8cm; }
+  * { box-sizing: border-box; }
+  body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9.5px; color: #1f2937; line-height: 1.4; margin: 0; }
+
+  .encabezado { display: flex; align-items: center; min-height: 72px; padding-bottom: 12px; margin-bottom: 18px; border-bottom: 2px solid #111827; }
+  .logo { width: 95px; min-width: 95px; max-height: 65px; object-fit: contain; object-position: left center; margin-right: 18px; }
+  .identidad { flex: 1; }
+  .titulo { margin: 0; font-size: 16px; line-height: 1.2; font-weight: 700; color: #111827; text-transform: uppercase; letter-spacing: .3px; }
+  .subtitulo { margin: 5px 0 0; font-size: 8.5px; color: #6b7280; }
+  .referencia { width: 100px; min-width: 100px; padding-left: 14px; border-left: 1px solid #d1d5db; text-align: right; }
+  .referencia-label { font-size: 7px; color: #6b7280; text-transform: uppercase; letter-spacing: .6px; margin-bottom: 3px; }
+  .referencia-numero { font-size: 10px; font-weight: 700; color: #111827; word-break: break-all; }
+  .referencia-fecha { margin-top: 3px; font-size: 8px; color: #6b7280; }
+
+  .introduccion { margin: 0 0 16px; font-size: 9.5px; line-height: 1.5; color: #374151; }
+  .introduccion strong { color: #111827; }
+
+  .seccion { margin-bottom: 15px; }
+  .seccion-titulo { display: flex; align-items: center; margin-bottom: 7px; padding-bottom: 5px; border-bottom: 1px solid #d1d5db; }
+  .seccion-numero { width: 20px; height: 20px; line-height: 20px; margin-right: 7px; background: #111827; color: #ffffff; border-radius: 3px; text-align: center; font-size: 7.5px; font-weight: 700; }
+  .seccion-titulo-texto { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: #111827; }
+
+  table.datos { width: 100%; border-collapse: collapse; }
+  table.datos td { padding: 5px 6px; vertical-align: top; border-bottom: 1px solid #f0f0f1; }
+  table.datos tr:last-child td { border-bottom: none; }
+  table.datos td.label { width: 28%; color: #6b7280; font-size: 8.2px; }
+  table.datos td.valor { color: #111827; font-size: 9.2px; font-weight: 600; }
+
+  .activo { border: 1px solid #d1d5db; border-left: 4px solid #111827; border-radius: 3px; overflow: hidden; }
+  .activo-principal { padding: 9px 11px; background: #f9fafb; border-bottom: 1px solid #e5e7eb; }
+  .activo-label { font-size: 7px; color: #6b7280; text-transform: uppercase; letter-spacing: .6px; margin-bottom: 2px; }
+  .activo-nombre { font-size: 11.5px; font-weight: 700; color: #111827; }
+  .activo-codigo { margin-top: 3px; font-size: 8px; color: #6b7280; }
+  .activo-datos { padding: 2px 6px; }
+
+  .custodio { border: 1px solid #d1d5db; border-radius: 3px; padding: 2px 6px; }
+
+  .observaciones { min-height: 55px; padding: 9px 11px; border: 1px solid #d1d5db; border-radius: 3px; background: #fafafa; font-size: 9px; color: #374151; }
+  .observaciones-vacio { color: #9ca3af; font-style: italic; }
+
+  .responsabilidad { margin-top: 4px; padding: 9px 11px; border: 1px solid #d1d5db; border-radius: 3px; background: #f9fafb; }
+  .responsabilidad-titulo { margin-bottom: 4px; font-size: 7.5px; font-weight: 700; color: #111827; text-transform: uppercase; letter-spacing: .6px; }
+  .responsabilidad-texto { margin: 0; font-size: 8.8px; line-height: 1.45; color: #374151; }
+
+  .firmas { display: flex; gap: 55px; margin-top: 55px; page-break-inside: avoid; }
+  .firma { flex: 1; text-align: center; }
+  .espacio-firma { height: 38px; }
+  .firma-linea { height: 1px; width: 100%; background: #111827; margin-bottom: 6px; }
+  .firma-nombre { min-height: 14px; font-size: 9px; font-weight: 700; color: #111827; }
+  .firma-cargo { margin-top: 2px; font-size: 8px; color: #6b7280; line-height: 1.35; }
+  .firma-documento { margin-top: 2px; font-size: 7.5px; color: #9ca3af; }
+
+  .pie { margin-top: 20px; padding-top: 6px; border-top: 1px solid #e5e7eb; text-align: center; font-size: 7px; color: #9ca3af; }
+
+  .contenido { page-break-inside: auto; }
+  .no-break { page-break-inside: avoid; }
+</style>
+</head>
+
+<body>
+<div class="contenido">
+
+  <div class="encabezado">
+    {% if logo_uri %}<img class="logo" src="{{ logo_uri }}" alt="Logo">{% endif %}
+    <div class="identidad">
+      <h1 class="titulo">Acta de Devolución de Equipo</h1>
+      <p class="subtitulo">Registro de cierre de custodia de activo</p>
+    </div>
+    <div class="referencia">
+      <div class="referencia-label">Acta N.º</div>
+      <div class="referencia-numero">{{ acta.id|stringformat:"s"|slice:":8" }}</div>
+      <div class="referencia-fecha">{{ acta.fecha|date:"d/m/Y" }}</div>
+    </div>
+  </div>
+
+  <p class="introduccion">
+    Se deja constancia de la devolución del equipo identificado en la presente
+    acta por parte de <strong>{{ acta.persona.nombre_completo }}</strong>,
+    quien hasta la fecha mantenía la custodia del bien, dando así por
+    finalizada su responsabilidad sobre el mismo conforme a las condiciones
+    registradas en este documento.
+  </p>
+
+  <div class="seccion no-break">
+    <div class="seccion-titulo">
+      <div class="seccion-numero">01</div>
+      <div class="seccion-titulo-texto">Equipo / Activo</div>
+    </div>
+
+    <div class="activo">
+      <div class="activo-principal">
+        <div class="activo-label">Bien devuelto</div>
+        <div class="activo-nombre">{{ acta.activo.nombre }}</div>
+        <div class="activo-codigo">Código interno: <strong>{{ acta.activo.codigo_interno }}</strong></div>
+      </div>
+      <div class="activo-datos">
+        <table class="datos">
+          <tr><td class="label">Categoría</td><td class="valor">{{ acta.activo.categoria.nombre }}</td></tr>
+          <tr><td class="label">Marca / Modelo</td><td class="valor">{{ acta.activo.marca|default:"—" }}{% if acta.activo.modelo %} / {{ acta.activo.modelo }}{% endif %}</td></tr>
+          <tr><td class="label">Número de serie</td><td class="valor">{{ acta.activo.numero_serie|default:"—" }}</td></tr>
+          <tr><td class="label">Ubicación de destino</td><td class="valor">{{ acta.activo.ubicacion.nombre }}</td></tr>
+          <tr><td class="label">Estado al momento de la devolución</td><td class="valor">{{ acta.activo.get_estado_display }}</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="seccion no-break">
+    <div class="seccion-titulo">
+      <div class="seccion-numero">02</div>
+      <div class="seccion-titulo-texto">Custodio que devuelve</div>
+    </div>
+
+    <div class="custodio">
+      <table class="datos">
+        <tr><td class="label">Nombre completo</td><td class="valor">{{ acta.persona.nombre_completo }}</td></tr>
+        <tr><td class="label">Documento de identidad</td><td class="valor">{{ acta.persona.documento }}</td></tr>
+        <tr><td class="label">Cargo</td><td class="valor">{{ acta.persona.cargo|default:"—" }}</td></tr>
+        <tr><td class="label">Área / Departamento</td><td class="valor">{{ acta.persona.area|default:"—" }}</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="seccion no-break">
+    <div class="seccion-titulo">
+      <div class="seccion-numero">03</div>
+      <div class="seccion-titulo-texto">Observaciones sobre el estado del equipo</div>
+    </div>
+
+    <div class="observaciones">
+      {% if acta.observaciones %}{{ acta.observaciones }}{% else %}<span class="observaciones-vacio">Sin observaciones.</span>{% endif %}
+    </div>
+  </div>
+
+  <div class="responsabilidad no-break">
+    <div class="responsabilidad-titulo">Cierre de responsabilidad</div>
+    <p class="responsabilidad-texto">
+      Se confirma la recepción del equipo antes descrito en las condiciones
+      señaladas en las observaciones. A partir de la firma de la presente
+      acta, el custodio queda liberado de responsabilidad sobre el bien,
+      la cual será reasignada según corresponda.
+    </p>
+  </div>
+
+  <div class="firmas">
+    <div class="firma">
+      <div class="espacio-firma"></div>
+      <div class="firma-linea"></div>
+      <div class="firma-nombre">{{ acta.persona.nombre_completo }}</div>
+      <div class="firma-cargo">Entregado por · Custodio saliente</div>
+      <div class="firma-documento">C.I. {{ acta.persona.documento }}</div>
+    </div>
+
+    <div class="firma">
+      <div class="espacio-firma"></div>
+      <div class="firma-linea"></div>
+      <div class="firma-nombre">&nbsp;</div>
+      <div class="firma-cargo">Recibido por</div>
+    </div>
+  </div>
+
+  <div class="pie">Documento de control interno · Acta de devolución de activo</div>
+
+</div>
+</body>
+</html>

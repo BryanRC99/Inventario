@@ -6,7 +6,7 @@
 <style>
   @page {
     size: A4;
-    margin: 1.8cm 2cm 1.8cm 2cm;
+    margin: 1.6cm 1.8cm;
   }
 
   * {
@@ -15,9 +15,9 @@
 
   body {
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-    font-size: 10px;
+    font-size: 9.5px;
     color: #1f2937;
-    line-height: 1.45;
+    line-height: 1.4;
     margin: 0;
   }
 
@@ -28,19 +28,19 @@
   .encabezado {
     display: flex;
     align-items: center;
-    min-height: 76px;
-    padding-bottom: 14px;
-    margin-bottom: 22px;
+    min-height: 72px;
+    padding-bottom: 12px;
+    margin-bottom: 18px;
     border-bottom: 2px solid #111827;
   }
 
   .logo {
-    width: 100px;
-    min-width: 100px;
-    max-height: 72px;
+    width: 95px;
+    min-width: 95px;
+    max-height: 65px;
     object-fit: contain;
     object-position: left center;
-    margin-right: 20px;
+    margin-right: 18px;
   }
 
   .identidad {
@@ -49,46 +49,46 @@
 
   .titulo {
     margin: 0;
-    font-size: 17px;
+    font-size: 16px;
     line-height: 1.2;
     font-weight: 700;
     color: #111827;
     text-transform: uppercase;
-    letter-spacing: .35px;
+    letter-spacing: .3px;
   }
 
   .subtitulo {
-    margin: 6px 0 0;
-    font-size: 9px;
+    margin: 5px 0 0;
+    font-size: 8.5px;
     color: #6b7280;
   }
 
   .referencia {
-    width: 105px;
-    min-width: 105px;
-    padding-left: 15px;
+    width: 100px;
+    min-width: 100px;
+    padding-left: 14px;
     border-left: 1px solid #d1d5db;
     text-align: right;
   }
 
   .referencia-label {
-    font-size: 7.5px;
+    font-size: 7px;
     color: #6b7280;
     text-transform: uppercase;
-    letter-spacing: .7px;
+    letter-spacing: .6px;
     margin-bottom: 3px;
   }
 
   .referencia-numero {
-    font-size: 10.5px;
+    font-size: 10px;
     font-weight: 700;
     color: #111827;
     word-break: break-all;
   }
 
   .referencia-fecha {
-    margin-top: 4px;
-    font-size: 8.5px;
+    margin-top: 3px;
+    font-size: 8px;
     color: #6b7280;
   }
 
@@ -98,10 +98,10 @@
      ========================================================= */
 
   .introduccion {
-    margin: 0 0 20px;
-    text-align: justify;
-    font-size: 10.2px;
-    line-height: 1.6;
+    margin: 0 0 16px;
+    font-size: 9.5px;
+    line-height: 1.5;
+    color: #374151;
   }
 
   .introduccion strong {
@@ -114,75 +114,41 @@
      ========================================================= */
 
   .seccion {
-    margin-bottom: 17px;
+    margin-bottom: 15px;
   }
 
   .seccion-titulo {
     display: flex;
     align-items: center;
-    margin-bottom: 8px;
-    padding-bottom: 6px;
+    margin-bottom: 7px;
+    padding-bottom: 5px;
     border-bottom: 1px solid #d1d5db;
   }
 
   .seccion-numero {
-    width: 21px;
-    height: 21px;
-    line-height: 21px;
-    margin-right: 8px;
+    width: 20px;
+    height: 20px;
+    line-height: 20px;
+    margin-right: 7px;
     background: #111827;
     color: #ffffff;
     border-radius: 3px;
     text-align: center;
-    font-size: 8px;
+    font-size: 7.5px;
     font-weight: 700;
   }
 
   .seccion-titulo-texto {
-    font-size: 9.5px;
+    font-size: 9px;
     font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .7px;
-    color: #111827;
-  }
-
-
-  /* =========================================================
-     ACTIVO DESTACADO
-     ========================================================= */
-
-  .activo-destacado {
-    padding: 10px 12px;
-    margin-bottom: 7px;
-    border: 1px solid #d1d5db;
-    border-left: 4px solid #111827;
-    background: #f9fafb;
-    border-radius: 3px;
-  }
-
-  .activo-destacado-label {
-    font-size: 7.5px;
-    color: #6b7280;
     text-transform: uppercase;
     letter-spacing: .6px;
-    margin-bottom: 3px;
-  }
-
-  .activo-destacado-nombre {
-    font-size: 12px;
-    font-weight: 700;
     color: #111827;
-  }
-
-  .activo-destacado-codigo {
-    margin-top: 3px;
-    font-size: 8.5px;
-    color: #6b7280;
   }
 
 
   /* =========================================================
-     TABLAS
+     DATOS GENERALES
      ========================================================= */
 
   table.datos {
@@ -190,29 +156,79 @@
     border-collapse: collapse;
   }
 
-  table.datos tr {
-    border-bottom: 1px solid #f0f0f1;
-  }
-
-  table.datos tr:last-child {
-    border-bottom: none;
-  }
-
   table.datos td {
     padding: 5px 6px;
     vertical-align: top;
+    border-bottom: 1px solid #f0f0f1;
+  }
+
+  table.datos tr:last-child td {
+    border-bottom: none;
   }
 
   table.datos td.label {
-    width: 31%;
+    width: 28%;
     color: #6b7280;
-    font-size: 8.8px;
+    font-size: 8.2px;
   }
 
   table.datos td.valor {
     color: #111827;
-    font-size: 9.5px;
+    font-size: 9.2px;
     font-weight: 600;
+  }
+
+
+  /* =========================================================
+     IDENTIFICACIÓN DEL ACTIVO
+     ========================================================= */
+
+  .activo {
+    border: 1px solid #d1d5db;
+    border-left: 4px solid #111827;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .activo-principal {
+    padding: 9px 11px;
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .activo-label {
+    font-size: 7px;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: .6px;
+    margin-bottom: 2px;
+  }
+
+  .activo-nombre {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #111827;
+  }
+
+  .activo-codigo {
+    margin-top: 3px;
+    font-size: 8px;
+    color: #6b7280;
+  }
+
+  .activo-datos {
+    padding: 2px 6px;
+  }
+
+
+  /* =========================================================
+     CUSTODIO
+     ========================================================= */
+
+  .custodio {
+    border: 1px solid #d1d5db;
+    border-radius: 3px;
+    padding: 2px 6px;
   }
 
 
@@ -221,57 +237,47 @@
      ========================================================= */
 
   .observaciones {
-    min-height: 42px;
-    padding: 10px 12px;
-    border: 1px solid #e5e7eb;
-    background: #fafafa;
+    min-height: 55px;
+    padding: 9px 11px;
+    border: 1px solid #d1d5db;
     border-radius: 3px;
-    font-size: 9.5px;
+    background: #fafafa;
+    font-size: 9px;
     color: #374151;
-    text-align: justify;
+  }
+
+  .observaciones-vacio {
+    color: #9ca3af;
+    font-style: italic;
   }
 
 
   /* =========================================================
-     DECLARACIÓN
+     RESPONSABILIDAD
      ========================================================= */
 
-  .declaracion {
-    margin-top: 21px;
-    padding: 13px 15px;
+  .responsabilidad {
+    margin-top: 4px;
+    padding: 9px 11px;
     border: 1px solid #d1d5db;
-    background: #f9fafb;
     border-radius: 3px;
+    background: #f9fafb;
   }
 
-  .declaracion-titulo {
-    margin-bottom: 7px;
-    font-size: 8.5px;
+  .responsabilidad-titulo {
+    margin-bottom: 4px;
+    font-size: 7.5px;
     font-weight: 700;
     color: #111827;
     text-transform: uppercase;
     letter-spacing: .6px;
   }
 
-  .declaracion-texto {
+  .responsabilidad-texto {
     margin: 0;
-    font-size: 9.3px;
-    line-height: 1.55;
+    font-size: 8.8px;
+    line-height: 1.45;
     color: #374151;
-    text-align: justify;
-  }
-
-
-  /* =========================================================
-     CONSTANCIA
-     ========================================================= */
-
-  .constancia {
-    margin: 15px 0 0;
-    font-size: 9.3px;
-    line-height: 1.55;
-    color: #374151;
-    text-align: justify;
   }
 
 
@@ -281,8 +287,8 @@
 
   .firmas {
     display: flex;
-    gap: 60px;
-    margin-top: 78px;
+    gap: 55px;
+    margin-top: 55px;
     page-break-inside: avoid;
   }
 
@@ -292,33 +298,47 @@
   }
 
   .espacio-firma {
-    height: 48px;
+    height: 38px;
   }
 
   .firma-linea {
     height: 1px;
     width: 100%;
     background: #111827;
-    margin-bottom: 7px;
+    margin-bottom: 6px;
   }
 
   .firma-nombre {
-    min-height: 15px;
-    font-size: 9.5px;
+    min-height: 14px;
+    font-size: 9px;
     font-weight: 700;
     color: #111827;
   }
 
   .firma-cargo {
-    margin-top: 3px;
-    font-size: 8.5px;
+    margin-top: 2px;
+    font-size: 8px;
     color: #6b7280;
-    line-height: 1.4;
+    line-height: 1.35;
   }
 
   .firma-documento {
     margin-top: 2px;
-    font-size: 8px;
+    font-size: 7.5px;
+    color: #9ca3af;
+  }
+
+
+  /* =========================================================
+     PIE
+     ========================================================= */
+
+  .pie {
+    margin-top: 20px;
+    padding-top: 6px;
+    border-top: 1px solid #e5e7eb;
+    text-align: center;
+    font-size: 7px;
     color: #9ca3af;
   }
 
@@ -329,6 +349,10 @@
 
   .contenido {
     page-break-inside: auto;
+  }
+
+  .no-break {
+    page-break-inside: avoid;
   }
 
 </style>
@@ -355,7 +379,7 @@
       </h1>
 
       <p class="subtitulo">
-        Acta de registro y custodia de activo
+        Registro de entrega y custodia de activo
       </p>
 
     </div>
@@ -384,7 +408,8 @@
        ======================================================= -->
 
   <p class="introduccion">
-    Por medio de la presente acta se deja constancia formal de la
+
+    Se deja constancia de la
     {% if acta.tipo == 'entrega' %}
       entrega
     {% elif acta.tipo == 'devolucion' %}
@@ -392,10 +417,11 @@
     {% else %}
       transferencia
     {% endif %}
-    del equipo descrito en el presente documento a favor de
-    <strong>{{ acta.persona.nombre_completo }}</strong>, quien asume la
-    responsabilidad de su custodia y declara recibir el bien de conformidad
-    con las características y condiciones aquí consignadas.
+    del equipo identificado en la presente acta a
+    <strong>{{ acta.persona.nombre_completo }}</strong>,
+    quien recibe el bien y asume su custodia conforme a las condiciones
+    registradas en este documento.
+
   </p>
 
 
@@ -403,130 +429,151 @@
        01. ACTIVO
        ======================================================= -->
 
-  <div class="seccion">
+  <div class="seccion no-break">
 
     <div class="seccion-titulo">
+
       <div class="seccion-numero">01</div>
+
       <div class="seccion-titulo-texto">
-        Identificación del activo
-      </div>
-    </div>
-
-    <div class="activo-destacado">
-
-      <div class="activo-destacado-label">
-        Bien asignado
-      </div>
-
-      <div class="activo-destacado-nombre">
-        {{ acta.activo.nombre }}
-      </div>
-
-      <div class="activo-destacado-codigo">
-        Código interno:
-        <strong>{{ acta.activo.codigo_interno }}</strong>
+        Equipo / Activo
       </div>
 
     </div>
 
-    <table class="datos">
 
-      <tr>
-        <td class="label">Categoría</td>
-        <td class="valor">
-          {{ acta.activo.categoria.nombre }}
-        </td>
-      </tr>
+    <div class="activo">
 
-      <tr>
-        <td class="label">Marca / Modelo</td>
-        <td class="valor">
-          {{ acta.activo.marca|default:"—" }}
-          {% if acta.activo.modelo %}
-            / {{ acta.activo.modelo }}
+      <div class="activo-principal">
+
+        <div class="activo-label">
+          Bien asignado
+        </div>
+
+        <div class="activo-nombre">
+          {{ acta.activo.nombre }}
+        </div>
+
+        <div class="activo-codigo">
+          Código interno:
+          <strong>{{ acta.activo.codigo_interno }}</strong>
+        </div>
+
+      </div>
+
+
+      <div class="activo-datos">
+
+        <table class="datos">
+
+          <tr>
+            <td class="label">Categoría</td>
+            <td class="valor">
+              {{ acta.activo.categoria.nombre }}
+            </td>
+          </tr>
+
+          <tr>
+            <td class="label">Marca / Modelo</td>
+            <td class="valor">
+              {{ acta.activo.marca|default:"—" }}
+              {% if acta.activo.modelo %}
+                / {{ acta.activo.modelo }}
+              {% endif %}
+            </td>
+          </tr>
+
+          <tr>
+            <td class="label">Número de serie</td>
+            <td class="valor">
+              {{ acta.activo.numero_serie|default:"—" }}
+            </td>
+          </tr>
+
+          <tr>
+            <td class="label">Ubicación</td>
+            <td class="valor">
+              {{ acta.activo.ubicacion.nombre }}
+            </td>
+          </tr>
+
+          <tr>
+            <td class="label">Estado</td>
+            <td class="valor">
+              {{ acta.activo.get_estado_display }}
+            </td>
+          </tr>
+
+          {% if acta.activo.fecha_fin_garantia %}
+          <tr>
+            <td class="label">Garantía</td>
+            <td class="valor">
+              Hasta el {{ acta.activo.fecha_fin_garantia|date:"d/m/Y" }}
+            </td>
+          </tr>
           {% endif %}
-        </td>
-      </tr>
 
-      <tr>
-        <td class="label">Número de serie</td>
-        <td class="valor">
-          {{ acta.activo.numero_serie|default:"—" }}
-        </td>
-      </tr>
+        </table>
 
-      <tr>
-        <td class="label">Ubicación asignada</td>
-        <td class="valor">
-          {{ acta.activo.ubicacion.nombre }}
-        </td>
-      </tr>
+      </div>
 
-      <tr>
-        <td class="label">Estado del activo</td>
-        <td class="valor">
-          {{ acta.activo.get_estado_display }}
-        </td>
-      </tr>
-
-      {% if acta.activo.fecha_fin_garantia %}
-      <tr>
-        <td class="label">Vigencia de garantía</td>
-        <td class="valor">
-          Hasta el {{ acta.activo.fecha_fin_garantia|date:"d/m/Y" }}
-        </td>
-      </tr>
-      {% endif %}
-
-    </table>
+    </div>
 
   </div>
 
 
   <!-- =======================================================
-       02. CUSTODIO
+       02. RESPONSABLE
        ======================================================= -->
 
-  <div class="seccion">
+  <div class="seccion no-break">
 
     <div class="seccion-titulo">
+
       <div class="seccion-numero">02</div>
+
       <div class="seccion-titulo-texto">
-        Identificación del custodio
+        Responsable / Custodio
       </div>
+
     </div>
 
-    <table class="datos">
 
-      <tr>
-        <td class="label">Nombre completo</td>
-        <td class="valor">
-          {{ acta.persona.nombre_completo }}
-        </td>
-      </tr>
+    <div class="custodio">
 
-      <tr>
-        <td class="label">Documento de identidad</td>
-        <td class="valor">
-          {{ acta.persona.documento }}
-        </td>
-      </tr>
+      <table class="datos">
 
-      <tr>
-        <td class="label">Cargo</td>
-        <td class="valor">
-          {{ acta.persona.cargo|default:"—" }}
-        </td>
-      </tr>
+        <tr>
+          <td class="label">Nombre completo</td>
+          <td class="valor">
+            {{ acta.persona.nombre_completo }}
+          </td>
+        </tr>
 
-      <tr>
-        <td class="label">Área / Departamento</td>
-        <td class="valor">
-          {{ acta.persona.area|default:"—" }}
-        </td>
-      </tr>
+        <tr>
+          <td class="label">Documento de identidad</td>
+          <td class="valor">
+            {{ acta.persona.documento }}
+          </td>
+        </tr>
 
-    </table>
+        <tr>
+          <td class="label">Cargo</td>
+          <td class="valor">
+            {{ acta.persona.cargo|default:"—" }}
+          </td>
+        </tr>
+
+        <tr>
+          <td class="label">Área / Departamento</td>
+          <td class="valor">
+            {{ acta.persona.area|default:"—" }}
+          </td>
+        </tr>
+
+      </table>
+
+    </div>
 
   </div>
 
@@ -535,70 +582,52 @@
        03. OBSERVACIONES
        ======================================================= -->
 
-  {% if acta.observaciones %}
-
-  <div class="seccion">
+  <div class="seccion no-break">
 
     <div class="seccion-titulo">
+
       <div class="seccion-numero">03</div>
+
       <div class="seccion-titulo-texto">
-        Observaciones y condiciones
+        Observaciones
       </div>
+
     </div>
 
+
     <div class="observaciones">
-      {{ acta.observaciones }}
+
+      {% if acta.observaciones %}
+        {{ acta.observaciones }}
+      {% else %}
+        <span class="observaciones-vacio">
+          Sin observaciones.
+        </span>
+      {% endif %}
+
     </div>
 
   </div>
 
-  {% endif %}
-
 
   <!-- =======================================================
-       DECLARACIÓN
+       RESPONSABILIDAD
        ======================================================= -->
 
-  <div class="declaracion">
+  <div class="responsabilidad no-break">
 
-    <div class="declaracion-titulo">
-      Declaración de responsabilidad
+    <div class="responsabilidad-titulo">
+      Responsabilidad del custodio
     </div>
 
-    <p class="declaracion-texto">
-
-      El custodio declara haber recibido el activo descrito en la presente
-      acta, verificando su identificación y estado general al momento de la
-      recepción.
-
-      Asimismo, manifiesta conocer y aceptar su responsabilidad respecto del
-      adecuado uso, cuidado, conservación y custodia del bien mientras este
-      permanezca bajo su responsabilidad.
-
-      <br><br>
-
-      El custodio se compromete a informar oportunamente cualquier pérdida,
-      deterioro, daño, falla o circunstancia que pueda afectar la integridad
-      o disponibilidad del activo, así como a ponerlo a disposición cuando
-      corresponda por cambio de asignación, traslado, devolución, terminación
-      de funciones o cualquier otra circunstancia administrativa que así lo
-      requiera.
-
+    <p class="responsabilidad-texto">
+      El receptor declara haber recibido el bien descrito en esta acta
+      y asume su custodia, uso adecuado y conservación mientras permanezca
+      bajo su responsabilidad. Se compromete a informar cualquier pérdida,
+      daño o deterioro y a devolverlo cuando corresponda.
     </p>
 
   </div>
-
-
-  <!-- =======================================================
-       CONSTANCIA
-       ======================================================= -->
-
-  <p class="constancia">
-    Para constancia de lo anterior, las partes suscriben la presente acta,
-    dejando registro de la asignación del activo y de las responsabilidades
-    asociadas a su custodia. La firma del presente documento acredita la
-    recepción y conformidad con la información consignada.
-  </p>
 
 
   <!-- =======================================================
@@ -644,6 +673,15 @@
 
     </div>
 
+  </div>
+
+
+  <!-- =======================================================
+       PIE
+       ======================================================= -->
+
+  <div class="pie">
+    Documento de control interno · Acta de entrega y custodia de activo
   </div>
 
 </div>

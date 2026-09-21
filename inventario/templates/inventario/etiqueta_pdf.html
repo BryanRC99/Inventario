@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="es">
 <head>
   <meta charset="utf-8">
+
   <style>
     @page {
       size: 50mm 25mm;
@@ -21,103 +21,172 @@
       padding: 0;
       overflow: hidden;
       font-family: Helvetica, Arial, sans-serif;
+      color: #111827;
     }
+
+
+    /* =========================================================
+       ETIQUETA
+       ========================================================= */
 
     .etiqueta {
+      width: 46mm;
+      height: 21mm;
+
       display: flex;
       align-items: stretch;
-      gap: 1.5mm;
-      width: 100%;
-      height: 100%;
-    }
 
-    /* Logo a la izquierda, ocupando todo el espacio disponible */
-    .logo-wrap {
-      flex: 1;
-      min-width: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
       overflow: hidden;
-      padding: 1mm;
+
+      border: 0.3mm solid #111827;
+      border-radius: 1mm;
+
+      background: #ffffff;
     }
 
-    .logo {
-      max-width: 90%;
-      max-height: 90%;
-      width: auto;
-      height: auto;
-      object-fit: contain;
-    }
 
-    /* Columna derecha: QR arriba, código y nombre abajo */
-    .right {
-      flex-shrink: 0;
-      width: 13mm;
+    /* =========================================================
+       COLUMNA IZQUIERDA (QR + TEXTO) - Ajustada al 44%
+       ========================================================= */
+
+    .izquierda {
+      width: 44%;
+      min-width: 44%;
+
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      gap: 0.5mm;
+      justify-content: space-between;
+
+      padding: 1.2mm 1.2mm 1.2mm 1.5mm;
+
+      border-right: 0.25mm solid #d1d5db;
       overflow: hidden;
+    }
+
+    .qr-wrap {
+      display: flex;
+      align-items: flex-start;
+      justify-content: flex-start;
     }
 
     .qr {
-      width: 13mm;
-      height: 13mm;
-      flex-shrink: 0;
+      width: 12.0mm;
+      height: 12.0mm;
+      display: block;
     }
 
-    .info {
-      width: 13mm;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      line-height: 1;
+    .informacion {
+      width: 100%;
+      overflow: hidden;
     }
 
     .codigo {
-      font-size: 6.5pt;
+      width: 100%;
+
+      font-size: 8.5pt;
+      line-height: 1;
+
       font-weight: 700;
-      color: #111;
+      letter-spacing: 0.15px;
+
+      color: #111827;
+
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-width: 100%;
     }
 
     .nombre {
-      font-size: 5pt;
-      color: #444;
-      line-height: 1.1;
+      width: 100%;
+
+      margin-top: 0.5mm;
+
+      font-size: 4.8pt;
+      line-height: 1.05;
+
+      color: #4b5563;
+
+      white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      display: -webkit-box;
-      -webkit-line-clamp: 1;
-      -webkit-box-orient: vertical;
-      max-width: 100%;
-      margin-top: 0.3mm;
     }
+
+
+    /* =========================================================
+       COLUMNA DERECHA (LOGO) - Ajustada al 56%
+       ========================================================= */
+
+    .derecha {
+      flex: 1;
+      width: 56%;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      /* Se aumentó el padding arriba/abajo a 1.5mm para alejar el logo del borde */
+      padding: 1.5mm 1.2mm;
+
+      overflow: hidden;
+    }
+
+    .logo {
+      max-width: 100%;
+      max-height: 100%;
+
+      width: auto;
+      height: auto;
+
+      object-fit: contain;
+      object-position: center;
+    }
+
   </style>
 </head>
 
 <body>
+
   <div class="etiqueta">
-    {% if logo_uri %}
-    <div class="logo-wrap">
-      <img class="logo" src="{{ logo_uri }}" alt="Logo">
-    </div>
-    {% endif %}
 
-    <div class="right">
-      <img class="qr" src="data:image/png;base64,{{ qr_base64 }}" alt="QR">
-      <div class="info">
-        <div class="codigo">{{ activo.codigo_interno }}</div>
-        <div class="nombre">{{ activo.nombre }}</div>
+    <!-- =====================================================
+         IZQUIERDA: QR + INFORMACIÓN
+         ===================================================== -->
+    <div class="izquierda">
+
+      <div class="qr-wrap">
+        <img
+          class="qr"
+          src="data:image/png;base64,{{ qr_base64 }}"
+          alt="Código QR">
       </div>
-    </div>
-  </div>
-</body>
 
+      <div class="informacion">
+        <div class="codigo">
+          {{ activo.codigo_interno }}
+        </div>
+        <div class="nombre">
+          {{ activo.nombre }}
+        </div>
+      </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         DERECHA: LOGO PREDOMINANTE
+         ===================================================== -->
+    <div class="derecha">
+
+      {% if logo_uri %}
+      <img
+        class="logo"
+        src="{{ logo_uri }}"
+        alt="Logo">
+      {% endif %}
+
+    </div>
+
+  </div>
+
+</body>
 </html>

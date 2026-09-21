@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Plus, Pencil, Trash2, Eye, Tag, PackageX } from 'lucide-react'
+import { Plus, Pencil, Trash2, Eye, Tag, PackageX, Upload } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -15,6 +15,7 @@ import { ActivoDialog } from '@/components/activo-dialog'
 import { ActivoDetailDialog } from '@/components/activo-detail-dialog'
 import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog'
 import { DarDeBajaDialog } from '@/components/dar-de-baja-dialog'
+import { ImportarActivosDialog } from '@/components/importar-activos-dialog'
 import {
   listarActivos,
   crearActivo,
@@ -51,6 +52,7 @@ export default function ActivosPage() {
   const [activoAEliminar, setActivoAEliminar] = useState<Activo | null>(null)
   const [activoParaBaja, setActivoParaBaja] = useState<Activo | null>(null)
   const [busqueda, setBusqueda] = useState('')
+  const [importarOpen, setImportarOpen] = useState(false)
 
   const cargarTodo = async () => {
     setLoading(true)
@@ -158,10 +160,17 @@ export default function ActivosPage() {
           <h1 className="text-lg font-semibold">Activos</h1>
           <p className="text-sm text-muted-foreground">Equipos registrados en el inventario</p>
         </div>
-        <Button size="sm" onClick={abrirCrear}>
-          <Plus className="size-3.5" />
-          Nuevo activo
-        </Button>
+
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="outline" onClick={() => setImportarOpen(true)}>
+            <Upload className="size-3.5" />
+            Importar
+          </Button>
+          <Button size="sm" onClick={abrirCrear}>
+            <Plus className="size-3.5" />
+            Nuevo activo
+          </Button>
+        </div>
       </div>
 
       <SearchInput
@@ -308,6 +317,12 @@ export default function ActivosPage() {
         titulo="¿Eliminar este activo?"
         descripcion={`Vas a eliminar "${activoAEliminar?.nombre}" (${activoAEliminar?.codigo_interno}).`}
         onConfirm={confirmarEliminar}
+      />
+
+      <ImportarActivosDialog
+        open={importarOpen}
+        onOpenChange={setImportarOpen}
+        onImportado={cargarTodo}
       />
     </div>
   )

@@ -42,6 +42,31 @@ export type ActivoInput = {
   especificaciones: Record<string, unknown> | null
 }
 
+export interface FilaValidacion {
+  fila: number
+  valido: boolean
+  errores: string[]
+  datos_mostrar: {
+    nombre: string
+    categoria: string
+    ubicacion: string
+    marca: string
+    modelo: string
+  }
+}
+
+export interface ResultadoValidacion {
+  total: number
+  validas: number
+  invalidas: number
+  filas: FilaValidacion[]
+}
+
+export interface ResultadoImportacion {
+  creados: number
+  errores: { fila: number; errores: string[] }[]
+}
+
 export const ESTADOS_ACTIVO: { value: EstadoActivo; label: string }[] = [
   { value: 'activo', label: 'Activo' },
   { value: 'en_mantenimiento', label: 'En mantenimiento' },
@@ -77,5 +102,30 @@ export async function obtenerEtiquetaPdf(activoId: string): Promise<Blob> {
 
 export async function darDeBajaActivo(id: string, motivo: string): Promise<Activo> {
   const { data } = await api.post(`/inventario/activos/${id}/dar_de_baja/`, { motivo })
+  return data
+}
+
+export async function descargarPlantillaActivos(): Promise<Blob> {
+  const { data } = await api.get('/inventario/activos/plantilla_importacion/', {
+    responseType: 'blob',
+  })
+  return data
+}
+
+export async function validarImportacionActivos(archivo: File): Promise<ResultadoValidacion> {
+  const formData = new FormData()
+  formData.append('archivo', archivo)
+  const { data } = await api.post('/inventario/activos/validar_importacion/', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+  return data
+}
+
+export async function confirmarImportacionActivos(archivo: File): Promise<ResultadoImportacion> {
+  const formData = new FormData()
+  formData.append('archivo', archivo)
+  const { data } = await api.post('/inventario/activos/confirmar_importacion/', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
   return data
 }

@@ -13,11 +13,19 @@ from weasyprint import HTML
 from .models import ActaEntrega
 
 
+TEMPLATE_POR_TIPO = {
+    'entrega': 'actas/acta_pdf.html',
+    'devolucion': 'actas/acta_devolucion_pdf.html',
+    'traslado': 'actas/acta_traslado_pdf.html',
+}
+
+
 def generar_pdf_acta(acta):
     logo_path = Path(settings.BASE_DIR) / 'static' / 'logovyv.png'
     logo_uri = logo_path.as_uri() if logo_path.exists() else None
 
-    html_string = render_to_string('actas/acta_pdf.html', {'acta': acta, 'logo_uri': logo_uri})
+    template = TEMPLATE_POR_TIPO.get(acta.tipo, 'actas/acta_pdf.html')
+    html_string = render_to_string(template, {'acta': acta, 'logo_uri': logo_uri})
     pdf_bytes = HTML(string=html_string, base_url=str(settings.BASE_DIR)).write_pdf()
     acta.pdf.save(f'acta_{acta.id}.pdf', ContentFile(pdf_bytes), save=True)
 
