@@ -1,6 +1,5 @@
 from django.db.models import Q
 
-
 def activos_visibles(user, queryset):
     if user.is_superuser or user.rol == 'admin':
         return queryset
@@ -17,3 +16,4 @@ def activos_visibles(user, queryset):
         | Q(custodias__area=user.area)
         | Q(custodias__persona__area=user.area)
     ).distinct()
+

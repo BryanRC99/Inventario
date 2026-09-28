@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api'
+const API_URL = import.meta.env.VITE_API_URL || 'http://10.10.10.125:8000/api'
 
 export const api = axios.create({
   baseURL: API_URL,
@@ -24,7 +24,17 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config
 
-    if (error.response?.status === 401 && !originalRequest._retry && !isRefreshing) {
+    // Si el 401 viene del propio endpoint de login, es una contraseña
+    // incorrecta normal — no una sesión expirada. Dejamos que LoginPage
+    // maneje el error tal cual, sin redirigir ni recargar nada.
+    const esPeticionDeLogin = originalRequest?.url?.includes('/auth/login/')
+
+    if (
+      error.response?.status === 401 &&
+      !esPeticionDeLogin &&
+      !originalRequest._retry &&
+      !isRefreshing
+    ) {
       originalRequest._retry = true
       isRefreshing = true
 

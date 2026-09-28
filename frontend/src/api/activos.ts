@@ -93,10 +93,20 @@ export async function eliminarActivo(id: string): Promise<void> {
   await api.delete(`/inventario/activos/${id}/`)
 }
 
-export async function obtenerEtiquetaPdf(activoId: string): Promise<Blob> {
+export async function obtenerEtiquetaPdf(activoId: string, tamano: 'normal' | 'pequena' = 'normal'): Promise<Blob> {
   const { data } = await api.get(`/inventario/activos/${activoId}/etiqueta/`, {
+    params: { tamano },
     responseType: 'blob',
   })
+  return data
+}
+
+export async function obtenerEtiquetasLotePdf(ids: string[], tamano: 'normal' | 'pequena' = 'normal'): Promise<Blob> {
+  const { data } = await api.post(
+    '/inventario/activos/etiquetas_lote/',
+    { ids, tamano },
+    { responseType: 'blob' },
+  )
   return data
 }
 
@@ -127,5 +137,15 @@ export async function confirmarImportacionActivos(archivo: File): Promise<Result
   const { data } = await api.post('/inventario/activos/confirmar_importacion/', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   })
+  return data
+}
+
+export async function descargarReporteExcel(): Promise<Blob> {
+  const { data } = await api.get('/inventario/activos/reporte_excel/', { responseType: 'blob' })
+  return data
+}
+
+export async function descargarReportePdf(): Promise<Blob> {
+  const { data } = await api.get('/inventario/activos/reporte_pdf/', { responseType: 'blob' })
   return data
 }

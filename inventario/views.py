@@ -151,10 +151,36 @@ class ActivoViewSet(viewsets.ModelViewSet):
         from .etiquetas import generar_pdf_etiqueta
 
         activo = self.get_object()
-        pdf_bytes = generar_pdf_etiqueta(activo)
+        tamano = request.query_params.get('tamano', 'normal')
+        pdf_bytes = generar_pdf_etiqueta(activo, tamano=tamano)
 
         response = HttpResponse(pdf_bytes, content_type='application/pdf')
         response['Content-Disposition'] = f'inline; filename="etiqueta_{activo.codigo_interno}.pdf"'
+        return response
+
+    @action(detail=False, methods=['post'])
+    def etiquetas_lote(self, request):
+        from django.http import HttpResponse
+
+        from .etiquetas import generar_pdf_etiquetas_lote
+
+        ids = request.data.get('ids', [])
+        tamano = request.data.get('tamano', 'normal')
+
+        if not ids:
+            return Response({'detail': 'Debes seleccionar al menos un activo.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Reutiliza el queryset con alcance por rol: nadie puede imprimir
+        # etiquetas de activos que no le corresponde ver.
+        activos = self.get_queryset().filter(id__in=ids)
+
+        if not activos.exists():
+            return Response({'detail': 'No se encontraron activos válidos.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        pdf_bytes = generar_pdf_etiquetas_lote(list(activos), tamano=tamano)
+
+        response = HttpResponse(pdf_bytes, content_type='application/pdf')
+        response['Content-Disposition'] = 'inline; filename="etiquetas.pdf"'
         return response
 
     @action(detail=True, methods=['post'])
@@ -208,6 +234,35 @@ class ActivoViewSet(viewsets.ModelViewSet):
         )
 
         return Response(self.get_serializer(activo).data)
+
+    @action(detail=False, methods=['get'])
+    def reporte_excel(self, request):
+        from django.http import HttpResponse
+
+        from .reportes import generar_reporte_excel
+
+        activos = list(self.get_queryset().select_related('categoria', 'ubicacion', 'proveedor'))
+        contenido = generar_reporte_excel(activos)
+
+        response = HttpResponse(
+            contenido,
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+        response['Content-Disposition'] = 'attachment; filename="reporte_activos.xlsx"'
+        return response
+
+    @action(detail=False, methods=['get'])
+    def reporte_pdf(self, request):
+        from django.http import HttpResponse
+
+        from .reportes import generar_reporte_pdf
+
+        activos = list(self.get_queryset().select_related('categoria', 'ubicacion', 'proveedor'))
+        pdf_bytes = generar_reporte_pdf(activos)
+
+        response = HttpResponse(pdf_bytes, content_type='application/pdf')
+        response['Content-Disposition'] = 'inline; filename="reporte_activos.pdf"'
+        return response
 
 class DashboardView(APIView):
     """GET /api/inventario/dashboard/ -> números y gráficas del panel principal."""

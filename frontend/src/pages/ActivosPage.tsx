@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import { Plus, Pencil, Trash2, Eye, Tag, PackageX, Upload } from 'lucide-react'
+import { Plus, Pencil, Trash2, Eye, Tag, PackageX, Upload, FileSpreadsheet, FileText } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Table,
   TableBody,
@@ -16,6 +17,7 @@ import { ActivoDetailDialog } from '@/components/activo-detail-dialog'
 import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog'
 import { DarDeBajaDialog } from '@/components/dar-de-baja-dialog'
 import { ImportarActivosDialog } from '@/components/importar-activos-dialog'
+import { TamanoEtiquetaDialog } from '@/components/tamano-etiqueta-dialog'
 import {
   listarActivos,
   crearActivo,
@@ -23,6 +25,8 @@ import {
   eliminarActivo,
   obtenerEtiquetaPdf,
   darDeBajaActivo,
+  descargarReporteExcel,
+  descargarReportePdf,
   type Activo,
   type ActivoInput,
   type EstadoActivo,
@@ -30,6 +34,7 @@ import {
 import { listarCategorias, type Categoria } from '@/api/categorias'
 import { listarUbicaciones, type Ubicacion } from '@/api/ubicaciones'
 import { listarProveedores, type Proveedor } from '@/api/proveedores'
+import { obtenerEtiquetasLotePdf } from '@/api/activos'
 import { SearchInput } from '@/components/search-input'
 import { coincide } from '@/lib/normalizar-texto'
 
@@ -53,6 +58,33 @@ export default function ActivosPage() {
   const [activoParaBaja, setActivoParaBaja] = useState<Activo | null>(null)
   const [busqueda, setBusqueda] = useState('')
   const [importarOpen, setImportarOpen] = useState(false)
+  const [seleccionados, setSeleccionados] = useState<Set<string>>(new Set())
+  const [tamanoDialogOpen, setTamanoDialogOpen] = useState(false)
+  const [activoParaEtiqueta, setActivoParaEtiqueta] = useState<Activo | null>(null)
+
+  const handleExportarExcel = async () => {
+    try {
+      const blob = await descargarReporteExcel()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'reporte_activos.xlsx'
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch {
+      toast.error('No se pudo generar el reporte Excel')
+    }
+  }
+
+  const handleExportarPdf = async () => {
+    try {
+      const blob = await descargarReportePdf()
+      const url = URL.createObjectURL(blob)
+      window.open(url, '_blank')
+    } catch {
+      toast.error('No se pudo generar el reporte PDF')
+    }
+  }
 
   const cargarTodo = async () => {
     setLoading(true)
@@ -132,13 +164,38 @@ export default function ActivosPage() {
     }
   }
 
-  const handleImprimirEtiqueta = async (activo: Activo) => {
+  const abrirDialogoEtiqueta = (activo: Activo | null) => {
+    setActivoParaEtiqueta(activo) // null = imprimir los seleccionados en lote
+    setTamanoDialogOpen(true)
+  }
+
+  const handleGenerarEtiqueta = async (tamano: 'normal' | 'pequena') => {
     try {
-      const blob = await obtenerEtiquetaPdf(activo.id)
+      const blob = activoParaEtiqueta
+        ? await obtenerEtiquetaPdf(activoParaEtiqueta.id, tamano)
+        : await obtenerEtiquetasLotePdf(Array.from(seleccionados), tamano)
       const url = URL.createObjectURL(blob)
       window.open(url, '_blank')
+      if (!activoParaEtiqueta) setSeleccionados(new Set())
     } catch {
-      toast.error('No se pudo generar la etiqueta')
+      toast.error('No se pudo generar el PDF de etiquetas')
+    }
+  }
+
+  const toggleSeleccion = (id: string) => {
+    setSeleccionados((prev) => {
+      const nuevo = new Set(prev)
+      if (nuevo.has(id)) nuevo.delete(id)
+      else nuevo.add(id)
+      return nuevo
+    })
+  }
+
+  const toggleSeleccionarTodos = () => {
+    if (seleccionados.size === activosFiltrados.length) {
+      setSeleccionados(new Set())
+    } else {
+      setSeleccionados(new Set(activosFiltrados.map((a) => a.id)))
     }
   }
 
@@ -161,7 +218,15 @@ export default function ActivosPage() {
           <p className="text-sm text-muted-foreground">Equipos registrados en el inventario</p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={handleExportarExcel}>
+            <FileSpreadsheet className="size-3.5" />
+            Excel
+          </Button>
+          <Button size="sm" variant="outline" onClick={handleExportarPdf}>
+            <FileText className="size-3.5" />
+            PDF
+          </Button>
           <Button size="sm" variant="outline" onClick={() => setImportarOpen(true)}>
             <Upload className="size-3.5" />
             Importar
@@ -179,10 +244,26 @@ export default function ActivosPage() {
         placeholder="Buscar por código, nombre, modelo, serie..."
       />
 
+      {seleccionados.size > 0 && (
+        <div className="flex items-center justify-between rounded-md border bg-muted/40 px-3 py-2">
+          <span className="text-sm text-muted-foreground">{seleccionados.size} seleccionado(s)</span>
+          <Button size="sm" variant="outline" onClick={() => abrirDialogoEtiqueta(null)}>
+            <Tag className="size-3.5" />
+            Imprimir etiquetas
+          </Button>
+        </div>
+      )}
+
       <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="h-9 w-8">
+                <Checkbox
+                  checked={activosFiltrados.length > 0 && seleccionados.size === activosFiltrados.length}
+                  onCheckedChange={toggleSeleccionarTodos}
+                />
+              </TableHead>
               <TableHead className="h-9 text-xs">Código</TableHead>
               <TableHead className="h-9 text-xs">Nombre</TableHead>
               <TableHead className="h-9 text-xs">Modelo</TableHead>
@@ -196,7 +277,7 @@ export default function ActivosPage() {
           <TableBody>
             {loading && (
               <TableRow>
-                <TableCell colSpan={8} className="py-6 text-center text-sm text-muted-foreground">
+                <TableCell colSpan={9} className="py-6 text-center text-sm text-muted-foreground">
                   Cargando...
                 </TableCell>
               </TableRow>
@@ -204,7 +285,7 @@ export default function ActivosPage() {
 
             {!loading && activosFiltrados.length === 0 && (
               <TableRow>
-                <TableCell colSpan={8} className="py-6 text-center text-sm text-muted-foreground">
+                <TableCell colSpan={9} className="py-6 text-center text-sm text-muted-foreground">
                   {busqueda
                     ? 'No se encontraron activos con ese criterio.'
                     : 'No hay activos todavía. Registra el primero.'}
@@ -214,6 +295,12 @@ export default function ActivosPage() {
 
             {activosFiltrados.map((activo) => (
               <TableRow key={activo.id}>
+                <TableCell className="py-2">
+                  <Checkbox
+                    checked={seleccionados.has(activo.id)}
+                    onCheckedChange={() => toggleSeleccion(activo.id)}
+                  />
+                </TableCell>
                 <TableCell className="py-2 text-sm font-mono">{activo.codigo_interno}</TableCell>
                 <TableCell className="py-2 text-sm font-medium">{activo.nombre}</TableCell>
                 <TableCell className="py-2 text-sm text-muted-foreground">
@@ -238,7 +325,7 @@ export default function ActivosPage() {
                     variant="ghost"
                     size="icon"
                     className="size-7"
-                    onClick={() => handleImprimirEtiqueta(activo)}
+                    onClick={() => abrirDialogoEtiqueta(activo)}
                     title="Imprimir etiqueta"
                   >
                     <Tag className="size-3.5" />
@@ -323,6 +410,13 @@ export default function ActivosPage() {
         open={importarOpen}
         onOpenChange={setImportarOpen}
         onImportado={cargarTodo}
+      />
+
+      <TamanoEtiquetaDialog
+        open={tamanoDialogOpen}
+        onOpenChange={setTamanoDialogOpen}
+        cantidad={activoParaEtiqueta ? 1 : seleccionados.size}
+        onConfirm={handleGenerarEtiqueta}
       />
     </div>
   )

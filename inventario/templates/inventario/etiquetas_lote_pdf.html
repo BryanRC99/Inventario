@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<style>
+  {% if tamano == 'pequena' %}
+  @page { size: 30mm 15mm; margin: 1.3mm; }
+  .etiqueta { width: 27.4mm; height: 12.4mm; gap: 1mm; padding: 0.8mm; }
+  .qr { width: 10.5mm; height: 10.5mm; }
+  .codigo { font-size: 7pt; }
+  {% else %}
+  @page { size: 50mm 25mm; margin: 2mm; }
+  .etiqueta { width: 46mm; height: 21mm; }
+  .izquierda { width: 44%; min-width: 44%; padding: 1.2mm 1.2mm 1.2mm 1.5mm; border-right: 0.25mm solid #d1d5db; }
+  .qr { width: 12mm; height: 12mm; }
+  .codigo { font-size: 8.5pt; }
+  .nombre { font-size: 4.8pt; margin-top: 0.5mm; color: #4b5563; }
+  .derecha { width: 56%; flex: 1; padding: 1.5mm 1.2mm; display: flex; align-items: center; justify-content: center; }
+  .logo { max-width: 100%; max-height: 100%; }
+  {% endif %}
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; font-family: Helvetica, Arial, sans-serif; color: #111827; }
+  .pagina:not(:last-child) { page-break-after: always; }
+  .etiqueta {
+    display: flex; align-items: center; overflow: hidden;
+    border: 0.3mm solid #111827; border-radius: 1mm; background: #ffffff;
+  }
+  .informacion { width: 100%; overflow: hidden; }
+  .codigo { font-weight: 700; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .nombre { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+</style>
+</head>
+<body>
+  {% for item in activos %}
+  <div class="pagina">
+    {% if tamano == 'pequena' %}
+    <div class="etiqueta">
+      <img class="qr" src="data:image/png;base64,{{ item.qr_base64 }}" alt="QR">
+      <div class="codigo">{{ item.activo.codigo_interno }}</div>
+    </div>
+    {% else %}
+    <div class="etiqueta">
+      <div class="izquierda">
+        <img class="qr" src="data:image/png;base64,{{ item.qr_base64 }}" alt="QR">
+        <div class="informacion">
+          <div class="codigo">{{ item.activo.codigo_interno }}</div>
+          <div class="nombre">{{ item.activo.nombre }}</div>
+        </div>
+      </div>
+      <div class="derecha">
+        {% if logo_uri %}<img class="logo" src="{{ logo_uri }}" alt="Logo">{% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+</body>
+</html>

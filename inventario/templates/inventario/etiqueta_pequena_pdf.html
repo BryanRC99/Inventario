@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <style>
+    @page { size: 30mm 15mm; margin: 1.3mm; }
+    * { box-sizing: border-box; }
+    html, body {
+      width: 27.4mm; height: 12.4mm;
+      margin: 0; padding: 0; overflow: hidden;
+      font-family: Helvetica, Arial, sans-serif;
+      color: #111827;
+    }
+    .etiqueta {
+      width: 27.4mm; height: 12.4mm;
+      display: flex; align-items: center;
+      gap: 1mm;
+      border: 0.3mm solid #111827;
+      border-radius: 0.8mm;
+      padding: 0.8mm;
+      background: #ffffff;
+      overflow: hidden;
+    }
+    .qr { width: 10.5mm; height: 10.5mm; flex-shrink: 0; display: block; }
+    .codigo {
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.1;
+      color: #111827;
+      word-break: break-word;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+  <div class="etiqueta">
+    <img class="qr" src="data:image/png;base64,{{ qr_base64 }}" alt="QR">
+    <div class="codigo">{{ activo.codigo_interno }}</div>
+  </div>
+</body>
+</html>

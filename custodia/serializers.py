@@ -39,14 +39,27 @@ class CustodiaSerializer(serializers.ModelSerializer):
 
 
     def validate(self, attrs):
+        import copy
+
+        campos_no_modelo = {'ubicacion_destino'}
+
         activo = attrs.get('activo') or (self.instance.activo if self.instance else None)
         if activo and activo.estado == 'dado_de_baja' and not attrs.get('fecha_fin'):
             raise serializers.ValidationError(
                 'No se puede asignar una custodia activa a un activo dado de baja.'
             )
 
-        instance = Custodia(**{**(self.instance.__dict__ if self.instance else {}), **attrs})
-        instance.pk = self.instance.pk if self.instance else None
+        if self.instance:
+            # Al editar: parte de una copia real del objeto existente (ya
+            # es una instancia válida de Django) y solo le aplica los
+            # campos que sí cambiaron.
+            instance = copy.copy(self.instance)
+            for campo, valor in attrs.items():
+                if campo not in campos_no_modelo:
+                    setattr(instance, campo, valor)
+        else:
+            instance = Custodia(**{k: v for k, v in attrs.items() if k not in campos_no_modelo})
+
         instance.clean()
         return attrs
 
