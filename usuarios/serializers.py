@@ -62,6 +62,7 @@ class UsuarioListaSerializer(serializers.ModelSerializer):
 
     nombre_completo = serializers.SerializerMethodField()
     area_nombre = serializers.CharField(source='area.nombre', read_only=True, default=None)
+    empresa_nombre = serializers.CharField(source='empresa.nombre', read_only=True, default=None)
 
     class Meta:
         model = Usuario
@@ -75,6 +76,8 @@ class UsuarioListaSerializer(serializers.ModelSerializer):
             'rol',
             'area',
             'area_nombre',
+            'empresa',
+            'empresa_nombre',
             'is_active',
             'date_joined',
         ]
@@ -91,7 +94,7 @@ class UsuarioCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Usuario
-        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'rol', 'area']
+        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'rol', 'area', 'empresa']
 
     def create(self, validated_data):
         from .utils import generar_password_aleatoria

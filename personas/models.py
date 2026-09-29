@@ -13,6 +13,9 @@ class Persona(models.Model):
     area = models.ForeignKey(
         'areas.Area', on_delete=models.SET_NULL, null=True, blank=True, related_name='personas'
     )
+    empresa = models.ForeignKey(
+        'empresas.Empresa', on_delete=models.SET_NULL, null=True, blank=True, related_name='personas'
+    )
     email = models.EmailField(blank=True)
     usuario = models.OneToOneField(
         'usuarios.Usuario',

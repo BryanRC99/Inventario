@@ -9,9 +9,7 @@ from django.core.files.base import ContentFile
 from django.template.loader import render_to_string
 from weasyprint import HTML
 
-
 from .models import ActaEntrega
-
 
 TEMPLATE_POR_TIPO = {
     'entrega': 'actas/acta_pdf.html',
@@ -60,3 +58,4 @@ class ActaEntregaSerializer(serializers.ModelSerializer):
         instance = super().create(validated_data)
         generar_pdf_acta(instance)
         return instance
+

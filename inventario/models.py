@@ -89,6 +89,14 @@ class Activo(models.Model):
         related_name='activos',
         help_text='Área del usuario que creó este activo. Todos los de esa área pueden verlo.',
     )
+    empresa = models.ForeignKey(
+        'empresas.Empresa',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='activos',
+        help_text='Empresa a la que pertenece este activo. Se asigna automáticamente según la empresa del usuario que lo crea.',
+    )
     ubicacion = models.ForeignKey(Ubicacion, on_delete=models.PROTECT, related_name='activos')
     especificaciones = models.JSONField(null=True, blank=True)
     creado_por = models.ForeignKey(

@@ -30,6 +30,7 @@ class UbicacionSerializer(serializers.ModelSerializer):
 class ActivoSerializer(serializers.ModelSerializer):
     categoria_nombre = serializers.CharField(source='categoria.nombre', read_only=True)
     ubicacion_nombre = serializers.CharField(source='ubicacion.nombre', read_only=True)
+    empresa_nombre = serializers.CharField(source='empresa.nombre', read_only=True, default=None)
     proveedor_nombre = serializers.CharField(
         source='proveedor.nombre', read_only=True, default=None
     )
@@ -90,6 +91,7 @@ class ActivoSerializer(serializers.ModelSerializer):
         usuario = self.context['request'].user
         validated_data['creado_por'] = usuario
         validated_data['area_creador'] = usuario.area
+        validated_data['empresa'] = usuario.empresa
         validated_data['codigo_interno'] = self.generar_codigo_interno(validated_data['categoria'])
 
         activo = super().create(validated_data)
@@ -103,3 +105,4 @@ class ActivoSerializer(serializers.ModelSerializer):
         )
 
         return activo
+

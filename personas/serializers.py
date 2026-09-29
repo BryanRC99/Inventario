@@ -9,6 +9,7 @@ from .models import Persona
 class PersonaSerializer(serializers.ModelSerializer):
     nombre_completo = serializers.CharField(read_only=True)
     area_nombre = serializers.CharField(source='area.nombre', read_only=True, default=None)
+    empresa_nombre = serializers.CharField(source='empresa.nombre', read_only=True, default=None)
     tiene_acceso_consulta = serializers.SerializerMethodField()
     crear_acceso_consulta = serializers.BooleanField(write_only=True, required=False, default=False)
 
@@ -23,6 +24,8 @@ class PersonaSerializer(serializers.ModelSerializer):
             'cargo',
             'area',
             'area_nombre',
+            'empresa',
+            'empresa_nombre',
             'email',
             'tiene_acceso_consulta',
             'crear_acceso_consulta',
@@ -55,6 +58,7 @@ class PersonaSerializer(serializers.ModelSerializer):
             email=persona.email,
             rol='consulta',
             area=persona.area,
+            empresa=persona.empresa,
         )
         usuario.set_password(password)
         usuario.save()

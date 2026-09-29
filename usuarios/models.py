@@ -21,6 +21,14 @@ class Usuario(AbstractUser):
         related_name='usuarios',
         help_text='Área/departamento del usuario. Determina qué datos puede ver si no es Admin.',
     )
+    empresa = models.ForeignKey(
+        'empresas.Empresa',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='usuarios',
+        help_text='Empresa a la que pertenece. Determina qué datos puede ver si no es Admin.',
+    )
 
     def __str__(self):
         return f"{self.username} ({self.get_rol_display()})"

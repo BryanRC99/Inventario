@@ -8,8 +8,14 @@
   * { box-sizing: border-box; }
   body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9.5px; color: #1f2937; line-height: 1.4; margin: 0; }
 
-  .encabezado { display: flex; align-items: center; min-height: 72px; padding-bottom: 12px; margin-bottom: 18px; border-bottom: 2px solid #111827; }
-  .logo { width: 95px; min-width: 95px; max-height: 65px; object-fit: contain; object-position: left center; margin-right: 18px; }
+  .marca-agua {
+    position: fixed; top: 42%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 62%; opacity: 0.06; z-index: -1;
+  }
+
+  .encabezado { display: flex; align-items: center; min-height: 88px; padding-bottom: 14px; margin-bottom: 18px; border-bottom: 2px solid #111827; }
+  .logo { width: 140px; min-width: 140px; max-height: 82px; object-fit: contain; object-position: left center; margin-right: 20px; }
   .identidad { flex: 1; }
   .titulo { margin: 0; font-size: 16px; line-height: 1.2; font-weight: 700; color: #111827; text-transform: uppercase; letter-spacing: .3px; }
   .subtitulo { margin: 5px 0 0; font-size: 8.5px; color: #6b7280; }
@@ -64,6 +70,11 @@
 </head>
 
 <body>
+
+{% if logo_uri %}
+  <img class="marca-agua" src="{{ logo_uri }}" alt="">
+{% endif %}
+
 <div class="contenido">
 
   <div class="encabezado">
@@ -102,10 +113,9 @@
       <div class="activo-datos">
         <table class="datos">
           <tr><td class="label">Categoría</td><td class="valor">{{ acta.activo.categoria.nombre }}</td></tr>
-          <tr><td class="label">Marca / Modelo</td><td class="valor">{{ acta.activo.marca|default:"—" }}{% if acta.activo.modelo %} / {{ acta.activo.modelo }}{% endif %}</td></tr>
+          <tr><td class="label">Marca</td><td class="valor">{{ acta.activo.marca|default:"—" }}</td></tr>
+          <tr><td class="label">Modelo</td><td class="valor">{{ acta.activo.modelo|default:"—" }}</td></tr>
           <tr><td class="label">Número de serie</td><td class="valor">{{ acta.activo.numero_serie|default:"—" }}</td></tr>
-          <tr><td class="label">Ubicación de destino</td><td class="valor">{{ acta.activo.ubicacion.nombre }}</td></tr>
-          <tr><td class="label">Estado al momento de la devolución</td><td class="valor">{{ acta.activo.get_estado_display }}</td></tr>
         </table>
       </div>
     </div>
@@ -122,7 +132,7 @@
         <tr><td class="label">Nombre completo</td><td class="valor">{{ acta.persona.nombre_completo }}</td></tr>
         <tr><td class="label">Documento de identidad</td><td class="valor">{{ acta.persona.documento }}</td></tr>
         <tr><td class="label">Cargo</td><td class="valor">{{ acta.persona.cargo|default:"—" }}</td></tr>
-        <tr><td class="label">Área / Departamento</td><td class="valor">{{ acta.persona.area|default:"—" }}</td></tr>
+        <tr><td class="label">Área / Departamento</td><td class="valor">{{ acta.persona.area.nombre|default:"—" }}</td></tr>
       </table>
     </div>
   </div>

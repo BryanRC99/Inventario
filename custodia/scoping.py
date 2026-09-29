@@ -5,6 +5,11 @@ def custodias_visibles(user, queryset):
     if user.is_superuser or user.rol == 'admin':
         return queryset
 
+    if user.empresa:
+        queryset = queryset.filter(activo__empresa=user.empresa)
+    else:
+        queryset = queryset.filter(activo__empresa__isnull=True)
+
     if user.rol == 'consulta':
         persona = getattr(user, 'persona_vinculada', None)
         if not persona:
@@ -12,8 +17,5 @@ def custodias_visibles(user, queryset):
         return queryset.filter(persona=persona)
 
     return queryset.filter(
-        Q(area=user.area)
-        | Q(persona__area=user.area)
-        | Q(activo__creado_por=user)
-        | Q(activo__area_creador=user.area)
+        Q(area=user.area) | Q(persona__area=user.area) | Q(activo__creado_por=user) | Q(activo__area_creador=user.area)
     ).distinct()

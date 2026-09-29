@@ -12,8 +12,9 @@ urlpatterns = [
     path('api/custodia/', include('custodia.urls')),
     path('api/actas/', include('actas.urls')),
     path('api/trazabilidad/', include('trazabilidad.urls')),
-    path('api/areas/', include('areas.urls')),
+    path('api/areas/', include('areas.urls')),  
     path('api/auditoria/', include('auditoria.urls')),
+    path('api/empresas/', include('empresas.urls')),
 ]
 
 if settings.DEBUG:
