@@ -13,6 +13,7 @@ import {
   Wrench,
   Building2,
   ShieldCheck,
+  Building,
 } from 'lucide-react'
 
 import {
@@ -54,6 +55,7 @@ const navAdmin: NavItem[] = [
   { titulo: 'Proveedores', url: '/proveedores', icon: Truck },
   { titulo: 'Usuarios', url: '/usuarios', icon: UserCog },
   { titulo: 'Áreas', url: '/areas', icon: Building2 },
+  { titulo: 'Empresas', url: '/empresas', icon: Building },
   { titulo: 'Auditoría', url: '/auditoria', icon: ShieldCheck },
 ]
 
@@ -119,7 +121,7 @@ export function MainNav() {
   const navAdminVisible = esAdmin
     ? navAdmin
     : navAdmin.filter(
-      (item) => item.url !== '/usuarios' && item.url !== '/areas' && item.url !== '/auditoria',
+      (item) => item.url !== '/usuarios' && item.url !== '/areas' && item.url !== '/auditoria' && item.url !== '/empresas',
     )
 
   return (

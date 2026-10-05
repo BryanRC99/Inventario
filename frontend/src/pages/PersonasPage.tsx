@@ -23,12 +23,14 @@ import {
   type PersonaConPassword,
 } from '@/api/personas'
 import { listarAreas, type Area } from '@/api/areas'
+import { listarEmpresas, type Empresa } from '@/api/empresas'
 import { SearchInput } from '@/components/search-input'
 import { coincide } from '@/lib/normalizar-texto'
 
 export default function PersonasPage() {
   const [personas, setPersonas] = useState<Persona[]>([])
   const [areas, setAreas] = useState<Area[]>([])
+  const [empresas, setEmpresas] = useState<Empresa[]>([])
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [personaEditando, setPersonaEditando] = useState<Persona | null>(null)
@@ -39,9 +41,14 @@ export default function PersonasPage() {
   const cargarPersonas = async () => {
     setLoading(true)
     try {
-      const [personasData, areasData] = await Promise.all([listarPersonas(), listarAreas()])
+      const [personasData, areasData, empresasData] = await Promise.all([
+        listarPersonas(),
+        listarAreas(),
+        listarEmpresas(),
+      ])
       setPersonas(personasData)
       setAreas(areasData)
+      setEmpresas(empresasData)
     } catch {
       toast.error('No se pudieron cargar las personas')
     } finally {
@@ -132,13 +139,14 @@ export default function PersonasPage() {
               <TableHead className="h-9 text-xs">Documento</TableHead>
               <TableHead className="h-9 text-xs">Cargo</TableHead>
               <TableHead className="h-9 text-xs">Área</TableHead>
+              <TableHead className="h-9 text-xs">Empresa</TableHead>
               <TableHead className="h-9 w-20 text-right text-xs">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading && (
               <TableRow>
-                <TableCell colSpan={5} className="py-6 text-center text-sm text-muted-foreground">
+                <TableCell colSpan={5 } className="py-6 text-center text-sm text-muted-foreground">
                   Cargando...
                 </TableCell>
               </TableRow>
@@ -162,6 +170,9 @@ export default function PersonasPage() {
                 <TableCell className="py-2 text-sm text-muted-foreground">
                   {persona.area_nombre || '—'}
                 </TableCell>
+                <TableCell className="py-2 text-sm text-muted-foreground">
+                  {persona.empresa_nombre || '—'}
+                </TableCell>  
                 <TableCell className="py-2 text-right">
                   <Button
                     variant="ghost"
@@ -191,6 +202,7 @@ export default function PersonasPage() {
         onOpenChange={setDialogOpen}
         persona={personaEditando}
         areas={areas}
+        empresas={empresas}
         onSubmit={handleSubmit}
       />
 

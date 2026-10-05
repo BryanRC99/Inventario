@@ -34,6 +34,7 @@ import {
 import { listarCategorias, type Categoria } from '@/api/categorias'
 import { listarUbicaciones, type Ubicacion } from '@/api/ubicaciones'
 import { listarProveedores, type Proveedor } from '@/api/proveedores'
+import { listarEmpresas, type Empresa } from '@/api/empresas'
 import { obtenerEtiquetasLotePdf } from '@/api/activos'
 import { SearchInput } from '@/components/search-input'
 import { coincide } from '@/lib/normalizar-texto'
@@ -61,6 +62,7 @@ export default function ActivosPage() {
   const [seleccionados, setSeleccionados] = useState<Set<string>>(new Set())
   const [tamanoDialogOpen, setTamanoDialogOpen] = useState(false)
   const [activoParaEtiqueta, setActivoParaEtiqueta] = useState<Activo | null>(null)
+  const [empresas, setEmpresas] = useState<Empresa[]>([])
 
   const handleExportarExcel = async () => {
     try {
@@ -89,16 +91,19 @@ export default function ActivosPage() {
   const cargarTodo = async () => {
     setLoading(true)
     try {
-      const [activosData, categoriasData, ubicacionesData, proveedoresData] = await Promise.all([
+      const [activosData, categoriasData, ubicacionesData, proveedoresData, empresasData] = await Promise.all([
         listarActivos(),
         listarCategorias(),
         listarUbicaciones(),
         listarProveedores(),
+        listarEmpresas(),
       ])
       setActivos(activosData)
       setCategorias(categoriasData)
       setUbicaciones(ubicacionesData)
       setProveedores(proveedoresData)
+      setEmpresas(empresasData)
+
     } catch {
       toast.error('No se pudieron cargar los activos')
     } finally {
@@ -269,6 +274,7 @@ export default function ActivosPage() {
               <TableHead className="h-9 text-xs">Modelo</TableHead>
               <TableHead className="h-9 text-xs">N° Serie</TableHead>
               <TableHead className="h-9 text-xs">Categoría</TableHead>
+              <TableHead className="h-9 text-xs">Empresa</TableHead>
               <TableHead className="h-9 text-xs">Ubicación</TableHead>
               <TableHead className="h-9 text-xs">Estado</TableHead>
               <TableHead className="h-9 w-36 text-right text-xs">Acciones</TableHead>
@@ -311,6 +317,9 @@ export default function ActivosPage() {
                 </TableCell>
                 <TableCell className="py-2 text-sm text-muted-foreground">
                   {activo.categoria_nombre}
+                </TableCell>
+                <TableCell className="py-2 text-sm text-muted-foreground">
+                  {activo.empresa_nombre || '—'}
                 </TableCell>
                 <TableCell className="py-2 text-sm text-muted-foreground">
                   {activo.ubicacion_nombre}
@@ -382,6 +391,7 @@ export default function ActivosPage() {
         categorias={categorias}
         ubicaciones={ubicaciones}
         proveedores={proveedores}
+        empresas={empresas}
         onSubmit={handleSubmit}
       />
 

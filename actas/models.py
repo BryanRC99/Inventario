@@ -7,7 +7,7 @@ from django.db import models
 class ActaEntrega(models.Model):
     class Tipo(models.TextChoices):
         ENTREGA = 'entrega', 'Entrega'
-        DEVOLUCION = 'devolucion', 'Devolución'
+        DEVOLUCION = 'devolucion', 'Devolución' 
         TRASLADO = 'traslado', 'Traslado'
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

@@ -25,6 +25,7 @@ import {
   type UsuarioConPassword,
 } from '@/api/usuarios'
 import { listarAreas, type Area } from '@/api/areas'
+import { listarEmpresas, type Empresa } from '@/api/empresas'
 import { SearchInput } from '@/components/search-input'
 import { coincide } from '@/lib/normalizar-texto'
 
@@ -32,6 +33,7 @@ export default function UsuariosPage() {
   const { usuario: usuarioActual } = useAuth()
   const [usuarios, setUsuarios] = useState<Usuario[]>([])
   const [areas, setAreas] = useState<Area[]>([])
+  const [empresas, setEmpresas] = useState<Empresa[]>([])
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [usuarioEditando, setUsuarioEditando] = useState<Usuario | null>(null)
@@ -42,9 +44,14 @@ export default function UsuariosPage() {
   const cargarUsuarios = async () => {
     setLoading(true)
     try {
-      const [usuariosData, areasData] = await Promise.all([listarUsuarios(), listarAreas()])
+      const [usuariosData, areasData, empresasData] = await Promise.all([
+        listarUsuarios(),
+        listarAreas(),
+        listarEmpresas(),
+      ])
       setUsuarios(usuariosData)
       setAreas(areasData)
+      setEmpresas(empresasData)
     } catch {
       toast.error('No se pudieron cargar los usuarios')
     } finally {
@@ -121,6 +128,7 @@ export default function UsuariosPage() {
               <TableHead className="h-9 text-xs">Nombre</TableHead>
               <TableHead className="h-9 text-xs">Rol</TableHead>
               <TableHead className="h-9 text-xs">Área</TableHead>
+              <TableHead className="h-9 text-xs">Empresa</TableHead>
               <TableHead className="h-9 text-xs">Estado</TableHead>
               <TableHead className="h-9 w-20 text-right text-xs">Acciones</TableHead>
             </TableRow>
@@ -158,6 +166,9 @@ export default function UsuariosPage() {
                 <TableCell className="py-2 text-sm text-muted-foreground">
                   {u.area_nombre || '—'}
                 </TableCell>
+                <TableCell className="py-2 text-sm text-muted-foreground">
+                  {u.empresa_nombre || '—'}
+                </TableCell>
                 <TableCell className="py-2">
                   <Badge variant={u.is_active ? 'default' : 'secondary'} className="text-xs">
                     {u.is_active ? 'Activo' : 'Inactivo'}
@@ -192,6 +203,7 @@ export default function UsuariosPage() {
         onOpenChange={setDialogOpen}
         usuario={usuarioEditando}
         areas={areas}
+        empresas={empresas}
         onSubmitCrear={async (payload) => {
           try {
             const creado = await crearUsuario(payload)

@@ -20,6 +20,8 @@ export interface Activo {
   estado_display: string
   ubicacion: string
   ubicacion_nombre: string
+  empresa: string | null
+  empresa_nombre: string | null
   especificaciones: Record<string, unknown> | null
   creado_por: string | null
   fecha_creacion: string
@@ -39,6 +41,7 @@ export type ActivoInput = {
   fecha_fin_garantia: string | null
   estado: EstadoActivo
   ubicacion: string
+  empresa: string | null
   especificaciones: Record<string, unknown> | null
 }
 

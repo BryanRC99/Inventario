@@ -20,12 +20,14 @@ import {
 import { Switch } from '@/components/ui/switch'
 import { ROLES, type Rol, type Usuario } from '@/api/usuarios'
 import type { Area } from '@/api/areas'
+import type { Empresa } from '@/api/empresas'
 
 interface UsuarioDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   usuario: Usuario | null
   areas: Area[]
+  empresas: Empresa[]
   onSubmitCrear: (payload: {
     username: string
     first_name: string
@@ -33,6 +35,8 @@ interface UsuarioDialogProps {
     email: string
     rol: Rol
     area: string | null
+    empresa: string | null
+
   }) => Promise<void>
   onSubmitEditar: (payload: {
     first_name: string
@@ -40,6 +44,7 @@ interface UsuarioDialogProps {
     email: string
     rol: Rol
     area: string | null
+    empresa: string | null
     is_active: boolean
   }) => Promise<void>
 }
@@ -51,6 +56,7 @@ const vacioCrear = {
   email: '',
   rol: 'operador' as Rol,
   area: null as string | null,
+  empresa: null as string | null,
 }
 
 export function UsuarioDialog({
@@ -58,6 +64,7 @@ export function UsuarioDialog({
   onOpenChange,
   usuario,
   areas,
+  empresas,
   onSubmitCrear,
   onSubmitEditar,
 }: UsuarioDialogProps) {
@@ -75,6 +82,7 @@ export function UsuarioDialog({
           email: usuario.email,
           rol: usuario.rol,
           area: usuario.area,
+          empresa: usuario.empresa,
         })
         setIsActive(usuario.is_active)
       } else {
@@ -88,6 +96,7 @@ export function UsuarioDialog({
     setForm((f) => ({ ...f, [key]: value }))
 
   const areaSeleccionada = areas.find((a) => a.id === form.area)
+  const empresaSeleccionada = empresas.find((e) => e.id === form.empresa)
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -100,6 +109,7 @@ export function UsuarioDialog({
           email: form.email,
           rol: form.rol,
           area: form.area,
+          empresa: form.empresa,
           is_active: isActive,
         })
       } else {
@@ -197,6 +207,28 @@ export function UsuarioDialog({
                   {areas.map((a) => (
                     <SelectItem key={a.id} value={a.id}>
                       {a.nombre}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="empresa">Empresa</Label>
+              <Select
+                value={form.empresa ?? 'none'}
+                onValueChange={(v) => set('empresa', v === 'none' ? null : v)}
+              >
+                <SelectTrigger id="empresa" className="w-full">
+                  <SelectValue placeholder="Sin empresa">
+                    {empresaSeleccionada?.nombre ?? (form.empresa ? undefined : 'Sin empresa')}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Sin empresa</SelectItem>
+                  {empresas.map((e) => (
+                    <SelectItem key={e.id} value={e.id}>
+                      {e.nombre}
                     </SelectItem>
                   ))}
                 </SelectContent>

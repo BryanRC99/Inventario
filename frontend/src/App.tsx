@@ -12,6 +12,7 @@ import MantenimientosPage from './pages/MantenimientosPage'
 import ProveedoresPage from './pages/ProveedoresPage'
 import UsuariosPage from './pages/UsuariosPage'
 import AreasPage from './pages/AreasPage'
+import EmpresasPage from './pages/EmpresasPage'
 import MisActivosPage from './pages/MisActivosPage'
 import AuditoriaPage from './pages/AuditoriaPage'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -127,6 +128,14 @@ function App() {
           element={
             <RoleGuard rolesPermitidos={['admin']} redirectTo="/mis-activos">
               <AreasPage />
+            </RoleGuard>
+          }
+        />
+        <Route
+          path="/empresas"
+          element={
+            <RoleGuard rolesPermitidos={['admin']} redirectTo="/mis-activos">
+              <EmpresasPage />
             </RoleGuard>
           }
         />

@@ -9,6 +9,8 @@ export interface Persona {
   cargo: string
   area: string | null
   area_nombre: string | null
+  empresa: string | null
+  empresa_nombre: string | null
   email: string
   tiene_acceso_consulta: boolean
 }
@@ -23,6 +25,7 @@ export type PersonaInput = {
   documento: string
   cargo: string
   area: string | null
+  empresa: string | null
   email: string
   crear_acceso_consulta?: boolean
 }

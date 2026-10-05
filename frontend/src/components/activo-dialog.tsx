@@ -1,5 +1,9 @@
 import { useEffect, useState, type FormEvent } from 'react'
+
 import { Button } from '@/components/ui/button'
+
+import { useAuth } from '@/context/AuthContext'
+
 import {
   Dialog,
   DialogContent,
@@ -8,8 +12,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+
 import { Input } from '@/components/ui/input'
+
 import { Label } from '@/components/ui/label'
+
 import {
   Select,
   SelectContent,
@@ -17,9 +24,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+
 import { ESTADOS_ACTIVO, type Activo, type ActivoInput } from '@/api/activos'
+
 import type { Categoria } from '@/api/categorias'
+
 import type { Ubicacion } from '@/api/ubicaciones'
+
+import type { Empresa } from '@/api/empresas'
+
 import type { Proveedor } from '@/api/proveedores'
 
 interface ActivoDialogProps {
@@ -29,6 +42,7 @@ interface ActivoDialogProps {
   categorias: Categoria[]
   ubicaciones: Ubicacion[]
   proveedores: Proveedor[]
+  empresas: Empresa[]
   onSubmit: (payload: ActivoInput) => Promise<void>
 }
 
@@ -44,6 +58,7 @@ const valoresVacios: ActivoInput = {
   fecha_fin_garantia: null,
   estado: 'activo',
   ubicacion: '',
+  empresa: null,
   especificaciones: null,
 }
 
@@ -54,8 +69,12 @@ export function ActivoDialog({
   categorias,
   ubicaciones,
   proveedores,
+  empresas,
   onSubmit,
 }: ActivoDialogProps) {
+  const { usuario } = useAuth()
+  const esAdmin = usuario?.rol === 'admin'
+
   const [form, setForm] = useState<ActivoInput>(valoresVacios)
   const [submitting, setSubmitting] = useState(false)
 
@@ -75,6 +94,7 @@ export function ActivoDialog({
               fecha_fin_garantia: activo.fecha_fin_garantia,
               estado: activo.estado,
               ubicacion: activo.ubicacion,
+              empresa: activo.empresa,
               especificaciones: activo.especificaciones,
             }
           : valoresVacios,
@@ -88,10 +108,12 @@ export function ActivoDialog({
   const categoriaSeleccionada = categorias.find((c) => c.id === form.categoria)
   const ubicacionSeleccionada = ubicaciones.find((u) => u.id === form.ubicacion)
   const proveedorSeleccionado = proveedores.find((p) => p.id === form.proveedor)
+  const empresaSeleccionada = empresas.find((e) => e.id === form.empresa)
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setSubmitting(true)
+
     try {
       await onSubmit({ ...form, especificaciones: activo?.especificaciones ?? null })
       onOpenChange(false)
@@ -148,6 +170,29 @@ export function ActivoDialog({
                 </SelectContent>
               </Select>
             </div>
+
+            {esAdmin && (
+              <div className="col-span-2 grid min-w-0 gap-2 sm:col-span-1">
+                <Label htmlFor="empresa">Empresa</Label>
+                <Select
+                  value={form.empresa ?? undefined}
+                  onValueChange={(v) => set('empresa', v)}
+                >
+                  <SelectTrigger id="empresa" className="w-full">
+                    <SelectValue placeholder="Selecciona una empresa">
+                      {empresaSeleccionada?.nombre}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {empresas.map((e) => (
+                      <SelectItem key={e.id} value={e.id}>
+                        {e.nombre}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             <div className="col-span-2 grid min-w-0 gap-2 sm:col-span-1">
               <Label htmlFor="ubicacion">Ubicación</Label>

@@ -12,6 +12,8 @@ export interface Usuario {
   rol: Rol
   area: string | null
   area_nombre: string | null
+  empresa: string | null
+  empresa_nombre: string | null
   is_active: boolean
   date_joined: string
 }
@@ -23,6 +25,7 @@ export type UsuarioCreateInput = {
   email: string
   rol: Rol
   area: string | null
+  empresa: string | null
 }
 
 
@@ -32,6 +35,7 @@ export type UsuarioUpdateInput = {
   email: string
   rol: Rol
   area: string | null
+  empresa: string | null
   is_active: boolean
 }
 

@@ -46,6 +46,7 @@ class ActivoSerializer(serializers.ModelSerializer):
             'codigo_interno',
             'categoria',
             'categoria_nombre',
+            'empresa_nombre',
             'nombre',
             'numero_serie',
             'marca',
@@ -91,7 +92,15 @@ class ActivoSerializer(serializers.ModelSerializer):
         usuario = self.context['request'].user
         validated_data['creado_por'] = usuario
         validated_data['area_creador'] = usuario.area
-        validated_data['empresa'] = usuario.empresa
+
+        if usuario.is_superuser or usuario.rol == 'admin':
+            if not validated_data.get('empresa'):
+                raise serializers.ValidationError(
+                    {'empresa': 'Selecciona la empresa a la que pertenece este activo.'}
+                )
+        else:
+            validated_data['empresa'] = usuario.empresa
+
         validated_data['codigo_interno'] = self.generar_codigo_interno(validated_data['categoria'])
 
         activo = super().create(validated_data)
@@ -105,4 +114,10 @@ class ActivoSerializer(serializers.ModelSerializer):
         )
 
         return activo
+
+    def update(self, instance, validated_data):
+        usuario = self.context['request'].user
+        if not (usuario.is_superuser or usuario.rol == 'admin'):
+            validated_data.pop('empresa', None)
+        return super().update(instance, validated_data)
 

@@ -20,12 +20,14 @@ import {
 } from '@/components/ui/select'
 import type { Persona, PersonaInput } from '@/api/personas'
 import type { Area } from '@/api/areas'
+import type { Empresa } from '@/api/empresas'
 
 interface PersonaDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   persona: Persona | null
   areas: Area[]
+  empresas: Empresa[]
   onSubmit: (payload: PersonaInput) => Promise<void>
 }
 
@@ -35,11 +37,12 @@ const valoresVacios: PersonaInput = {
   documento: '',
   cargo: '',
   area: null,
+  empresa: null,
   email: '',
   crear_acceso_consulta: false,
 }
 
-export function PersonaDialog({ open, onOpenChange, persona, areas, onSubmit }: PersonaDialogProps) {
+export function PersonaDialog({ open, onOpenChange, persona, areas, empresas, onSubmit }: PersonaDialogProps) {
   const [form, setForm] = useState<PersonaInput>(valoresVacios)
   const [submitting, setSubmitting] = useState(false)
 
@@ -48,13 +51,14 @@ export function PersonaDialog({ open, onOpenChange, persona, areas, onSubmit }: 
       setForm(
         persona
           ? {
-              nombres: persona.nombres,
-              apellidos: persona.apellidos,
-              documento: persona.documento,
-              cargo: persona.cargo,
-              area: persona.area,
-              email: persona.email,
-            }
+            nombres: persona.nombres,
+            apellidos: persona.apellidos,
+            documento: persona.documento,
+            cargo: persona.cargo,
+            area: persona.area,
+            empresa: persona.empresa,
+            email: persona.email,
+          }
           : valoresVacios,
       )
     }
@@ -64,6 +68,7 @@ export function PersonaDialog({ open, onOpenChange, persona, areas, onSubmit }: 
     setForm((f) => ({ ...f, [key]: value }))
 
   const areaSeleccionada = areas.find((a) => a.id === form.area)
+  const empresaSeleccionada = empresas.find((e) => e.id === form.empresa)
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -156,6 +161,28 @@ export function PersonaDialog({ open, onOpenChange, persona, areas, onSubmit }: 
                   {areas.map((a) => (
                     <SelectItem key={a.id} value={a.id}>
                       {a.nombre}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="empresa">Empresa</Label>
+              <Select
+                value={form.empresa ?? 'none'}
+                onValueChange={(v) => set('empresa', v === 'none' ? null : v)}
+              >
+                <SelectTrigger id="empresa" className="w-full">
+                  <SelectValue placeholder="Sin empresa">
+                    {empresaSeleccionada?.nombre ?? (form.empresa ? undefined : 'Sin empresa')}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Sin empresa</SelectItem>
+                  {empresas.map((e) => (
+                    <SelectItem key={e.id} value={e.id}>
+                      {e.nombre}
                     </SelectItem>
                   ))}
                 </SelectContent>
