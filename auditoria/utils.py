@@ -29,7 +29,7 @@ def calcular_cambios(anterior: dict, nuevo: dict):
 def registrar_auditoria(accion, modelo='', objeto_id='', objeto_repr='', cambios=None, usuario=None):
     request = get_current_request()
 
-    if usuario is None and request is not None: 
+    if usuario is None and request is not None:
         usuario = request.user if request.user.is_authenticated else None
 
     ip = obtener_ip(request) if request else None

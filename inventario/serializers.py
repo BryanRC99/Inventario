@@ -81,7 +81,7 @@ class ActivoSerializer(serializers.ModelSerializer):
             except ValueError:
                 ultimo_numero = 0
         else:
-            ultimo_numero = 0
+            ultimo_numero = 0   
 
         siguiente_numero = ultimo_numero + 1
         return f'{prefijo}-{siguiente_numero:03d}'

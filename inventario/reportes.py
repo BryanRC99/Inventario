@@ -68,7 +68,7 @@ def generar_reporte_excel(activos):
         celda.fill = PatternFill('solid', fgColor='111827')
         celda.alignment = Alignment(horizontal='center', vertical='center')
     hoja.row_dimensions[1].height = 22
-
+    
     for fila_idx, fila in enumerate(filas, start=2):
         relleno = (
             PatternFill('solid', fgColor='F9FAFB')
