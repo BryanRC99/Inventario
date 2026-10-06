@@ -25,7 +25,7 @@ class UbicacionSerializer(serializers.ModelSerializer):
         if self.instance and value and value.id == self.instance.id:
             raise serializers.ValidationError('Una ubicación no puede ser su propio padre.')
         return value
-
+    
 
 class ActivoSerializer(serializers.ModelSerializer):
     categoria_nombre = serializers.CharField(source='categoria.nombre', read_only=True)

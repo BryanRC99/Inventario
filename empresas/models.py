@@ -11,8 +11,9 @@ class Empresa(models.Model):
         max_length=255,
         blank=True,
         help_text=(
-            'Nombre exacto del archivo dentro de la carpeta static/ del backend, '
-            'ej. logo_empresa_a.png. Si se deja vacío, se usa el logo por defecto del sistema.'
+            'Opcional. El sistema ya detecta el logo automáticamente buscando '
+            '"logo_<nombre_empresa>.png" en la carpeta static/. Solo llena este campo '
+            'si necesitas usar un nombre de archivo distinto al de esa convención.'
         ),
     )
 

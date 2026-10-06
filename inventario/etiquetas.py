@@ -20,18 +20,26 @@ def generar_qr_base64(data):
 
 def _logo_uri_para_empresa(empresa):
     """
-    Busca el logo configurado en la empresa del activo; si no tiene uno
-    asignado, o el archivo no existe en disco, usa el logo por defecto
-    del sistema como respaldo — así nunca se rompe la etiqueta.
+    Resuelve el logo a usar en este orden:
+    1. Si la empresa tiene 'logo_filename' configurado manualmente, se usa ese.
+    2. Si no, se busca automáticamente por convención: logo_<nombre>.png/.jpg/.jpeg
+    3. Si nada de eso existe, se usa el logo por defecto del sistema.
     """
+    from empresas.utils import logo_path_por_convencion
+
     static_dir = Path(settings.BASE_DIR) / 'static'
-    nombre_archivo = (empresa.logo_filename if empresa else '') or 'logovyv.png'
 
-    logo_path = static_dir / nombre_archivo
-    if not logo_path.exists():
-        logo_path = static_dir / 'logovyv.png'
+    if empresa and empresa.logo_filename:
+        ruta_manual = static_dir / empresa.logo_filename
+        if ruta_manual.exists():
+            return ruta_manual.as_uri()
 
-    return logo_path.as_uri() if logo_path.exists() else None
+    ruta_automatica = logo_path_por_convencion(empresa)
+    if ruta_automatica:
+        return ruta_automatica.as_uri()
+
+    ruta_default = static_dir / 'logovyv.png'
+    return ruta_default.as_uri() if ruta_default.exists() else None
 
 
 def generar_pdf_etiqueta(activo, tamano='normal'):

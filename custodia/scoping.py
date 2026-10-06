@@ -1,6 +1,5 @@
 from django.db.models import Q
 
-
 def custodias_visibles(user, queryset):
     if user.is_superuser or user.rol == 'admin':
         return queryset

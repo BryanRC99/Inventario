@@ -86,8 +86,8 @@ export function EmpresaDialog({ open, onOpenChange, empresa, onSubmit }: Empresa
               placeholder="Ej. logo_empresa_a.png"
             />
             <p className="text-xs text-muted-foreground">
-              Debe existir ese archivo exacto en la carpeta static/ del backend. Si se deja
-              vacío, se usa el logo por defecto en las etiquetas de esta empresa.
+              El logo se detecta automáticamente buscando "logo_{'{nombre}'}.png" en el
+              sistema. Solo llena esto si necesitas un nombre de archivo distinto.
             </p>
           </div>
 
