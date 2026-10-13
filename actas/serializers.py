@@ -17,7 +17,6 @@ TEMPLATE_POR_TIPO = {
     'traslado': 'actas/acta_traslado_pdf.html',
 }
 
-
 def generar_pdf_acta(acta):
     logo_path = Path(settings.BASE_DIR) / 'static' / 'logovyv.png'
     logo_uri = logo_path.as_uri() if logo_path.exists() else None

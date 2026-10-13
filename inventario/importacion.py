@@ -9,7 +9,7 @@ from .models import Activo, Categoria, Ubicacion
 from proveedores.models import Proveedor
 
 def _limpiar(valor):
-    if valor is None:
+    if valor is None:   
         return ''
     return str(valor).strip()
 
@@ -99,7 +99,7 @@ def generar_plantilla_excel():
     instrucciones.append([''])
     instrucciones.append(['Ubicaciones existentes:'])
     for ub in Ubicacion.objects.order_by('nombre'):
-        instrucciones.append([f'  - {ub.nombre}'])
+        instrucciones.append([f'  - {ub.nombre}'])  
 
     instrucciones.append([''])
     instrucciones.append(['Proveedores existentes (opcional):'])

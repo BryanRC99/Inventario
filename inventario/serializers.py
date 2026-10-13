@@ -25,19 +25,19 @@ class UbicacionSerializer(serializers.ModelSerializer):
         if self.instance and value and value.id == self.instance.id:
             raise serializers.ValidationError('Una ubicación no puede ser su propio padre.')
         return value
-    
+
 
 class ActivoSerializer(serializers.ModelSerializer):
     categoria_nombre = serializers.CharField(source='categoria.nombre', read_only=True)
     ubicacion_nombre = serializers.CharField(source='ubicacion.nombre', read_only=True)
-    empresa_nombre = serializers.CharField(source='empresa.nombre', read_only=True, default=None)
     proveedor_nombre = serializers.CharField(
         source='proveedor.nombre', read_only=True, default=None
     )
-    estado_display = serializers.CharField(source='get_estado_display', read_only=True)
     area_creador_nombre = serializers.CharField(
         source='area_creador.nombre', read_only=True, default=None
     )
+    empresa_nombre = serializers.CharField(source='empresa.nombre', read_only=True, default=None)
+    estado_display = serializers.CharField(source='get_estado_display', read_only=True)
 
     class Meta:
         model = Activo
@@ -46,7 +46,6 @@ class ActivoSerializer(serializers.ModelSerializer):
             'codigo_interno',
             'categoria',
             'categoria_nombre',
-            'empresa_nombre',
             'nombre',
             'numero_serie',
             'marca',
@@ -58,14 +57,26 @@ class ActivoSerializer(serializers.ModelSerializer):
             'fecha_fin_garantia',
             'estado',
             'estado_display',
+            'motivo_baja',
+            'fecha_baja',
             'ubicacion',
             'ubicacion_nombre',
             'especificaciones',
-            'creado_por',
+            'area_creador',
             'area_creador_nombre',
+            'empresa',
+            'empresa_nombre',
+            'creado_por',
             'fecha_creacion',
         ]
-        read_only_fields = ['codigo_interno', 'creado_por', 'fecha_creacion', 'motivo_baja', 'fecha_baja']
+        read_only_fields = [
+            'codigo_interno',
+            'creado_por',
+            'fecha_creacion',
+            'motivo_baja',
+            'fecha_baja',
+            'area_creador',
+        ]
 
     def generar_codigo_interno(self, categoria):
         prefijo = categoria.prefijo
@@ -81,24 +92,38 @@ class ActivoSerializer(serializers.ModelSerializer):
             except ValueError:
                 ultimo_numero = 0
         else:
-            ultimo_numero = 0   
+            ultimo_numero = 0
 
-        siguiente_numero = ultimo_numero + 1
-        return f'{prefijo}-{siguiente_numero:03d}'
+        return f'{prefijo}-{ultimo_numero + 1:03d}'
 
     def create(self, validated_data):
         from trazabilidad.utils import registrar_movimiento
 
         usuario = self.context['request'].user
+        es_admin = usuario.is_superuser or usuario.rol == 'admin'
+
         validated_data['creado_por'] = usuario
         validated_data['area_creador'] = usuario.area
 
-        if usuario.is_superuser or usuario.rol == 'admin':
+        if es_admin:
+            # Admin administra las 3 empresas y no tiene una propia:
+            # debe elegirla a mano.
             if not validated_data.get('empresa'):
                 raise serializers.ValidationError(
                     {'empresa': 'Selecciona la empresa a la que pertenece este activo.'}
                 )
         else:
+            # Los demás roles la heredan de su usuario. Si no tienen una,
+            # se rechaza en vez de guardar el activo "huérfano" (null).
+            if not usuario.empresa:
+                raise serializers.ValidationError(
+                    {
+                        'empresa': (
+                            'Tu usuario no tiene una empresa asignada. '
+                            'Pide a un administrador que te asigne una.'
+                        )
+                    }
+                )
             validated_data['empresa'] = usuario.empresa
 
         validated_data['codigo_interno'] = self.generar_codigo_interno(validated_data['categoria'])
@@ -118,6 +143,6 @@ class ActivoSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         usuario = self.context['request'].user
         if not (usuario.is_superuser or usuario.rol == 'admin'):
+            # Un no-Admin no puede cambiar la empresa de un activo.
             validated_data.pop('empresa', None)
         return super().update(instance, validated_data)
-

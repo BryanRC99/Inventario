@@ -145,8 +145,9 @@ export default function ActivosPage() {
         toast.success('Activo creado')
       }
       await cargarTodo()
-    } catch {
-      toast.error('Ocurrió un error al guardar. Revisa que el código no esté repetido.')
+    } catch (err: any) {
+      const data = err?.response?.data
+      toast.error(data?.empresa?.[0] || data?.detail || 'Ocurrió un error al guardar el activo.')
     }
   }
 

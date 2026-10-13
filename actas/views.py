@@ -6,7 +6,6 @@ from usuarios.permissions import PermisoPorRol
 from .models import ActaEntrega
 from .serializers import ActaEntregaSerializer
 
-
 class ActaEntregaViewSet(viewsets.ModelViewSet):
     serializer_class = ActaEntregaSerializer
     permission_classes = [PermisoPorRol]
