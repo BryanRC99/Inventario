@@ -47,7 +47,7 @@ def _post_save(sender, instance, created, **kwargs):
 
 def _post_delete(sender, instance, **kwargs):
     registrar_auditoria(
-        accion='eliminar',
+        accion='eliminar',  
         modelo=sender.__name__,
         objeto_id=instance.pk,
         objeto_repr=str(instance),
