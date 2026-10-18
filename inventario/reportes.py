@@ -53,7 +53,7 @@ def _fila_activo(activo, custodios_por_id):
     ]
 
 
-def generar_reporte_excel(activos):
+def generar_reporte_excel(activos, filtros=None):
     custodios_por_id = _custodios_actuales(activos)
     filas = [_fila_activo(a, custodios_por_id) for a in activos]
 
@@ -88,12 +88,22 @@ def generar_reporte_excel(activos):
     hoja.freeze_panes = 'A2'
     hoja.auto_filter.ref = f'A1:{get_column_letter(len(COLUMNAS))}{max(len(filas) + 1, 2)}'
 
+    if filtros:
+        hoja_f = wb.create_sheet('Filtros')
+        hoja_f.cell(row=1, column=1, value='Filtro').font = Font(bold=True)
+        hoja_f.cell(row=1, column=2, value='Valor').font = Font(bold=True)
+        for i, (etiqueta, texto) in enumerate(filtros, start=2):
+            hoja_f.cell(row=i, column=1, value=etiqueta)
+            hoja_f.cell(row=i, column=2, value=texto)
+        hoja_f.column_dimensions['A'].width = 16
+        hoja_f.column_dimensions['B'].width = 60
+
     buffer = BytesIO()
     wb.save(buffer)
     return buffer.getvalue()
 
 
-def generar_reporte_pdf(activos):
+def generar_reporte_pdf(activos, filtros=None):
     custodios_por_id = _custodios_actuales(activos)
     logo_path = Path(settings.BASE_DIR) / 'static' / 'logovyv.png'
     logo_uri = logo_path.as_uri() if logo_path.exists() else None
@@ -119,6 +129,7 @@ def generar_reporte_pdf(activos):
             'filas': filas,
             'logo_uri': logo_uri,
             'total': len(activos),
+            'filtros': filtros or [],
             'fecha_generacion': datetime.now().strftime('%d/%m/%Y %H:%M'),
         },
     )

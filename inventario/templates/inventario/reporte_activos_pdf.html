@@ -76,7 +76,8 @@
     {% if logo_uri %}<img class="logo" src="{{ logo_uri }}" alt="Logo">{% endif %}
     <div class="titulos">
       <h1>Reporte de Activos</h1>
-      <p>Listado general del inventario de equipos</p>
+      <p>{% if filtros %}Reporte filtrado{% else %}Listado general del inventario de equipos{% endif %}</p>
+      {% if filtros %}<p><strong>Filtros:</strong> {% for etiqueta, texto in filtros %}{{ etiqueta }}: {{ texto }}{% if not forloop.last %} · {% endif %}{% endfor %}</p>{% endif %}
     </div>
     <div class="meta">
       Generado el {{ fecha_generacion }}<br>

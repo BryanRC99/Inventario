@@ -77,8 +77,33 @@ export const ESTADOS_ACTIVO: { value: EstadoActivo; label: string }[] = [
   { value: 'extraviado', label: 'Extraviado' },
 ]
 
-export async function listarActivos(): Promise<Activo[]> {
-  const { data } = await api.get('/inventario/activos/')
+export interface FiltrosActivos {
+  empresa?: string[]
+  categoria?: string[]
+  ubicacion?: string[]
+  estado?: EstadoActivo[]
+  search?: string
+}
+
+// Repite la clave por valor (estado=a&estado=b), que es lo que espera django-filter.
+const serializarFiltros = { indexes: null as null }
+
+function limpiarFiltros(filtros: FiltrosActivos = {}) {
+  const params: Record<string, string | string[]> = {}
+  for (const clave of ['empresa', 'categoria', 'ubicacion', 'estado'] as const) {
+    const valores = filtros[clave]
+    if (valores && valores.length > 0) params[clave] = valores
+  }
+  const search = filtros.search?.trim()
+  if (search) params.search = search.slice(0, 100)
+  return params
+}
+
+export async function listarActivos(filtros?: FiltrosActivos): Promise<Activo[]> {
+  const { data } = await api.get('/inventario/activos/', {
+    params: limpiarFiltros(filtros),
+    paramsSerializer: serializarFiltros,
+  })
   return data
 }
 
@@ -143,12 +168,20 @@ export async function confirmarImportacionActivos(archivo: File): Promise<Result
   return data
 }
 
-export async function descargarReporteExcel(): Promise<Blob> {
-  const { data } = await api.get('/inventario/activos/reporte_excel/', { responseType: 'blob' })
+export async function descargarReporteExcel(filtros?: FiltrosActivos): Promise<Blob> {
+  const { data } = await api.get('/inventario/activos/reporte_excel/', {
+    params: limpiarFiltros(filtros),
+    paramsSerializer: serializarFiltros,
+    responseType: 'blob',
+  })
   return data
 }
 
-export async function descargarReportePdf(): Promise<Blob> {
-  const { data } = await api.get('/inventario/activos/reporte_pdf/', { responseType: 'blob' })
+export async function descargarReportePdf(filtros?: FiltrosActivos): Promise<Blob> {
+  const { data } = await api.get('/inventario/activos/reporte_pdf/', {
+    params: limpiarFiltros(filtros),
+    paramsSerializer: serializarFiltros,
+    responseType: 'blob',
+  })
   return data
 }
