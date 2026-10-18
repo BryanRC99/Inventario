@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Plus, Pencil, Eye, Tag, PackageX, Upload, FileSpreadsheet, FileText } from 'lucide-react'
+import { Plus, Pencil, Eye, Tag, PackageX, Upload, FileSpreadsheet, FileText, FilterX } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -27,6 +27,8 @@ import {
   descargarReportePdf,
   type Activo,
   type ActivoInput,
+  type FiltrosActivos,
+  ESTADOS_ACTIVO,
   type EstadoActivo,
 } from '@/api/activos'
 import { listarCategorias, type Categoria } from '@/api/categorias'
@@ -36,6 +38,8 @@ import { listarEmpresas, type Empresa } from '@/api/empresas'
 import { obtenerEtiquetasLotePdf } from '@/api/activos'
 import { SearchInput } from '@/components/search-input'
 import { coincide } from '@/lib/normalizar-texto'
+import { MultiSelectFilter } from '@/components/multi-select-filter'
+import { mensajeErrorApi } from '@/lib/errores-api'
 
 const BADGE_POR_ESTADO: Record<EstadoActivo, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   activo: 'default',
@@ -60,28 +64,49 @@ export default function ActivosPage() {
   const [tamanoDialogOpen, setTamanoDialogOpen] = useState(false)
   const [activoParaEtiqueta, setActivoParaEtiqueta] = useState<Activo | null>(null)
   const [empresas, setEmpresas] = useState<Empresa[]>([])
+  const [fEmpresa, setFEmpresa] = useState<string[]>([])
+  const [fCategoria, setFCategoria] = useState<string[]>([])
+  const [fUbicacion, setFUbicacion] = useState<string[]>([])
+  const [fEstado, setFEstado] = useState<string[]>([])
+
+  const hayFiltros = fEmpresa.length + fCategoria.length + fUbicacion.length + fEstado.length > 0
+  const filtrosServidor: FiltrosActivos = {
+    empresa: fEmpresa,
+    categoria: fCategoria,
+    ubicacion: fUbicacion,
+    estado: fEstado as EstadoActivo[],
+  }
+  // Los reportes usan exactamente los mismos filtros que la tabla (+ la búsqueda de texto).
+  const filtrosReporte: FiltrosActivos = { ...filtrosServidor, search: busqueda }
+
+  const limpiarFiltros = () => {
+    setFEmpresa([])
+    setFCategoria([])
+    setFUbicacion([])
+    setFEstado([])
+  }
 
   const handleExportarExcel = async () => {
     try {
-      const blob = await descargarReporteExcel()
+      const blob = await descargarReporteExcel(filtrosReporte)
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = 'reporte_activos.xlsx'
+      a.download = hayFiltros || busqueda.trim() ? 'reporte_activos_filtrado.xlsx' : 'reporte_activos.xlsx'
       a.click()
       URL.revokeObjectURL(url)
-    } catch {
-      toast.error('No se pudo generar el reporte Excel')
+    } catch (err) {
+      toast.error(await mensajeErrorApi(err, 'No se pudo generar el reporte Excel.'))
     }
   }
 
   const handleExportarPdf = async () => {
     try {
-      const blob = await descargarReportePdf()
+      const blob = await descargarReportePdf(filtrosReporte)
       const url = URL.createObjectURL(blob)
       window.open(url, '_blank')
-    } catch {
-      toast.error('No se pudo generar el reporte PDF')
+    } catch (err) {
+      toast.error(await mensajeErrorApi(err, 'No se pudo generar el reporte PDF.'))
     }
   }
 
@@ -89,7 +114,7 @@ export default function ActivosPage() {
     setLoading(true)
     try {
       const [activosData, categoriasData, ubicacionesData, proveedoresData, empresasData] = await Promise.all([
-        listarActivos(),
+        listarActivos(filtrosServidor),
         listarCategorias(),
         listarUbicaciones(),
         listarProveedores(),
@@ -100,16 +125,19 @@ export default function ActivosPage() {
       setUbicaciones(ubicacionesData)
       setProveedores(proveedoresData)
       setEmpresas(empresasData)
-    } catch {
-      toast.error('No se pudieron cargar los activos')
+    } catch (err) {
+      toast.error(await mensajeErrorApi(err, 'No se pudieron cargar los activos.'))
     } finally {
       setLoading(false)
     }
   }
 
+  // Recarga al montar y cada vez que cambia un filtro.
+  const claveFiltros = JSON.stringify([fEmpresa, fCategoria, fUbicacion, fEstado])
   useEffect(() => {
     cargarTodo()
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [claveFiltros])
 
   const activosFiltrados = activos.filter(
     (a) =>
@@ -221,11 +249,48 @@ export default function ActivosPage() {
         </div>
       </div>
 
-      <SearchInput
-        value={busqueda}
-        onChange={setBusqueda}
-        placeholder="Buscar por código, nombre, modelo, serie..."
-      />
+      <div className="flex flex-wrap items-center gap-2">
+        <SearchInput
+          value={busqueda}
+          onChange={setBusqueda}
+          placeholder="Buscar por código, nombre, modelo, serie..."
+        />
+        {empresas.length > 1 && (
+          <MultiSelectFilter
+            titulo="Empresa"
+            opciones={empresas.map((e) => ({ value: e.id, label: e.nombre }))}
+            seleccion={fEmpresa}
+            onChange={setFEmpresa}
+          />
+        )}
+        <MultiSelectFilter
+          titulo="Categoría"
+          opciones={categorias.map((c) => ({ value: c.id, label: c.nombre }))}
+          seleccion={fCategoria}
+          onChange={setFCategoria}
+        />
+        <MultiSelectFilter
+          titulo="Ubicación"
+          opciones={ubicaciones.map((u) => ({ value: u.id, label: u.nombre }))}
+          seleccion={fUbicacion}
+          onChange={setFUbicacion}
+        />
+        <MultiSelectFilter
+          titulo="Estado"
+          opciones={ESTADOS_ACTIVO}
+          seleccion={fEstado}
+          onChange={setFEstado}
+        />
+        {hayFiltros && (
+          <Button size="sm" variant="ghost" onClick={limpiarFiltros}>
+            <FilterX className="size-3.5" />
+            Limpiar filtros
+          </Button>
+        )}
+        {!loading && (hayFiltros || busqueda) && (
+          <span className="text-xs text-muted-foreground">{activosFiltrados.length} resultado(s)</span>
+        )}
+      </div>
 
       {seleccionados.size > 0 && (
         <div className="flex items-center justify-between rounded-md border bg-muted/40 px-3 py-2">
@@ -270,8 +335,8 @@ export default function ActivosPage() {
             {!loading && activosFiltrados.length === 0 && (
               <TableRow>
                 <TableCell colSpan={9} className="py-6 text-center text-sm text-muted-foreground">
-                  {busqueda
-                    ? 'No se encontraron activos con ese criterio.'
+                  {busqueda || hayFiltros
+                    ? 'No se encontraron activos con esos filtros.'
                     : 'No hay activos todavía. Registra el primero.'}
                 </TableCell>
               </TableRow>

@@ -7,6 +7,7 @@ from rest_framework.views import APIView
 
 from usuarios.permissions import PermisoPorRolSinConsulta
 
+from .filters import ActivoFilter, describir_filtros
 from .models import Activo, Categoria, Ubicacion
 from .serializers import ActivoSerializer, CategoriaSerializer, UbicacionSerializer
 
@@ -26,7 +27,7 @@ class UbicacionViewSet(viewsets.ModelViewSet):
 class ActivoViewSet(viewsets.ModelViewSet):
     serializer_class = ActivoSerializer
     permission_classes = [PermisoPorRolSinConsulta]
-    filterset_fields = ['estado', 'categoria', 'ubicacion']
+    filterset_class = ActivoFilter
     http_method_names = ['get', 'post', 'put', 'patch', 'head', 'options']
 
     def get_queryset(self):
@@ -212,14 +213,25 @@ class ActivoViewSet(viewsets.ModelViewSet):
 
         return Response(self.get_serializer(activo).data)
 
+    def _activos_filtrados(self):
+        """Mismo queryset (scoping + filtros) que usa el listado, para que los reportes coincidan con la tabla."""
+        from django_filters.rest_framework import DjangoFilterBackend
+
+        backend = DjangoFilterBackend()
+        queryset = self.get_queryset().select_related('categoria', 'ubicacion', 'proveedor')
+        # get_filterset puede lanzar ValidationError (-> 400 con detalle por campo).
+        filterset = backend.get_filterset(self.request, queryset, self)
+        queryset = backend.filter_queryset(self.request, queryset, self)
+        return list(queryset), describir_filtros(filterset)
+
     @action(detail=False, methods=['get'])
     def reporte_excel(self, request):
         from django.http import HttpResponse
 
         from .reportes import generar_reporte_excel
 
-        activos = list(self.get_queryset().select_related('categoria', 'ubicacion', 'proveedor'))
-        contenido = generar_reporte_excel(activos)
+        activos, filtros = self._activos_filtrados()
+        contenido = generar_reporte_excel(activos, filtros)
 
         response = HttpResponse(
             contenido,
@@ -234,8 +246,8 @@ class ActivoViewSet(viewsets.ModelViewSet):
 
         from .reportes import generar_reporte_pdf
 
-        activos = list(self.get_queryset().select_related('categoria', 'ubicacion', 'proveedor'))
-        pdf_bytes = generar_reporte_pdf(activos)
+        activos, filtros = self._activos_filtrados()
+        pdf_bytes = generar_reporte_pdf(activos, filtros)
 
         response = HttpResponse(pdf_bytes, content_type='application/pdf')
         response['Content-Disposition'] = 'inline; filename="reporte_activos.pdf"'
