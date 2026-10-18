@@ -11,10 +11,10 @@ class Persona(models.Model):
     documento = models.CharField(max_length=20, unique=True)
     cargo = models.CharField(max_length=100, blank=True)
     area = models.ForeignKey(
-        'areas.Area', on_delete=models.SET_NULL, null=True, blank=True, related_name='personas'
+        'areas.Area', on_delete=models.PROTECT, null=True, blank=True, related_name='personas'
     )
     empresa = models.ForeignKey(
-        'empresas.Empresa', on_delete=models.SET_NULL, null=True, blank=True, related_name='personas'
+        'empresas.Empresa', on_delete=models.PROTECT, null=True, blank=True, related_name='personas'
     )
     email = models.EmailField(blank=True)
     usuario = models.OneToOneField(

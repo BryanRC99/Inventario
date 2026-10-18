@@ -1,3 +1,4 @@
+from django.db import transaction
 from rest_framework import serializers
 from inventario.models import Ubicacion
 
@@ -37,8 +38,21 @@ class CustodiaSerializer(serializers.ModelSerializer):
     def get_activa(self, obj):
         return obj.fecha_fin is None
 
-
     def validate(self, attrs):
+        # Bloquear la edición si la custodia ya está finalizada
+        if self.instance and self.instance.fecha_fin is not None:
+            raise serializers.ValidationError(
+                'Esta custodia ya está finalizada y no se puede modificar.'
+            )
+
+        from usuarios.alcance import validar_acceso
+        user = self.context['request'].user
+        validar_acceso(
+            user,
+            attrs.get('activo') or (self.instance.activo if self.instance else None),
+            attrs.get('persona') or (self.instance.persona if self.instance else None),
+        )
+
         import copy
 
         campos_no_modelo = {'ubicacion_destino'}
@@ -63,6 +77,7 @@ class CustodiaSerializer(serializers.ModelSerializer):
         instance.clean()
         return attrs
 
+    @transaction.atomic
     def create(self, validated_data):
         from trazabilidad.utils import registrar_movimiento
 
@@ -99,6 +114,7 @@ class CustodiaSerializer(serializers.ModelSerializer):
 
         return custodia
 
+    @transaction.atomic
     def update(self, instance, validated_data):
         from trazabilidad.utils import registrar_movimiento
 

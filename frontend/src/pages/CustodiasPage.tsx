@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Plus, Pencil, Trash2, Eye, CheckCircle2, RefreshCw } from 'lucide-react'
+import { Plus, Pencil, Eye, CheckCircle2, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -15,12 +15,10 @@ import { CustodiaDialog } from '@/components/custodia-dialog'
 import { CustodiaDetailDialog } from '@/components/custodia-detail-dialog'
 import { ActaDialog } from '@/components/acta-dialog'
 import { FinalizarCustodiaDialog } from '@/components/finalizar-custodia-dialog'
-import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog'
 import {
   listarCustodias,
   crearCustodia,
   actualizarCustodia,
-  eliminarCustodia,
   cerrarCustodia,
   extraerMensajeError,
   type Custodia,
@@ -47,7 +45,6 @@ export default function CustodiasPage() {
   const [custodiaDetalle, setCustodiaDetalle] = useState<Custodia | null>(null)
   const [custodiaAFinalizar, setCustodiaAFinalizar] = useState<Custodia | null>(null)
   const [reasignandoActivoId, setReasignandoActivoId] = useState<string | null>(null)
-  const [custodiaAEliminar, setCustodiaAEliminar] = useState<Custodia | null>(null)
   const [busqueda, setBusqueda] = useState('')
 
   const cargarTodo = async () => {
@@ -117,23 +114,6 @@ export default function CustodiasPage() {
     }
   }
 
-  const confirmarEliminar = async () => {
-    if (!custodiaAEliminar) return
-    try {
-      await eliminarCustodia(custodiaAEliminar.id)
-      toast.success('Custodia eliminada')
-      await cargarTodo()
-    } catch (err: any) {
-      if (err?.response?.status === 403) {
-        toast.error('No tienes permiso para eliminar custodias')
-      } else {
-        toast.error('No se pudo eliminar la custodia')
-      }
-    } finally {
-      setCustodiaAEliminar(null)
-    }
-  }
-
   const handleFinalizar = async (fechaFin: string, ubicacionDestino: string) => {
     if (!custodiaAFinalizar) return
     try {
@@ -187,7 +167,7 @@ export default function CustodiasPage() {
               <TableHead className="h-9 text-xs">Desde</TableHead>
               <TableHead className="h-9 text-xs">Hasta</TableHead>
               <TableHead className="h-9 text-xs">Estado</TableHead>
-              <TableHead className="h-9 w-36 text-right text-xs">Acciones</TableHead>
+              <TableHead className="h-9 w-32 text-right text-xs">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -237,6 +217,7 @@ export default function CustodiasPage() {
                     size="icon"
                     className="size-7"
                     onClick={() => setCustodiaDetalle(custodia)}
+                    title="Ver detalle"
                   >
                     <Eye className="size-3.5" />
                   </Button>
@@ -267,16 +248,9 @@ export default function CustodiasPage() {
                     size="icon"
                     className="size-7"
                     onClick={() => abrirEditar(custodia)}
+                    title="Editar"
                   >
                     <Pencil className="size-3.5" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="size-7"
-                    onClick={() => setCustodiaAEliminar(custodia)}
-                  >
-                    <Trash2 className="size-3.5" />
                   </Button>
                 </TableCell>
               </TableRow>
@@ -332,14 +306,6 @@ export default function CustodiasPage() {
           onSkip={() => setCustodiaParaActa(null)}
         />
       )}
-
-      <ConfirmDeleteDialog
-        open={!!custodiaAEliminar}
-        onOpenChange={(open) => !open && setCustodiaAEliminar(null)}
-        titulo="¿Eliminar esta custodia?"
-        descripcion={`Vas a eliminar la custodia de "${custodiaAEliminar?.activo_nombre}".`}
-        onConfirm={confirmarEliminar}
-      />
     </div>
   )
 }

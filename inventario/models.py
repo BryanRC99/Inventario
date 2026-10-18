@@ -40,7 +40,7 @@ class Ubicacion(models.Model):
         'self',
         null=True,
         blank=True,
-        on_delete=models.SET_NULL,
+        on_delete=models.PROTECT,  # Cambiado a PROTECT
         related_name='sub_ubicaciones',
         help_text='Ej. una oficina pertenece a un piso, un piso pertenece a una sede.',
     )
@@ -72,7 +72,7 @@ class Activo(models.Model):
     valor_adquisicion = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     proveedor = models.ForeignKey(
         'proveedores.Proveedor',
-        on_delete=models.SET_NULL,
+        on_delete=models.PROTECT,  # Cambiado a PROTECT
         null=True,
         blank=True,
         related_name='activos',
@@ -83,7 +83,7 @@ class Activo(models.Model):
     fecha_baja = models.DateField(null=True, blank=True)
     area_creador = models.ForeignKey(
         'areas.Area',
-        on_delete=models.SET_NULL,
+        on_delete=models.PROTECT,  # Cambiado a PROTECT
         null=True,
         blank=True,
         related_name='activos',
@@ -91,7 +91,7 @@ class Activo(models.Model):
     )
     empresa = models.ForeignKey(
         'empresas.Empresa',
-        on_delete=models.SET_NULL,
+        on_delete=models.PROTECT,  # Cambiado a PROTECT
         null=True,
         blank=True,
         related_name='activos',
@@ -101,7 +101,7 @@ class Activo(models.Model):
     especificaciones = models.JSONField(null=True, blank=True)
     creado_por = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
+        on_delete=models.SET_NULL,  # Este se mantiene igual según las instrucciones
         null=True,
         blank=True,
         related_name='activos_creados',

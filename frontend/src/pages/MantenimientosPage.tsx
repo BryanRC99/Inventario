@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Plus, Pencil, Trash2 } from 'lucide-react'
+import { Plus, Pencil } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import {
@@ -11,12 +11,10 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { MantenimientoDialog } from '@/components/mantenimiento-dialog'
-import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog'
 import {
   listarMantenimientos,
   crearMantenimiento,
   actualizarMantenimiento,
-  eliminarMantenimiento,
   type Mantenimiento,
   type MantenimientoInput,
 } from '@/api/mantenimientos'
@@ -32,7 +30,6 @@ export default function MantenimientosPage() {
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [mantenimientoEditando, setMantenimientoEditando] = useState<Mantenimiento | null>(null)
-  const [mantenimientoAEliminar, setMantenimientoAEliminar] = useState<Mantenimiento | null>(null)
   const [busqueda, setBusqueda] = useState('')
 
   const cargarTodo = async () => {
@@ -89,23 +86,6 @@ export default function MantenimientosPage() {
     }
   }
 
-  const confirmarEliminar = async () => {
-    if (!mantenimientoAEliminar) return
-    try {
-      await eliminarMantenimiento(mantenimientoAEliminar.id)
-      toast.success('Mantenimiento eliminado')
-      await cargarTodo()
-    } catch (err: any) {
-      if (err?.response?.status === 403) {
-        toast.error('No tienes permiso para eliminar mantenimientos')
-      } else {
-        toast.error('No se pudo eliminar')
-      }
-    } finally {
-      setMantenimientoAEliminar(null)
-    }
-  }
-
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
@@ -134,7 +114,7 @@ export default function MantenimientosPage() {
               <TableHead className="h-9 text-xs">Fecha</TableHead>
               <TableHead className="h-9 text-xs">Costo</TableHead>
               <TableHead className="h-9 text-xs">Próximo</TableHead>
-              <TableHead className="h-9 w-20 text-right text-xs">Acciones</TableHead>
+              <TableHead className="h-9 w-16 text-right text-xs">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -178,16 +158,9 @@ export default function MantenimientosPage() {
                     size="icon"
                     className="size-7"
                     onClick={() => abrirEditar(m)}
+                    title="Editar"
                   >
                     <Pencil className="size-3.5" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="size-7"
-                    onClick={() => setMantenimientoAEliminar(m)}
-                  >
-                    <Trash2 className="size-3.5" />
                   </Button>
                 </TableCell>
               </TableRow>
@@ -203,14 +176,6 @@ export default function MantenimientosPage() {
         activos={activos}
         proveedores={proveedores}
         onSubmit={handleSubmit}
-      />
-
-      <ConfirmDeleteDialog
-        open={!!mantenimientoAEliminar}
-        onOpenChange={(open) => !open && setMantenimientoAEliminar(null)}
-        titulo="¿Eliminar este registro de mantenimiento?"
-        descripcion={`Vas a eliminar el mantenimiento de "${mantenimientoAEliminar?.activo_nombre}".`}
-        onConfirm={confirmarEliminar}
       />
     </div>
   )

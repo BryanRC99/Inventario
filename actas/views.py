@@ -1,12 +1,14 @@
 from django.db.models import Q
-from rest_framework import viewsets
+from rest_framework import mixins, viewsets
 
 from usuarios.permissions import PermisoPorRol
 
 from .models import ActaEntrega
 from .serializers import ActaEntregaSerializer
 
-class ActaEntregaViewSet(viewsets.ModelViewSet):
+
+class ActaEntregaViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
+                         mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     serializer_class = ActaEntregaSerializer
     permission_classes = [PermisoPorRol]
     filterset_fields = ['activo', 'persona', 'tipo', 'custodia']
@@ -18,8 +20,8 @@ class ActaEntregaViewSet(viewsets.ModelViewSet):
         if user.is_superuser or user.rol == 'admin':
             return base.all()
 
-        if user.empresa:
-            base = base.filter(activo__empresa=user.empresa)
+        if user.empresa_id:
+            base = base.filter(activo__empresa_id=user.empresa_id)
         else:
             base = base.filter(activo__empresa__isnull=True)
 
@@ -29,9 +31,7 @@ class ActaEntregaViewSet(viewsets.ModelViewSet):
                 return base.none()
             return base.filter(persona=persona)
 
-        return base.filter(
-            Q(generado_por=user)
-            | Q(persona__area=user.area)
-            | Q(activo__creado_por=user)
-            | Q(activo__area_creador=user.area)
-        ).distinct()
+        q = Q(generado_por=user) | Q(activo__creado_por=user)
+        if user.area_id:
+            q |= Q(persona__area_id=user.area_id) | Q(activo__area_creador_id=user.area_id)
+        return base.filter(q).distinct()

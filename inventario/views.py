@@ -1,12 +1,11 @@
-from rest_framework import viewsets
+from django.db import transaction
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework import status
-from rest_framework.response import Response
 
-from usuarios.permissions import PermisoPorRol
+from usuarios.permissions import PermisoPorRolSinConsulta
 
 from .models import Activo, Categoria, Ubicacion
 from .serializers import ActivoSerializer, CategoriaSerializer, UbicacionSerializer
@@ -15,42 +14,26 @@ from .serializers import ActivoSerializer, CategoriaSerializer, UbicacionSeriali
 class CategoriaViewSet(viewsets.ModelViewSet):
     queryset = Categoria.objects.all()
     serializer_class = CategoriaSerializer
-    permission_classes = [PermisoPorRol]
+    permission_classes = [PermisoPorRolSinConsulta]
 
     
 class UbicacionViewSet(viewsets.ModelViewSet):
     queryset = Ubicacion.objects.select_related('ubicacion_padre').all()
     serializer_class = UbicacionSerializer
-    permission_classes = [PermisoPorRol]
+    permission_classes = [PermisoPorRolSinConsulta]
 
 
 class ActivoViewSet(viewsets.ModelViewSet):
     serializer_class = ActivoSerializer
-    permission_classes = [PermisoPorRol]
+    permission_classes = [PermisoPorRolSinConsulta]
     filterset_fields = ['estado', 'categoria', 'ubicacion']
+    http_method_names = ['get', 'post', 'put', 'patch', 'head', 'options']
 
     def get_queryset(self):
         from .scoping import activos_visibles
 
         base = Activo.objects.select_related('categoria', 'ubicacion', 'proveedor')
         return activos_visibles(self.request.user, base)
-
-    def destroy(self, request, *args, **kwargs):
-        from django.db.models import ProtectedError
-
-        try:
-            return super().destroy(request, *args, **kwargs)
-        except ProtectedError:
-            return Response(
-                {
-                    'detail': (
-                        'No se puede eliminar este activo porque tiene custodias, '
-                        'movimientos, mantenimientos o actas asociadas. '
-                        'Si ya no está en uso, cambia su estado a "Dado de baja" en su lugar.'
-                    )
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
 
     @action(detail=False, methods=['get'])
     def plantilla_importacion(self, request):
@@ -82,9 +65,6 @@ class ActivoViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Guardamos temporalmente los datos ya validados en sesión-less
-        # token: en vez de eso, devolvemos todo al frontend y que nos lo
-        # reenvíe en confirmar_importacion (más simple, sin estado en servidor).
         return Response(
             {
                 'total': len(filas),
@@ -170,8 +150,6 @@ class ActivoViewSet(viewsets.ModelViewSet):
         if not ids:
             return Response({'detail': 'Debes seleccionar al menos un activo.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Reutiliza el queryset con alcance por rol: nadie puede imprimir
-        # etiquetas de activos que no le corresponde ver.
         activos = self.get_queryset().filter(id__in=ids)
 
         if not activos.exists():
@@ -184,6 +162,7 @@ class ActivoViewSet(viewsets.ModelViewSet):
         return response
 
     @action(detail=True, methods=['post'])
+    @transaction.atomic
     def dar_de_baja(self, request, pk=None):
         from datetime import date
 
@@ -207,8 +186,6 @@ class ActivoViewSet(viewsets.ModelViewSet):
 
         hoy = date.today()
 
-        # Cierra automáticamente cualquier custodia activa: un activo dado
-        # de baja no puede seguir figurando como asignado a alguien.
         custodias_activas = Custodia.objects.filter(activo=activo, fecha_fin__isnull=True)
         for custodia in custodias_activas:
             custodia.fecha_fin = hoy
@@ -263,6 +240,7 @@ class ActivoViewSet(viewsets.ModelViewSet):
         response = HttpResponse(pdf_bytes, content_type='application/pdf')
         response['Content-Disposition'] = 'inline; filename="reporte_activos.pdf"'
         return response
+
 
 class DashboardView(APIView):
     """GET /api/inventario/dashboard/ -> números y gráficas del panel principal."""

@@ -21,7 +21,7 @@ class Movimiento(models.Model):
     tipo_evento = models.CharField(max_length=30, choices=TipoEvento.choices)
     usuario = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
+        on_delete=models.SET_NULL,  # Se mantiene SET_NULL
         null=True,
         blank=True,
         related_name='movimientos_registrados',
@@ -29,14 +29,14 @@ class Movimiento(models.Model):
     fecha_hora = models.DateTimeField(auto_now_add=True)
     ubicacion_origen = models.ForeignKey(
         'inventario.Ubicacion',
-        on_delete=models.SET_NULL,
+        on_delete=models.PROTECT,  # Cambiado a PROTECT
         null=True,
         blank=True,
         related_name='movimientos_como_origen',
     )
     ubicacion_destino = models.ForeignKey(
         'inventario.Ubicacion',
-        on_delete=models.SET_NULL,
+        on_delete=models.PROTECT,  # Cambiado a PROTECT
         null=True,
         blank=True,
         related_name='movimientos_como_destino',
@@ -59,7 +59,7 @@ class Mantenimiento(models.Model):
     )
     proveedor = models.ForeignKey(
         'proveedores.Proveedor',
-        on_delete=models.SET_NULL,
+        on_delete=models.PROTECT,  # Cambiado a PROTECT
         null=True,
         blank=True,
         related_name='mantenimientos',

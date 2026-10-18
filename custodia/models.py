@@ -22,7 +22,7 @@ class Custodia(models.Model):
     )
     area = models.ForeignKey(
         'areas.Area',
-        on_delete=models.SET_NULL,
+        on_delete=models.PROTECT,  # Cambiado a PROTECT
         null=True,
         blank=True,
         related_name='custodias',

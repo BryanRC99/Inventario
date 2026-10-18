@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Plus, Pencil, Trash2, Eye, Tag, PackageX, Upload, FileSpreadsheet, FileText } from 'lucide-react'
+import { Plus, Pencil, Eye, Tag, PackageX, Upload, FileSpreadsheet, FileText } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -14,7 +14,6 @@ import {
 } from '@/components/ui/table'
 import { ActivoDialog } from '@/components/activo-dialog'
 import { ActivoDetailDialog } from '@/components/activo-detail-dialog'
-import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog'
 import { DarDeBajaDialog } from '@/components/dar-de-baja-dialog'
 import { ImportarActivosDialog } from '@/components/importar-activos-dialog'
 import { TamanoEtiquetaDialog } from '@/components/tamano-etiqueta-dialog'
@@ -22,7 +21,6 @@ import {
   listarActivos,
   crearActivo,
   actualizarActivo,
-  eliminarActivo,
   obtenerEtiquetaPdf,
   darDeBajaActivo,
   descargarReporteExcel,
@@ -55,7 +53,6 @@ export default function ActivosPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [activoEditando, setActivoEditando] = useState<Activo | null>(null)
   const [activoDetalle, setActivoDetalle] = useState<Activo | null>(null)
-  const [activoAEliminar, setActivoAEliminar] = useState<Activo | null>(null)
   const [activoParaBaja, setActivoParaBaja] = useState<Activo | null>(null)
   const [busqueda, setBusqueda] = useState('')
   const [importarOpen, setImportarOpen] = useState(false)
@@ -103,7 +100,6 @@ export default function ActivosPage() {
       setUbicaciones(ubicacionesData)
       setProveedores(proveedoresData)
       setEmpresas(empresasData)
-
     } catch {
       toast.error('No se pudieron cargar los activos')
     } finally {
@@ -151,27 +147,8 @@ export default function ActivosPage() {
     }
   }
 
-  const confirmarEliminar = async () => {
-    if (!activoAEliminar) return
-    try {
-      await eliminarActivo(activoAEliminar.id)
-      toast.success('Activo eliminado')
-      await cargarTodo()
-    } catch (err: any) {
-      if (err?.response?.status === 403) {
-        toast.error('No tienes permiso para eliminar activos')
-      } else if (err?.response?.data?.detail) {
-        toast.error(err.response.data.detail)
-      } else {
-        toast.error('No se pudo eliminar el activo')
-      }
-    } finally {
-      setActivoAEliminar(null)
-    }
-  }
-
   const abrirDialogoEtiqueta = (activo: Activo | null) => {
-    setActivoParaEtiqueta(activo) // null = imprimir los seleccionados en lote
+    setActivoParaEtiqueta(activo)
     setTamanoDialogOpen(true)
   }
 
@@ -278,7 +255,7 @@ export default function ActivosPage() {
               <TableHead className="h-9 text-xs">Empresa</TableHead>
               <TableHead className="h-9 text-xs">Ubicación</TableHead>
               <TableHead className="h-9 text-xs">Estado</TableHead>
-              <TableHead className="h-9 w-36 text-right text-xs">Acciones</TableHead>
+              <TableHead className="h-9 w-32 text-right text-xs">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -369,15 +346,6 @@ export default function ActivosPage() {
                   >
                     <Pencil className="size-3.5" />
                   </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="size-7"
-                    onClick={() => setActivoAEliminar(activo)}
-                    title="Eliminar"
-                  >
-                    <Trash2 className="size-3.5" />
-                  </Button>
                 </TableCell>
               </TableRow>
             ))}
@@ -407,14 +375,6 @@ export default function ActivosPage() {
         onOpenChange={(open) => !open && setActivoParaBaja(null)}
         activo={activoParaBaja}
         onConfirm={handleDarDeBaja}
-      />
-
-      <ConfirmDeleteDialog
-        open={!!activoAEliminar}
-        onOpenChange={(open) => !open && setActivoAEliminar(null)}
-        titulo="¿Eliminar este activo?"
-        descripcion={`Vas a eliminar "${activoAEliminar?.nombre}" (${activoAEliminar?.codigo_interno}).`}
-        onConfirm={confirmarEliminar}
       />
 
       <ImportarActivosDialog

@@ -1,3 +1,4 @@
+from django.db import transaction
 from rest_framework import serializers
 
 from .models import Mantenimiento, Movimiento
@@ -63,6 +64,15 @@ class MantenimientoSerializer(serializers.ModelSerializer):
             'proxima_fecha_programada',
         ]
 
+    def validate(self, attrs):
+        from usuarios.alcance import validar_acceso
+
+        activo_val = attrs.get('activo') or (self.instance.activo if self.instance else None)
+        if activo_val:
+            validar_acceso(self.context['request'].user, activo=activo_val)
+        return attrs
+
+    @transaction.atomic
     def create(self, validated_data):
         from .utils import registrar_movimiento
 

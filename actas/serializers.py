@@ -1,12 +1,11 @@
 from io import BytesIO
 
 from django.core.files.base import ContentFile
+from django.db import transaction
 from django.template.loader import render_to_string
 from rest_framework import serializers
 from pathlib import Path
 from django.conf import settings
-from django.core.files.base import ContentFile
-from django.template.loader import render_to_string
 from weasyprint import HTML
 
 from .models import ActaEntrega
@@ -52,9 +51,23 @@ class ActaEntregaSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['pdf', 'generado_por']
 
+    def validate(self, attrs):
+        from usuarios.alcance import validar_acceso
+
+        validar_acceso(self.context['request'].user, attrs['activo'], attrs['persona'])
+        custodia = attrs.get('custodia')
+        if custodia and (
+            custodia.activo_id != attrs['activo'].id
+            or custodia.persona_id != attrs['persona'].id
+        ):
+            raise serializers.ValidationError(
+                {'custodia': 'La custodia no corresponde al activo y la persona indicados.'}
+            )
+        return attrs
+
+    @transaction.atomic
     def create(self, validated_data):
         validated_data['generado_por'] = self.context['request'].user
         instance = super().create(validated_data)
         generar_pdf_acta(instance)
         return instance
-

@@ -97,7 +97,7 @@ export default function AuditoriaPage() {
 
         <div className="grid gap-1.5">
           <label className="text-xs text-muted-foreground">Acción</label>
-          <Select value={filtroAccion} onValueChange={setFiltroAccion}>
+          <Select value={filtroAccion} onValueChange={(v) => setFiltroAccion(v ?? '')}>
             <SelectTrigger className="h-8 w-40 text-sm">
               <SelectValue />
             </SelectTrigger>
@@ -114,7 +114,7 @@ export default function AuditoriaPage() {
 
         <div className="grid gap-1.5">
           <label className="text-xs text-muted-foreground">Módulo</label>
-          <Select value={filtroModelo} onValueChange={setFiltroModelo}>
+          <Select value={filtroModelo} onValueChange={(v) => setFiltroModelo(v ?? '')}>
             <SelectTrigger className="h-8 w-40 text-sm">
               <SelectValue />
             </SelectTrigger>

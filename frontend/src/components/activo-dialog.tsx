@@ -155,7 +155,7 @@ export function ActivoDialog({
 
             <div className="col-span-2 grid min-w-0 gap-2 sm:col-span-1">
               <Label htmlFor="categoria">Categoría</Label>
-              <Select value={form.categoria} onValueChange={(v) => set('categoria', v)}>
+              <Select value={form.categoria} onValueChange={(v) => { if (v !== null) set('categoria', v); }}>
                 <SelectTrigger id="categoria" className="w-full">
                   <SelectValue placeholder="Selecciona">
                     {categoriaSeleccionada?.nombre}
@@ -196,7 +196,7 @@ export function ActivoDialog({
 
             <div className="col-span-2 grid min-w-0 gap-2 sm:col-span-1">
               <Label htmlFor="ubicacion">Ubicación</Label>
-              <Select value={form.ubicacion} onValueChange={(v) => set('ubicacion', v)}>
+              <Select value={form.ubicacion} onValueChange={(v) => { if (v !== null) set('ubicacion', v); }}>
                 <SelectTrigger id="ubicacion" className="w-full">
                   <SelectValue placeholder="Selecciona">
                     {ubicacionSeleccionada?.nombre}

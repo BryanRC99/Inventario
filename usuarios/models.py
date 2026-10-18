@@ -15,7 +15,7 @@ class Usuario(AbstractUser):
     rol = models.CharField(max_length=20, choices=Rol.choices, default=Rol.OPERADOR)
     area = models.ForeignKey(
         'areas.Area',
-        on_delete=models.SET_NULL,
+        on_delete=models.PROTECT,  # Cambiado a PROTECT
         null=True,
         blank=True,
         related_name='usuarios',
@@ -23,7 +23,7 @@ class Usuario(AbstractUser):
     )
     empresa = models.ForeignKey(
         'empresas.Empresa',
-        on_delete=models.SET_NULL,
+        on_delete=models.PROTECT,  # Cambiado a PROTECT
         null=True,
         blank=True,
         related_name='usuarios',

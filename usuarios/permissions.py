@@ -52,3 +52,20 @@ class LecturaTodosEscribeAdmin(BasePermission):
             return True
 
         return user.is_superuser or user.rol == 'admin'
+
+
+class PermisoPorRolSinConsulta(PermisoPorRol):
+    """Igual que PermisoPorRol, pero el rol 'consulta' no puede ni leer."""
+    def has_permission(self, request, view):
+        if not super().has_permission(request, view):
+            return False
+        user = request.user
+        return user.is_superuser or user.rol != 'consulta'
+
+
+class LecturaStaffEscribeAdmin(LecturaTodosEscribeAdmin):
+    def has_permission(self, request, view):
+        if not super().has_permission(request, view):
+            return False
+        user = request.user
+        return user.is_superuser or user.rol != 'consulta'

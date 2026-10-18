@@ -129,7 +129,7 @@ export function CustodiaDialog({
 
             <div className="grid gap-2">
               <Label htmlFor="activo">Activo</Label>
-              <Select value={form.activo} onValueChange={(v) => set('activo', v)}>
+              <Select value={form.activo} onValueChange={(v) => { if (v !== null) set('activo', v); }}>
                 <SelectTrigger id="activo" className="w-full">
                   <SelectValue placeholder="Selecciona un activo">
                     {activoSeleccionado

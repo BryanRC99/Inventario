@@ -1,11 +1,12 @@
 from django.db.models import Q
 
+
 def custodias_visibles(user, queryset):
     if user.is_superuser or user.rol == 'admin':
         return queryset
 
-    if user.empresa:
-        queryset = queryset.filter(activo__empresa=user.empresa)
+    if user.empresa_id:
+        queryset = queryset.filter(activo__empresa_id=user.empresa_id)
     else:
         queryset = queryset.filter(activo__empresa__isnull=True)
 
@@ -15,6 +16,11 @@ def custodias_visibles(user, queryset):
             return queryset.none()
         return queryset.filter(persona=persona)
 
-    return queryset.filter(
-        Q(area=user.area) | Q(persona__area=user.area) | Q(activo__creado_por=user) | Q(activo__area_creador=user.area)
-    ).distinct()
+    q = Q(activo__creado_por=user)
+    if user.area_id:
+        q |= (
+            Q(area_id=user.area_id)
+            | Q(persona__area_id=user.area_id)
+            | Q(activo__area_creador_id=user.area_id)
+        )
+    return queryset.filter(q).distinct()

@@ -1,3 +1,4 @@
+from django.db import transaction
 from rest_framework import serializers
 
 from usuarios.models import Usuario
@@ -34,6 +35,22 @@ class PersonaSerializer(serializers.ModelSerializer):
     def get_tiene_acceso_consulta(self, obj):
         return obj.usuario_id is not None
 
+    def validate(self, attrs):
+        user = self.context['request'].user
+        es_admin = user.is_superuser or user.rol == 'admin'
+        if not es_admin:
+            if not user.empresa_id:
+                raise serializers.ValidationError('Tu usuario no tiene una empresa asignada.')
+            attrs['empresa'] = user.empresa  # el operador no elige empresa
+        documento = attrs.get('documento')
+        if attrs.get('crear_acceso_consulta') and documento:
+            if Usuario.objects.filter(username=documento).exists():
+                raise serializers.ValidationError(
+                    {'crear_acceso_consulta': 'Ya existe un usuario con ese número de documento.'}
+                )
+        return attrs
+
+    @transaction.atomic
     def create(self, validated_data):
         crear_acceso = validated_data.pop('crear_acceso_consulta', False)
         persona = super().create(validated_data)

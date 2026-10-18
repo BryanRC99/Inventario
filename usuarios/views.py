@@ -55,11 +55,13 @@ class CambiarPasswordView(APIView):
 class UsuarioViewSet(viewsets.ModelViewSet):
     queryset = Usuario.objects.all().order_by('username')
     permission_classes = [SoloAdmin]
+    http_method_names = ['get', 'post', 'put', 'patch', 'head', 'options']
 
     def get_serializer_class(self):
         if self.action == 'create':
             return UsuarioCreateSerializer
         return UsuarioListaSerializer
+
 
 class LogoutView(APIView):
     """POST /api/auth/logout/ -> solo registra el evento en auditoría."""

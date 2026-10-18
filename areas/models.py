@@ -9,7 +9,7 @@ class Area(models.Model):
     descripcion = models.CharField(max_length=255, blank=True)
     ubicacion = models.ForeignKey(
         'inventario.Ubicacion',
-        on_delete=models.SET_NULL,
+        on_delete=models.PROTECT,
         null=True,
         blank=True,
         related_name='areas',

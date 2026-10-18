@@ -95,7 +95,7 @@ export function FinalizarCustodiaDialog({
 
             <div className="grid gap-2">
               <Label htmlFor="ubicacion_destino">¿Dónde queda el activo ahora?</Label>
-              <Select value={ubicacionDestino} onValueChange={setUbicacionDestino}>
+              <Select value={ubicacionDestino} onValueChange={(v) => setUbicacionDestino(v ?? '')}>
                 <SelectTrigger id="ubicacion_destino" className="w-full">
                   <SelectValue placeholder="Selecciona una ubicación">
                     {ubicacionSeleccionada?.nombre}

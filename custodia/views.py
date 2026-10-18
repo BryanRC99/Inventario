@@ -11,6 +11,7 @@ class CustodiaViewSet(viewsets.ModelViewSet):
     serializer_class = CustodiaSerializer
     permission_classes = [PermisoPorRol]
     filterset_fields = ['activo', 'persona']
+    http_method_names = ['get', 'post', 'put', 'patch', 'head', 'options']
 
     def get_queryset(self):
         from .scoping import custodias_visibles

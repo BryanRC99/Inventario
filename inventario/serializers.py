@@ -1,3 +1,5 @@
+import re
+from django.db import transaction
 from rest_framework import serializers
 
 from .models import Activo, Categoria, Ubicacion
@@ -80,22 +82,14 @@ class ActivoSerializer(serializers.ModelSerializer):
 
     def generar_codigo_interno(self, categoria):
         prefijo = categoria.prefijo
-        ultimo = (
-            Activo.objects.filter(codigo_interno__startswith=f'{prefijo}-')
-            .order_by('-codigo_interno')
-            .first()
-        )
+        patron = re.compile(rf'^{re.escape(prefijo)}-(\d+)$')
+        codigos = Activo.objects.filter(
+            codigo_interno__startswith=f'{prefijo}-'
+        ).values_list('codigo_interno', flat=True)
+        numeros = [int(m.group(1)) for c in codigos if (m := patron.match(c))]
+        return f'{prefijo}-{max(numeros, default=0) + 1:03d}'
 
-        if ultimo:
-            try:
-                ultimo_numero = int(ultimo.codigo_interno.split('-')[-1])
-            except ValueError:
-                ultimo_numero = 0
-        else:
-            ultimo_numero = 0
-
-        return f'{prefijo}-{ultimo_numero + 1:03d}'
-
+    @transaction.atomic
     def create(self, validated_data):
         from trazabilidad.utils import registrar_movimiento
 
@@ -106,15 +100,11 @@ class ActivoSerializer(serializers.ModelSerializer):
         validated_data['area_creador'] = usuario.area
 
         if es_admin:
-            # Admin administra las 3 empresas y no tiene una propia:
-            # debe elegirla a mano.
             if not validated_data.get('empresa'):
                 raise serializers.ValidationError(
                     {'empresa': 'Selecciona la empresa a la que pertenece este activo.'}
                 )
         else:
-            # Los demás roles la heredan de su usuario. Si no tienen una,
-            # se rechaza en vez de guardar el activo "huérfano" (null).
             if not usuario.empresa:
                 raise serializers.ValidationError(
                     {
@@ -126,7 +116,10 @@ class ActivoSerializer(serializers.ModelSerializer):
                 )
             validated_data['empresa'] = usuario.empresa
 
-        validated_data['codigo_interno'] = self.generar_codigo_interno(validated_data['categoria'])
+        # Bloquea la fila de la categoría: dos creaciones simultáneas
+        # de la misma categoría se ponen en fila y no repiten código.
+        categoria = Categoria.objects.select_for_update().get(pk=validated_data['categoria'].pk)
+        validated_data['codigo_interno'] = self.generar_codigo_interno(categoria)
 
         activo = super().create(validated_data)
 

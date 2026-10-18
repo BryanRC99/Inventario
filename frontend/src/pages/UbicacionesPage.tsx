@@ -203,7 +203,7 @@ export default function UbicacionesPage() {
         open={!!ubicacionAEliminar}
         onOpenChange={(open) => !open && setUbicacionAEliminar(null)}
         titulo="¿Eliminar esta ubicación?"
-        descripcion={`Vas a eliminar "${ubicacionAEliminar?.nombre}". Las sub-ubicaciones quedarán sin padre.`}
+        descripcion="Solo se puede eliminar si no tiene sub-ubicaciones, activos ni historial."
         onConfirm={confirmarEliminar}
       />
     </div>
