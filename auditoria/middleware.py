@@ -12,7 +12,7 @@ class AuditoriaMiddleware:
         try:
             response = self.get_response(request)
         finally:
-            _thread_locals.request = None
+            _thread_locals.request = None   
         return response
 
 
