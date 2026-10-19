@@ -1,6 +1,7 @@
+from usuarios.alcance import es_admin, filtrar_por_empresas
+
+
 def personas_visibles(user, queryset):
-    if user.is_superuser or user.rol == 'admin':
+    if es_admin(user):
         return queryset
-    if user.empresa_id:
-        return queryset.filter(empresa_id=user.empresa_id)
-    return queryset.filter(empresa__isnull=True)
+    return filtrar_por_empresas(user, queryset, 'empresa')

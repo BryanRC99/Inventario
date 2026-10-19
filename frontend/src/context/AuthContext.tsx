@@ -9,6 +9,8 @@ interface Usuario {
   email: string
   rol: string
   nombre_completo: string
+  /** Empresas que este usuario puede gestionar (todas si es admin). */
+  empresas: { id: string; nombre: string }[]
 }
 
 interface AuthContextType {

@@ -14,6 +14,9 @@ export interface Usuario {
   area_nombre: string | null
   empresa: string | null
   empresa_nombre: string | null
+  empresas_adicionales: string[]
+  empresas_adicionales_nombres: string[]
+  sin_restriccion_area: boolean
   is_active: boolean
   date_joined: string
 }
@@ -26,8 +29,9 @@ export type UsuarioCreateInput = {
   rol: Rol
   area: string | null
   empresa: string | null
+  empresas_adicionales: string[]
+  sin_restriccion_area: boolean
 }
-
 
 export type UsuarioUpdateInput = {
   first_name: string
@@ -36,6 +40,8 @@ export type UsuarioUpdateInput = {
   rol: Rol
   area: string | null
   empresa: string | null
+  empresas_adicionales: string[]
+  sin_restriccion_area: boolean
   is_active: boolean
 }
 

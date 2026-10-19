@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
+import { MultiSelectFilter } from '@/components/multi-select-filter'
 import { ROLES, type Rol, type Usuario } from '@/api/usuarios'
 import type { Area } from '@/api/areas'
 import type { Empresa } from '@/api/empresas'
@@ -36,7 +37,8 @@ interface UsuarioDialogProps {
     rol: Rol
     area: string | null
     empresa: string | null
-
+    empresas_adicionales: string[]
+    sin_restriccion_area: boolean
   }) => Promise<void>
   onSubmitEditar: (payload: {
     first_name: string
@@ -45,6 +47,8 @@ interface UsuarioDialogProps {
     rol: Rol
     area: string | null
     empresa: string | null
+    empresas_adicionales: string[]
+    sin_restriccion_area: boolean
     is_active: boolean
   }) => Promise<void>
 }
@@ -57,6 +61,8 @@ const vacioCrear = {
   rol: 'operador' as Rol,
   area: null as string | null,
   empresa: null as string | null,
+  empresas_adicionales: [] as string[],
+  sin_restriccion_area: false,
 }
 
 export function UsuarioDialog({
@@ -83,6 +89,8 @@ export function UsuarioDialog({
           rol: usuario.rol,
           area: usuario.area,
           empresa: usuario.empresa,
+          empresas_adicionales: usuario.empresas_adicionales ?? [],
+          sin_restriccion_area: usuario.sin_restriccion_area ?? false,
         })
         setIsActive(usuario.is_active)
       } else {
@@ -98,8 +106,19 @@ export function UsuarioDialog({
   const areaSeleccionada = areas.find((a) => a.id === form.area)
   const empresaSeleccionada = empresas.find((e) => e.id === form.empresa)
 
+  const esOperador = form.rol === 'operador'
+  // La empresa principal ya cuenta: no se ofrece de nuevo como adicional.
+  const opcionesAdicionales = empresas
+    .filter((e) => e.id !== form.empresa)
+    .map((e) => ({ value: e.id, label: e.nombre }))
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
+    // Solo el Operador usa estos campos; al cambiar de rol se limpian para no dejar permisos huérfanos.
+    const alcance = {
+      empresas_adicionales: esOperador && form.empresa ? form.empresas_adicionales.filter((id) => id !== form.empresa) : [],
+      sin_restriccion_area: esOperador ? form.sin_restriccion_area : false,
+    }
     setSubmitting(true)
     try {
       if (usuario) {
@@ -110,10 +129,11 @@ export function UsuarioDialog({
           rol: form.rol,
           area: form.area,
           empresa: form.empresa,
+          ...alcance,
           is_active: isActive,
         })
       } else {
-        await onSubmitCrear(form)
+        await onSubmitCrear({ ...form, ...alcance })
       }
       onOpenChange(false)
     } finally {
@@ -234,6 +254,53 @@ export function UsuarioDialog({
                 </SelectContent>
               </Select>
             </div>
+
+            {esOperador && (
+              <div className="grid gap-3 rounded-lg border p-3 sm:col-span-2">
+                <div className="grid gap-1.5">
+                  <Label>Otras empresas que administra</Label>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <MultiSelectFilter
+                      titulo="Empresas adicionales"
+                      opciones={opcionesAdicionales}
+                      seleccion={form.empresas_adicionales}
+                      onChange={(v) => set('empresas_adicionales', v)}
+                    />
+                    {opcionesAdicionales.length > 0 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        disabled={!form.empresa}
+                        onClick={() => set('empresas_adicionales', opcionesAdicionales.map((o) => o.value))}
+                      >
+                        Todas
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {form.empresa
+                      ? 'Además de su empresa principal, podrá ver y registrar datos en estas.'
+                      : 'Primero elige la empresa principal.'}
+                  </p>
+                </div>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="grid gap-0.5">
+                    <Label htmlFor="sin_restriccion_area" className="font-normal">
+                      Acceso completo a sus empresas
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      Ve todo lo de sus empresas, sin limitarse a lo que creó o a lo de su área.
+                    </p>
+                  </div>
+                  <Switch
+                    id="sin_restriccion_area"
+                    checked={form.sin_restriccion_area}
+                    onCheckedChange={(v) => set('sin_restriccion_area', v)}
+                  />
+                </div>
+              </div>
+            )}
 
             {usuario && (
               <div className="flex items-center justify-between rounded-lg border p-3 sm:col-span-2">

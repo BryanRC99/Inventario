@@ -23,6 +23,7 @@ import {
 } from '@/api/usuarios'
 import { listarAreas, type Area } from '@/api/areas'
 import { listarEmpresas, type Empresa } from '@/api/empresas'
+import { mensajeErrorApi } from '@/lib/errores-api'
 import { SearchInput } from '@/components/search-input'
 import { coincide } from '@/lib/normalizar-texto'
 
@@ -142,6 +143,14 @@ export default function UsuariosPage() {
                 </TableCell>
                 <TableCell className="py-2 text-sm text-muted-foreground">
                   {u.empresa_nombre || '—'}
+                  {u.empresas_adicionales_nombres?.length > 0 && (
+                    <span
+                      className="ml-1 text-xs"
+                      title={u.empresas_adicionales_nombres.join(', ')}
+                    >
+                      +{u.empresas_adicionales_nombres.length}
+                    </span>
+                  )}
                 </TableCell>
                 <TableCell className="py-2">
                   <Badge variant={u.is_active ? 'default' : 'secondary'} className="text-xs">
@@ -180,9 +189,7 @@ export default function UsuariosPage() {
               setCredencialesGeneradas(creado)
             }
           } catch (err: any) {
-            const data = err?.response?.data
-            const mensaje = data?.username?.[0] || 'Error al crear usuario'
-            toast.error(mensaje)
+            toast.error(await mensajeErrorApi(err, 'No se pudo crear el usuario.'))
             throw err
           }
         }}
@@ -192,8 +199,8 @@ export default function UsuariosPage() {
             await actualizarUsuario(usuarioEditando.id, payload)
             toast.success('Usuario actualizado')
             await cargarUsuarios()
-          } catch {
-            toast.error('Error al actualizar usuario')
+          } catch (err) {
+            toast.error(await mensajeErrorApi(err, 'No se pudo actualizar el usuario.'))
             throw new Error('actualizar_fallo')
           }
         }}

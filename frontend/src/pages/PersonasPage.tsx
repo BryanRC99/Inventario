@@ -24,6 +24,7 @@ import {
 } from '@/api/personas'
 import { listarAreas, type Area } from '@/api/areas'
 import { listarEmpresas, type Empresa } from '@/api/empresas'
+import { mensajeErrorApi } from '@/lib/errores-api'
 import { SearchInput } from '@/components/search-input'
 import { coincide } from '@/lib/normalizar-texto'
 
@@ -90,8 +91,8 @@ export default function PersonasPage() {
         }
       }
       await cargarPersonas()
-    } catch {
-      toast.error('Ocurrió un error al guardar. Revisa que el documento no esté repetido.')
+    } catch (err) {
+      toast.error(await mensajeErrorApi(err, 'Ocurrió un error al guardar. Revisa que el documento no esté repetido.'))
     }
   }
 

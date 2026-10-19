@@ -1,6 +1,7 @@
 from django.db.models import Q
 from rest_framework import viewsets
 
+from usuarios.alcance import filtrar_por_empresas, ve_todo_en_sus_empresas
 from usuarios.permissions import PermisoPorRol
 
 from .models import Mantenimiento, Movimiento
@@ -11,10 +12,7 @@ def _filtrar_por_rol(user, base):
     if user.is_superuser or user.rol == 'admin':
         return base.all()
 
-    if user.empresa_id:
-        base = base.filter(activo__empresa_id=user.empresa_id)
-    else:
-        base = base.filter(activo__empresa__isnull=True)
+    base = filtrar_por_empresas(user, base, 'activo__empresa')
 
     if user.rol == 'consulta':
         persona = getattr(user, 'persona_vinculada', None)
@@ -24,6 +22,9 @@ def _filtrar_por_rol(user, base):
             activo__custodias__persona=persona,
             activo__custodias__fecha_fin__isnull=True,
         ).distinct()
+
+    if ve_todo_en_sus_empresas(user):
+        return base
 
     q = Q(activo__creado_por=user)
     if user.area_id:

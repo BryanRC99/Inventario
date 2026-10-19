@@ -1,6 +1,7 @@
 from django.db.models import Q
 from rest_framework import mixins, viewsets
 
+from usuarios.alcance import filtrar_por_empresas, ve_todo_en_sus_empresas
 from usuarios.permissions import PermisoPorRol
 
 from .models import ActaEntrega
@@ -20,16 +21,16 @@ class ActaEntregaViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
         if user.is_superuser or user.rol == 'admin':
             return base.all()
 
-        if user.empresa_id:
-            base = base.filter(activo__empresa_id=user.empresa_id)
-        else:
-            base = base.filter(activo__empresa__isnull=True)
+        base = filtrar_por_empresas(user, base, 'activo__empresa')
 
         if user.rol == 'consulta':
             persona = getattr(user, 'persona_vinculada', None)
             if not persona:
                 return base.none()
             return base.filter(persona=persona)
+
+        if ve_todo_en_sus_empresas(user):
+            return base
 
         q = Q(generado_por=user) | Q(activo__creado_por=user)
         if user.area_id:

@@ -40,6 +40,7 @@ import { SearchInput } from '@/components/search-input'
 import { coincide } from '@/lib/normalizar-texto'
 import { MultiSelectFilter } from '@/components/multi-select-filter'
 import { mensajeErrorApi } from '@/lib/errores-api'
+import { useAuth } from '@/context/AuthContext'
 
 const BADGE_POR_ESTADO: Record<EstadoActivo, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   activo: 'default',
@@ -49,6 +50,7 @@ const BADGE_POR_ESTADO: Record<EstadoActivo, 'default' | 'secondary' | 'destruct
 }
 
 export default function ActivosPage() {
+  const { usuario } = useAuth()
   const [activos, setActivos] = useState<Activo[]>([])
   const [categorias, setCategorias] = useState<Categoria[]>([])
   const [ubicaciones, setUbicaciones] = useState<Ubicacion[]>([])
@@ -69,6 +71,8 @@ export default function ActivosPage() {
   const [fUbicacion, setFUbicacion] = useState<string[]>([])
   const [fEstado, setFEstado] = useState<string[]>([])
 
+  // Admin filtra por cualquier empresa; los demás solo por las suyas (y solo si tienen varias).
+  const empresasFiltro = usuario?.rol === 'admin' ? empresas : (usuario?.empresas ?? [])
   const hayFiltros = fEmpresa.length + fCategoria.length + fUbicacion.length + fEstado.length > 0
   const filtrosServidor: FiltrosActivos = {
     empresa: fEmpresa,
@@ -170,8 +174,7 @@ export default function ActivosPage() {
       }
       await cargarTodo()
     } catch (err: any) {
-      const data = err?.response?.data
-      toast.error(data?.empresa?.[0] || data?.detail || 'Ocurrió un error al guardar el activo.')
+      toast.error(await mensajeErrorApi(err, 'Ocurrió un error al guardar el activo.'))
     }
   }
 
@@ -255,10 +258,10 @@ export default function ActivosPage() {
           onChange={setBusqueda}
           placeholder="Buscar por código, nombre, modelo, serie..."
         />
-        {empresas.length > 1 && (
+        {empresasFiltro.length > 1 && (
           <MultiSelectFilter
             titulo="Empresa"
-            opciones={empresas.map((e) => ({ value: e.id, label: e.nombre }))}
+            opciones={empresasFiltro.map((e) => ({ value: e.id, label: e.nombre }))}
             seleccion={fEmpresa}
             onChange={setFEmpresa}
           />

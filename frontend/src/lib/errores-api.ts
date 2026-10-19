@@ -9,6 +9,12 @@ const NOMBRES_CAMPO: Record<string, string> = {
   ubicacion: 'Ubicación',
   estado: 'Estado',
   search: 'Búsqueda',
+  empresas_adicionales: 'Empresas adicionales',
+  sin_restriccion_area: 'Acceso completo',
+  username: 'Usuario',
+  rol: 'Rol',
+  area: 'Área',
+  documento: 'Documento',
 }
 
 function aplanar(data: unknown): string[] {
