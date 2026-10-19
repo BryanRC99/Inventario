@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Plus, Pencil, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { ErrorCarga } from '@/components/error-carga'
+import { clasificarErrorCarga, type ErrorCarga as ErrorCargaTipo } from '@/lib/errores-api'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -27,6 +29,7 @@ import { coincide } from '@/lib/normalizar-texto'
 export default function CategoriasPage() {
   const [categorias, setCategorias] = useState<Categoria[]>([])
   const [loading, setLoading] = useState(true)
+  const [errorCarga, setErrorCarga] = useState<ErrorCargaTipo | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [categoriaEditando, setCategoriaEditando] = useState<Categoria | null>(null)
   const [categoriaAEliminar, setCategoriaAEliminar] = useState<Categoria | null>(null)
@@ -34,11 +37,12 @@ export default function CategoriasPage() {
 
   const cargarCategorias = async () => {
     setLoading(true)
+    setErrorCarga(null)
     try {
       const data = await listarCategorias()
       setCategorias(data)
-    } catch {
-      toast.error('No se pudieron cargar las categorías')
+    } catch (err) {
+      setErrorCarga(clasificarErrorCarga(err))
     } finally {
       setLoading(false)
     }
@@ -113,7 +117,8 @@ export default function CategoriasPage() {
         placeholder="Buscar por nombre o prefijo..."
       />
 
-      <div className="max-w-2xl rounded-md border">
+      {errorCarga && <ErrorCarga error={errorCarga} onReintentar={cargarCategorias} />}
+      <div className={errorCarga ? 'hidden' : 'max-w-2xl rounded-md border'}>
         <Table>
           <TableHeader>
             <TableRow>

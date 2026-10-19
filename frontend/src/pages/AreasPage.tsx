@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Plus, Pencil, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { ErrorCarga } from '@/components/error-carga'
+import { clasificarErrorCarga, type ErrorCarga as ErrorCargaTipo } from '@/lib/errores-api'
 import { Button } from '@/components/ui/button'
 import {
   Table,
@@ -28,6 +30,7 @@ export default function AreasPage() {
   const [areas, setAreas] = useState<Area[]>([])
   const [ubicaciones, setUbicaciones] = useState<Ubicacion[]>([])
   const [loading, setLoading] = useState(true)
+  const [errorCarga, setErrorCarga] = useState<ErrorCargaTipo | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [areaEditando, setAreaEditando] = useState<Area | null>(null)
   const [areaAEliminar, setAreaAEliminar] = useState<Area | null>(null)
@@ -35,12 +38,13 @@ export default function AreasPage() {
 
   const cargarAreas = async () => {
     setLoading(true)
+    setErrorCarga(null)
     try {
       const [areasData, ubicacionesData] = await Promise.all([listarAreas(), listarUbicaciones()])
       setAreas(areasData)
       setUbicaciones(ubicacionesData)
-    } catch {
-      toast.error('No se pudieron cargar las áreas')
+    } catch (err) {
+      setErrorCarga(clasificarErrorCarga(err))
     } finally {
       setLoading(false)
     }
@@ -111,7 +115,8 @@ export default function AreasPage() {
         placeholder="Buscar por nombre o ubicación..."
       />
 
-      <div className="max-w-2xl rounded-md border">
+      {errorCarga && <ErrorCarga error={errorCarga} onReintentar={cargarAreas} />}
+      <div className={errorCarga ? 'hidden' : 'max-w-2xl rounded-md border'}>
         <Table>
           <TableHeader>
             <TableRow>

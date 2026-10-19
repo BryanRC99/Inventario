@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Plus, Pencil, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { ErrorCarga } from '@/components/error-carga'
+import { clasificarErrorCarga, type ErrorCarga as ErrorCargaTipo } from '@/lib/errores-api'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -35,6 +37,7 @@ const badgeVariantPorTipo: Record<Ubicacion['tipo'], 'default' | 'secondary' | '
 export default function UbicacionesPage() {
   const [ubicaciones, setUbicaciones] = useState<Ubicacion[]>([])
   const [loading, setLoading] = useState(true)
+  const [errorCarga, setErrorCarga] = useState<ErrorCargaTipo | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [ubicacionEditando, setUbicacionEditando] = useState<Ubicacion | null>(null)
   const [ubicacionAEliminar, setUbicacionAEliminar] = useState<Ubicacion | null>(null)
@@ -42,11 +45,12 @@ export default function UbicacionesPage() {
 
   const cargarUbicaciones = async () => {
     setLoading(true)
+    setErrorCarga(null)
     try {
       const data = await listarUbicaciones()
       setUbicaciones(data)
-    } catch {
-      toast.error('No se pudieron cargar las ubicaciones')
+    } catch (err) {
+      setErrorCarga(clasificarErrorCarga(err))
     } finally {
       setLoading(false)
     }
@@ -127,7 +131,8 @@ export default function UbicacionesPage() {
         placeholder="Buscar por nombre o ubicación padre..."
       />
 
-      <div className="max-w-3xl rounded-md border">
+      {errorCarga && <ErrorCarga error={errorCarga} onReintentar={cargarUbicaciones} />}
+      <div className={errorCarga ? 'hidden' : 'max-w-3xl rounded-md border'}>
         <Table>
           <TableHeader>
             <TableRow>

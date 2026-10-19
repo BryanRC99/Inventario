@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Plus, Pencil } from 'lucide-react'
 import { toast } from 'sonner'
+import { ErrorCarga } from '@/components/error-carga'
+import { clasificarErrorCarga, type ErrorCarga as ErrorCargaTipo } from '@/lib/errores-api'
 import { Button } from '@/components/ui/button'
 import {
   Table,
@@ -28,12 +30,14 @@ export default function MantenimientosPage() {
   const [activos, setActivos] = useState<Activo[]>([])
   const [proveedores, setProveedores] = useState<Proveedor[]>([])
   const [loading, setLoading] = useState(true)
+  const [errorCarga, setErrorCarga] = useState<ErrorCargaTipo | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [mantenimientoEditando, setMantenimientoEditando] = useState<Mantenimiento | null>(null)
   const [busqueda, setBusqueda] = useState('')
 
   const cargarTodo = async () => {
     setLoading(true)
+    setErrorCarga(null)
     try {
       const [mantenimientosData, activosData, proveedoresData] = await Promise.all([
         listarMantenimientos(),
@@ -43,8 +47,8 @@ export default function MantenimientosPage() {
       setMantenimientos(mantenimientosData)
       setActivos(activosData)
       setProveedores(proveedoresData)
-    } catch {
-      toast.error('No se pudieron cargar los mantenimientos')
+    } catch (err) {
+      setErrorCarga(clasificarErrorCarga(err))
     } finally {
       setLoading(false)
     }
@@ -105,7 +109,8 @@ export default function MantenimientosPage() {
         placeholder="Buscar por activo o problema..."
       />
 
-      <div className="rounded-md border">
+      {errorCarga && <ErrorCarga error={errorCarga} onReintentar={cargarTodo} />}
+      <div className={errorCarga ? 'hidden' : 'rounded-md border'}>
         <Table>
           <TableHeader>
             <TableRow>

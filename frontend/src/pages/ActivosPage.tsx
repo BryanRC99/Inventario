@@ -39,7 +39,8 @@ import { obtenerEtiquetasLotePdf } from '@/api/activos'
 import { SearchInput } from '@/components/search-input'
 import { coincide } from '@/lib/normalizar-texto'
 import { MultiSelectFilter } from '@/components/multi-select-filter'
-import { mensajeErrorApi } from '@/lib/errores-api'
+import { mensajeErrorApi, clasificarErrorCarga, type ErrorCarga as ErrorCargaTipo } from '@/lib/errores-api'
+import { ErrorCarga } from '@/components/error-carga'
 
 const BADGE_POR_ESTADO: Record<EstadoActivo, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   activo: 'default',
@@ -54,6 +55,7 @@ export default function ActivosPage() {
   const [ubicaciones, setUbicaciones] = useState<Ubicacion[]>([])
   const [proveedores, setProveedores] = useState<Proveedor[]>([])
   const [loading, setLoading] = useState(true)
+  const [errorCarga, setErrorCarga] = useState<ErrorCargaTipo | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [activoEditando, setActivoEditando] = useState<Activo | null>(null)
   const [activoDetalle, setActivoDetalle] = useState<Activo | null>(null)
@@ -112,6 +114,7 @@ export default function ActivosPage() {
 
   const cargarTodo = async () => {
     setLoading(true)
+    setErrorCarga(null)
     try {
       const [activosData, categoriasData, ubicacionesData, proveedoresData, empresasData] = await Promise.all([
         listarActivos(filtrosServidor),
@@ -126,7 +129,12 @@ export default function ActivosPage() {
       setProveedores(proveedoresData)
       setEmpresas(empresasData)
     } catch (err) {
-      toast.error(await mensajeErrorApi(err, 'No se pudieron cargar los activos.'))
+      // Un 400 es un filtro inválido (mensaje claro en toast); el resto es un fallo de carga.
+      if ((err as { response?: { status?: number } })?.response?.status === 400) {
+        toast.error(await mensajeErrorApi(err, 'Los filtros seleccionados no son válidos.'))
+      } else {
+        setErrorCarga(clasificarErrorCarga(err))
+      }
     } finally {
       setLoading(false)
     }
@@ -302,7 +310,8 @@ export default function ActivosPage() {
         </div>
       )}
 
-      <div className="rounded-md border">
+      {errorCarga && <ErrorCarga error={errorCarga} onReintentar={cargarTodo} />}
+      <div className={errorCarga ? 'hidden' : 'rounded-md border'}>
         <Table>
           <TableHeader>
             <TableRow>

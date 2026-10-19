@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Eye } from 'lucide-react'
-import { toast } from 'sonner'
+import { ErrorCarga } from '@/components/error-carga'
+import { clasificarErrorCarga, type ErrorCarga as ErrorCargaTipo } from '@/lib/errores-api'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -26,14 +27,21 @@ const BADGE_POR_ESTADO: Record<EstadoActivo, 'default' | 'secondary' | 'destruct
 export default function MisActivosPage() {
   const [activos, setActivos] = useState<Activo[]>([])
   const [loading, setLoading] = useState(true)
+  const [errorCarga, setErrorCarga] = useState<ErrorCargaTipo | null>(null)
   const [detalle, setDetalle] = useState<Activo | null>(null)
   const [busqueda, setBusqueda] = useState('')
 
-  useEffect(() => {
+  const cargar = () => {
+    setLoading(true)
+    setErrorCarga(null)
     listarActivos()
       .then(setActivos)
-      .catch(() => toast.error('No se pudieron cargar tus activos'))
+      .catch((err) => setErrorCarga(clasificarErrorCarga(err)))
       .finally(() => setLoading(false))
+  }
+
+  useEffect(() => {
+    cargar()
   }, [])
 
   const activosFiltrados = activos.filter(
@@ -56,7 +64,8 @@ export default function MisActivosPage() {
         placeholder="Buscar por código, nombre o categoría..."
       />
 
-      <div className="max-w-3xl rounded-md border">
+      {errorCarga && <ErrorCarga error={errorCarga} onReintentar={cargar} />}
+      <div className={errorCarga ? 'hidden' : 'max-w-3xl rounded-md border'}>
         <Table>
           <TableHeader>
             <TableRow>
