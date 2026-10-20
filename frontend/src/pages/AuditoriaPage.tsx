@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Eye } from 'lucide-react'
-import { toast } from 'sonner'
+import { ErrorCarga } from '@/components/error-carga'
+import { clasificarErrorCarga, type ErrorCarga as ErrorCargaTipo } from '@/lib/errores-api'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -40,6 +41,7 @@ const BADGE_POR_ACCION: Record<AccionAuditoria, 'default' | 'secondary' | 'destr
 export default function AuditoriaPage() {
   const [registros, setRegistros] = useState<RegistroAuditoria[]>([])
   const [loading, setLoading] = useState(true)
+  const [errorCarga, setErrorCarga] = useState<ErrorCargaTipo | null>(null)
   const [detalle, setDetalle] = useState<RegistroAuditoria | null>(null)
 
   const [filtroUsuario, setFiltroUsuario] = useState('')
@@ -50,6 +52,7 @@ export default function AuditoriaPage() {
 
   const cargar = async () => {
     setLoading(true)
+    setErrorCarga(null)
     try {
       const data = await listarAuditoria({
         usuario_username: filtroUsuario || undefined,
@@ -59,8 +62,8 @@ export default function AuditoriaPage() {
         fecha_hora_before: filtroHasta || undefined,
       })
       setRegistros(data)
-    } catch {
-      toast.error('No se pudo cargar la auditoría')
+    } catch (err) {
+      setErrorCarga(clasificarErrorCarga(err))
     } finally {
       setLoading(false)
     }
@@ -150,7 +153,8 @@ export default function AuditoriaPage() {
         </div>
       </div>
 
-      <div className="rounded-md border">
+      {errorCarga && <ErrorCarga error={errorCarga} onReintentar={cargar} />}
+      <div className={errorCarga ? 'hidden' : 'rounded-md border'}>
         <Table>
           <TableHeader>
             <TableRow>

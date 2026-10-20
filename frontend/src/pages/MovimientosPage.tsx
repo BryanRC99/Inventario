@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { toast } from 'sonner'
+import { ErrorCarga } from '@/components/error-carga'
+import { clasificarErrorCarga, type ErrorCarga as ErrorCargaTipo } from '@/lib/errores-api'
 import { Badge } from '@/components/ui/badge'
 import {
   Table,
@@ -26,13 +27,20 @@ const BADGE_POR_EVENTO: Record<TipoEvento, 'default' | 'secondary' | 'outline' |
 export default function MovimientosPage() {
   const [movimientos, setMovimientos] = useState<Movimiento[]>([])
   const [loading, setLoading] = useState(true)
+  const [errorCarga, setErrorCarga] = useState<ErrorCargaTipo | null>(null)
   const [busqueda, setBusqueda] = useState('')
 
-  useEffect(() => {
+  const cargar = () => {
+    setLoading(true)
+    setErrorCarga(null)
     listarMovimientos()
       .then(setMovimientos)
-      .catch(() => toast.error('No se pudieron cargar los movimientos'))
+      .catch((err) => setErrorCarga(clasificarErrorCarga(err)))
       .finally(() => setLoading(false))
+  }
+
+  useEffect(() => {
+    cargar()
   }, [])
 
   const movimientosFiltrados = movimientos.filter(
@@ -58,7 +66,8 @@ export default function MovimientosPage() {
         placeholder="Buscar por activo, evento o usuario..."
       />
 
-      <div className="rounded-md border">
+      {errorCarga && <ErrorCarga error={errorCarga} onReintentar={cargar} />}
+      <div className={errorCarga ? 'hidden' : 'rounded-md border'}>
         <Table>
           <TableHeader>
             <TableRow>

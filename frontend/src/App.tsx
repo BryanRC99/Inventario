@@ -15,6 +15,7 @@ import AreasPage from './pages/AreasPage'
 import EmpresasPage from './pages/EmpresasPage'
 import MisActivosPage from './pages/MisActivosPage'
 import AuditoriaPage from './pages/AuditoriaPage'
+import NoEncontradoPage from './pages/NoEncontradoPage'
 import ProtectedRoute from './components/ProtectedRoute'
 import { RoleGuard } from './components/admin-route'
 import DashboardLayout from './layouts/DashboardLayout'
@@ -147,6 +148,9 @@ function App() {
             </RoleGuard>
           }
         />
+
+        {/* Cualquier otra dirección: 404 dentro del layout (conserva el menú). */}
+        <Route path="*" element={<NoEncontradoPage />} />
       </Route>
     </Routes>
   )

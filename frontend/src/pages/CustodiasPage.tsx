@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Plus, Pencil, Eye, CheckCircle2, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
+import { ErrorCarga } from '@/components/error-carga'
+import { clasificarErrorCarga, type ErrorCarga as ErrorCargaTipo } from '@/lib/errores-api'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -39,6 +41,7 @@ export default function CustodiasPage() {
   const [areas, setAreas] = useState<Area[]>([])
   const [ubicaciones, setUbicaciones] = useState<Ubicacion[]>([])
   const [loading, setLoading] = useState(true)
+  const [errorCarga, setErrorCarga] = useState<ErrorCargaTipo | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [custodiaEditando, setCustodiaEditando] = useState<Custodia | null>(null)
   const [custodiaParaActa, setCustodiaParaActa] = useState<Custodia | null>(null)
@@ -49,6 +52,7 @@ export default function CustodiasPage() {
 
   const cargarTodo = async () => {
     setLoading(true)
+    setErrorCarga(null)
     try {
       const [custodiasData, activosData, personasData, areasData, ubicacionesData] =
         await Promise.all([
@@ -63,8 +67,8 @@ export default function CustodiasPage() {
       setPersonas(personasData)
       setAreas(areasData)
       setUbicaciones(ubicacionesData)
-    } catch {
-      toast.error('No se pudieron cargar las custodias')
+    } catch (err) {
+      setErrorCarga(clasificarErrorCarga(err))
     } finally {
       setLoading(false)
     }
@@ -158,7 +162,8 @@ export default function CustodiasPage() {
         placeholder="Buscar por activo o custodio..."
       />
 
-      <div className="rounded-md border">
+      {errorCarga && <ErrorCarga error={errorCarga} onReintentar={cargarTodo} />}
+      <div className={errorCarga ? 'hidden' : 'rounded-md border'}>
         <Table>
           <TableHeader>
             <TableRow>

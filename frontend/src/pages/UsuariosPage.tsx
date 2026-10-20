@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Plus, Pencil } from 'lucide-react'
 import { toast } from 'sonner'
+import { ErrorCarga } from '@/components/error-carga'
+import { clasificarErrorCarga, type ErrorCarga as ErrorCargaTipo } from '@/lib/errores-api'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -32,6 +34,7 @@ export default function UsuariosPage() {
   const [areas, setAreas] = useState<Area[]>([])
   const [empresas, setEmpresas] = useState<Empresa[]>([])
   const [loading, setLoading] = useState(true)
+  const [errorCarga, setErrorCarga] = useState<ErrorCargaTipo | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [usuarioEditando, setUsuarioEditando] = useState<Usuario | null>(null)
   const [credencialesGeneradas, setCredencialesGeneradas] = useState<UsuarioConPassword | null>(null)
@@ -39,6 +42,7 @@ export default function UsuariosPage() {
 
   const cargarUsuarios = async () => {
     setLoading(true)
+    setErrorCarga(null)
     try {
       const [usuariosData, areasData, empresasData] = await Promise.all([
         listarUsuarios(),
@@ -48,8 +52,8 @@ export default function UsuariosPage() {
       setUsuarios(usuariosData)
       setAreas(areasData)
       setEmpresas(empresasData)
-    } catch {
-      toast.error('No se pudieron cargar los usuarios')
+    } catch (err) {
+      setErrorCarga(clasificarErrorCarga(err))
     } finally {
       setLoading(false)
     }
@@ -95,7 +99,8 @@ export default function UsuariosPage() {
         placeholder="Buscar por usuario, nombre o área..."
       />
 
-      <div className="rounded-md border">
+      {errorCarga && <ErrorCarga error={errorCarga} onReintentar={cargarUsuarios} />}
+      <div className={errorCarga ? 'hidden' : 'rounded-md border'}>
         <Table>
           <TableHeader>
             <TableRow>
