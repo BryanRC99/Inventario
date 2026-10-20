@@ -39,7 +39,9 @@ import { obtenerEtiquetasLotePdf } from '@/api/activos'
 import { SearchInput } from '@/components/search-input'
 import { coincide } from '@/lib/normalizar-texto'
 import { MultiSelectFilter } from '@/components/multi-select-filter'
-import { mensajeErrorApi } from '@/lib/errores-api'
+import { mensajeErrorApi, clasificarErrorCarga, type ErrorCarga as ErrorCargaTipo } from '@/lib/errores-api'
+import { ErrorCarga } from '@/components/error-carga'
+import { useAuth } from '@/context/AuthContext'
 
 const BADGE_POR_ESTADO: Record<EstadoActivo, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   activo: 'default',
@@ -49,11 +51,13 @@ const BADGE_POR_ESTADO: Record<EstadoActivo, 'default' | 'secondary' | 'destruct
 }
 
 export default function ActivosPage() {
+  const { usuario } = useAuth()
   const [activos, setActivos] = useState<Activo[]>([])
   const [categorias, setCategorias] = useState<Categoria[]>([])
   const [ubicaciones, setUbicaciones] = useState<Ubicacion[]>([])
   const [proveedores, setProveedores] = useState<Proveedor[]>([])
   const [loading, setLoading] = useState(true)
+  const [errorCarga, setErrorCarga] = useState<ErrorCargaTipo | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [activoEditando, setActivoEditando] = useState<Activo | null>(null)
   const [activoDetalle, setActivoDetalle] = useState<Activo | null>(null)
@@ -69,6 +73,8 @@ export default function ActivosPage() {
   const [fUbicacion, setFUbicacion] = useState<string[]>([])
   const [fEstado, setFEstado] = useState<string[]>([])
 
+  // Admin filtra por cualquier empresa; los demás solo por las suyas (y solo si tienen varias).
+  const empresasFiltro = usuario?.rol === 'admin' ? empresas : (usuario?.empresas ?? [])
   const hayFiltros = fEmpresa.length + fCategoria.length + fUbicacion.length + fEstado.length > 0
   const filtrosServidor: FiltrosActivos = {
     empresa: fEmpresa,
@@ -112,6 +118,7 @@ export default function ActivosPage() {
 
   const cargarTodo = async () => {
     setLoading(true)
+    setErrorCarga(null)
     try {
       const [activosData, categoriasData, ubicacionesData, proveedoresData, empresasData] = await Promise.all([
         listarActivos(filtrosServidor),
@@ -126,7 +133,12 @@ export default function ActivosPage() {
       setProveedores(proveedoresData)
       setEmpresas(empresasData)
     } catch (err) {
-      toast.error(await mensajeErrorApi(err, 'No se pudieron cargar los activos.'))
+      // Un 400 es un filtro inválido (mensaje claro en toast); el resto es un fallo de carga.
+      if ((err as { response?: { status?: number } })?.response?.status === 400) {
+        toast.error(await mensajeErrorApi(err, 'Los filtros seleccionados no son válidos.'))
+      } else {
+        setErrorCarga(clasificarErrorCarga(err))
+      }
     } finally {
       setLoading(false)
     }
@@ -170,8 +182,7 @@ export default function ActivosPage() {
       }
       await cargarTodo()
     } catch (err: any) {
-      const data = err?.response?.data
-      toast.error(data?.empresa?.[0] || data?.detail || 'Ocurrió un error al guardar el activo.')
+      toast.error(await mensajeErrorApi(err, 'Ocurrió un error al guardar el activo.'))
     }
   }
 
@@ -255,10 +266,10 @@ export default function ActivosPage() {
           onChange={setBusqueda}
           placeholder="Buscar por código, nombre, modelo, serie..."
         />
-        {empresas.length > 1 && (
+        {empresasFiltro.length > 1 && (
           <MultiSelectFilter
             titulo="Empresa"
-            opciones={empresas.map((e) => ({ value: e.id, label: e.nombre }))}
+            opciones={empresasFiltro.map((e) => ({ value: e.id, label: e.nombre }))}
             seleccion={fEmpresa}
             onChange={setFEmpresa}
           />
@@ -302,7 +313,8 @@ export default function ActivosPage() {
         </div>
       )}
 
-      <div className="rounded-md border">
+      {errorCarga && <ErrorCarga error={errorCarga} onReintentar={cargarTodo} />}
+      <div className={errorCarga ? 'hidden' : 'rounded-md border'}>
         <Table>
           <TableHeader>
             <TableRow>

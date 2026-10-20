@@ -21,6 +21,7 @@ import {
 import type { Persona, PersonaInput } from '@/api/personas'
 import type { Area } from '@/api/areas'
 import type { Empresa } from '@/api/empresas'
+import { useAuth } from '@/context/AuthContext'
 
 interface PersonaDialogProps {
   open: boolean
@@ -43,6 +44,11 @@ const valoresVacios: PersonaInput = {
 }
 
 export function PersonaDialog({ open, onOpenChange, persona, areas, empresas, onSubmit }: PersonaDialogProps) {
+  const { usuario } = useAuth()
+  const esAdmin = usuario?.rol === 'admin'
+  // Un operador solo registra personas en SUS empresas; si tiene una sola, se asigna sola.
+  const empresasElegibles = esAdmin ? empresas : (usuario?.empresas ?? [])
+  const mostrarEmpresa = esAdmin || empresasElegibles.length > 1
   const [form, setForm] = useState<PersonaInput>(valoresVacios)
   const [submitting, setSubmitting] = useState(false)
 
@@ -68,7 +74,7 @@ export function PersonaDialog({ open, onOpenChange, persona, areas, empresas, on
     setForm((f) => ({ ...f, [key]: value }))
 
   const areaSeleccionada = areas.find((a) => a.id === form.area)
-  const empresaSeleccionada = empresas.find((e) => e.id === form.empresa)
+  const empresaSeleccionada = [...empresas, ...(usuario?.empresas ?? [])].find((e) => e.id === form.empresa)
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -167,11 +173,13 @@ export function PersonaDialog({ open, onOpenChange, persona, areas, empresas, on
               </Select>
             </div>
 
+            {mostrarEmpresa && (
             <div className="grid gap-2">
               <Label htmlFor="empresa">Empresa</Label>
               <Select
                 value={form.empresa ?? 'none'}
                 onValueChange={(v) => set('empresa', v === 'none' ? null : v)}
+                disabled={!esAdmin && !!persona}
               >
                 <SelectTrigger id="empresa" className="w-full">
                   <SelectValue placeholder="Sin empresa">
@@ -179,8 +187,8 @@ export function PersonaDialog({ open, onOpenChange, persona, areas, empresas, on
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">Sin empresa</SelectItem>
-                  {empresas.map((e) => (
+                  {esAdmin && <SelectItem value="none">Sin empresa</SelectItem>}
+                  {empresasElegibles.map((e) => (
                     <SelectItem key={e.id} value={e.id}>
                       {e.nombre}
                     </SelectItem>
@@ -188,6 +196,7 @@ export function PersonaDialog({ open, onOpenChange, persona, areas, empresas, on
                 </SelectContent>
               </Select>
             </div>
+            )}
 
             {!persona && (
               <div className="flex items-start gap-2 rounded-lg border p-3 sm:col-span-2">

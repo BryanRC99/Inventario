@@ -2,6 +2,8 @@ import re
 from django.db import transaction
 from rest_framework import serializers
 
+from usuarios.alcance import resolver_empresa_para_crear
+
 from .models import Activo, Categoria, Ubicacion
 
 
@@ -94,27 +96,10 @@ class ActivoSerializer(serializers.ModelSerializer):
         from trazabilidad.utils import registrar_movimiento
 
         usuario = self.context['request'].user
-        es_admin = usuario.is_superuser or usuario.rol == 'admin'
-
         validated_data['creado_por'] = usuario
         validated_data['area_creador'] = usuario.area
 
-        if es_admin:
-            if not validated_data.get('empresa'):
-                raise serializers.ValidationError(
-                    {'empresa': 'Selecciona la empresa a la que pertenece este activo.'}
-                )
-        else:
-            if not usuario.empresa:
-                raise serializers.ValidationError(
-                    {
-                        'empresa': (
-                            'Tu usuario no tiene una empresa asignada. '
-                            'Pide a un administrador que te asigne una.'
-                        )
-                    }
-                )
-            validated_data['empresa'] = usuario.empresa
+        validated_data['empresa'] = resolver_empresa_para_crear(usuario, validated_data.get('empresa'))
 
         # Bloquea la fila de la categoría: dos creaciones simultáneas
         # de la misma categoría se ponen en fila y no repiten código.

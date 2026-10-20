@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { Boxes, ClipboardList, Wrench, AlertTriangle } from 'lucide-react'
 import { Cell, Pie, PieChart, Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
 import { useAuth } from '@/context/AuthContext'
+import { ErrorCarga } from '@/components/error-carga'
+import { clasificarErrorCarga, type ErrorCarga as ErrorCargaTipo } from '@/lib/errores-api'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import {
   ChartContainer,
@@ -34,11 +36,19 @@ export default function DashboardPage() {
   const { usuario } = useAuth()
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [errorCarga, setErrorCarga] = useState<ErrorCargaTipo | null>(null)
 
-  useEffect(() => {
+  const cargar = () => {
+    setLoading(true)
+    setErrorCarga(null)
     obtenerDashboard()
       .then(setData)
+      .catch((err) => setErrorCarga(clasificarErrorCarga(err)))
       .finally(() => setLoading(false))
+  }
+
+  useEffect(() => {
+    cargar()
   }, [])
 
   const resumen = [
@@ -104,6 +114,8 @@ export default function DashboardPage() {
           </Card>
         ))}
       </div>
+
+      {errorCarga && <ErrorCarga error={errorCarga} onReintentar={cargar} />}
 
       {!loading && data && (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">

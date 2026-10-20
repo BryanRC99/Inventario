@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Plus, Pencil, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { ErrorCarga } from '@/components/error-carga'
+import { clasificarErrorCarga, type ErrorCarga as ErrorCargaTipo } from '@/lib/errores-api'
 import { Button } from '@/components/ui/button'
 import {
   Table,
@@ -24,6 +26,7 @@ import {
 } from '@/api/personas'
 import { listarAreas, type Area } from '@/api/areas'
 import { listarEmpresas, type Empresa } from '@/api/empresas'
+import { mensajeErrorApi } from '@/lib/errores-api'
 import { SearchInput } from '@/components/search-input'
 import { coincide } from '@/lib/normalizar-texto'
 
@@ -32,6 +35,7 @@ export default function PersonasPage() {
   const [areas, setAreas] = useState<Area[]>([])
   const [empresas, setEmpresas] = useState<Empresa[]>([])
   const [loading, setLoading] = useState(true)
+  const [errorCarga, setErrorCarga] = useState<ErrorCargaTipo | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [personaEditando, setPersonaEditando] = useState<Persona | null>(null)
   const [personaAEliminar, setPersonaAEliminar] = useState<Persona | null>(null)
@@ -40,6 +44,7 @@ export default function PersonasPage() {
 
   const cargarPersonas = async () => {
     setLoading(true)
+    setErrorCarga(null)
     try {
       const [personasData, areasData, empresasData] = await Promise.all([
         listarPersonas(),
@@ -49,8 +54,8 @@ export default function PersonasPage() {
       setPersonas(personasData)
       setAreas(areasData)
       setEmpresas(empresasData)
-    } catch {
-      toast.error('No se pudieron cargar las personas')
+    } catch (err) {
+      setErrorCarga(clasificarErrorCarga(err))
     } finally {
       setLoading(false)
     }
@@ -90,8 +95,8 @@ export default function PersonasPage() {
         }
       }
       await cargarPersonas()
-    } catch {
-      toast.error('Ocurrió un error al guardar. Revisa que el documento no esté repetido.')
+    } catch (err) {
+      toast.error(await mensajeErrorApi(err, 'Ocurrió un error al guardar. Revisa que el documento no esté repetido.'))
     }
   }
 
@@ -131,7 +136,8 @@ export default function PersonasPage() {
         placeholder="Buscar por nombre, documento o área..."
       />
 
-      <div className="rounded-md border">
+      {errorCarga && <ErrorCarga error={errorCarga} onReintentar={cargarPersonas} />}
+      <div className={errorCarga ? 'hidden' : 'rounded-md border'}>
         <Table>
           <TableHeader>
             <TableRow>

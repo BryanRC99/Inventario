@@ -9,6 +9,12 @@ const NOMBRES_CAMPO: Record<string, string> = {
   ubicacion: 'Ubicación',
   estado: 'Estado',
   search: 'Búsqueda',
+  empresas_adicionales: 'Empresas adicionales',
+  sin_restriccion_area: 'Acceso completo',
+  username: 'Usuario',
+  rol: 'Rol',
+  area: 'Área',
+  documento: 'Documento',
 }
 
 function aplanar(data: unknown): string[] {
@@ -43,4 +49,23 @@ export async function mensajeErrorApi(err: unknown, porDefecto: string): Promise
   if (e.response.status === 403) return 'No tienes permiso para realizar esta acción.'
   if (e.response.status === 401) return 'Tu sesión expiró. Inicia sesión de nuevo.'
   return porDefecto
+}
+
+export interface ErrorCarga {
+  tipo: 'red' | '403' | 'error'
+  mensaje?: string
+}
+
+/** Clasifica un fallo al cargar datos de una pantalla, para mostrar la pantalla de error adecuada. */
+export function clasificarErrorCarga(err: unknown): ErrorCarga {
+  const e = err as { response?: { status?: number } }
+  if (!e?.response) return { tipo: 'red' }
+  const status = e.response.status
+  if (status === 403) return { tipo: '403' }
+  if (status === 401) return { tipo: 'error', mensaje: 'Su sesión expiró. Inicie sesión nuevamente.' }
+  if (status === 404) return { tipo: 'error', mensaje: 'La información solicitada ya no existe o fue movida.' }
+  if (status && status >= 500) {
+    return { tipo: 'error', mensaje: 'El servidor presentó un problema al procesar la solicitud. Intente nuevamente en unos momentos.' }
+  }
+  return { tipo: 'error' }
 }

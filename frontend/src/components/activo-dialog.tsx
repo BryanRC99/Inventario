@@ -74,6 +74,9 @@ export function ActivoDialog({
 }: ActivoDialogProps) {
   const { usuario } = useAuth()
   const esAdmin = usuario?.rol === 'admin'
+  // Admin elige entre todas; un operador solo entre las suyas, y solo se le pregunta si tiene varias.
+  const empresasElegibles = esAdmin ? empresas : (usuario?.empresas ?? [])
+  const mostrarEmpresa = esAdmin || empresasElegibles.length > 1
 
   const [form, setForm] = useState<ActivoInput>(valoresVacios)
   const [submitting, setSubmitting] = useState(false)
@@ -108,7 +111,7 @@ export function ActivoDialog({
   const categoriaSeleccionada = categorias.find((c) => c.id === form.categoria)
   const ubicacionSeleccionada = ubicaciones.find((u) => u.id === form.ubicacion)
   const proveedorSeleccionado = proveedores.find((p) => p.id === form.proveedor)
-  const empresaSeleccionada = empresas.find((e) => e.id === form.empresa)
+  const empresaSeleccionada = [...empresas, ...(usuario?.empresas ?? [])].find((e) => e.id === form.empresa)
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -171,12 +174,13 @@ export function ActivoDialog({
               </Select>
             </div>
 
-            {esAdmin && (
+            {mostrarEmpresa && (
               <div className="col-span-2 grid min-w-0 gap-2 sm:col-span-1">
                 <Label htmlFor="empresa">Empresa</Label>
                 <Select
                   value={form.empresa ?? undefined}
                   onValueChange={(v) => set('empresa', v)}
+                  disabled={!esAdmin && !!activo}
                 >
                   <SelectTrigger id="empresa" className="w-full">
                     <SelectValue placeholder="Selecciona una empresa">
@@ -184,7 +188,7 @@ export function ActivoDialog({
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
-                    {empresas.map((e) => (
+                    {empresasElegibles.map((e) => (
                       <SelectItem key={e.id} value={e.id}>
                         {e.nombre}
                       </SelectItem>

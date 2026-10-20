@@ -30,5 +30,19 @@ class Usuario(AbstractUser):
         help_text='Empresa a la que pertenece. Determina qué datos puede ver si no es Admin.',
     )
 
+    empresas_adicionales = models.ManyToManyField(
+        'empresas.Empresa',
+        blank=True,
+        related_name='usuarios_con_acceso',
+        help_text='Otras empresas que este usuario también administra, además de su empresa principal.',
+    )
+    sin_restriccion_area = models.BooleanField(
+        default=False,
+        help_text=(
+            'Solo Operador: ve y gestiona todo lo de sus empresas, sin limitarse a lo que creó '
+            'o a lo de su área.'
+        ),
+    )
+
     def __str__(self):
         return f"{self.username} ({self.get_rol_display()})"

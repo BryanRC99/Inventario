@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { FileText } from 'lucide-react'
-import { toast } from 'sonner'
+import { ErrorCarga } from '@/components/error-carga'
+import { clasificarErrorCarga, type ErrorCarga as ErrorCargaTipo } from '@/lib/errores-api'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -24,13 +25,20 @@ const BADGE_POR_TIPO: Record<TipoActa, 'default' | 'secondary' | 'outline'> = {
 export default function ActasEntregaPage() {
   const [actas, setActas] = useState<ActaEntrega[]>([])
   const [loading, setLoading] = useState(true)
+  const [errorCarga, setErrorCarga] = useState<ErrorCargaTipo | null>(null)
   const [busqueda, setBusqueda] = useState('')
 
-  useEffect(() => {
+  const cargar = () => {
+    setLoading(true)
+    setErrorCarga(null)
     listarActas()
       .then(setActas)
-      .catch(() => toast.error('No se pudieron cargar las actas'))
+      .catch((err) => setErrorCarga(clasificarErrorCarga(err)))
       .finally(() => setLoading(false))
+  }
+
+  useEffect(() => {
+    cargar()
   }, [])
 
   const actasFiltradas = actas.filter(
@@ -55,7 +63,8 @@ export default function ActasEntregaPage() {
         placeholder="Buscar por activo o custodio..."
       />
 
-      <div className="rounded-md border">
+      {errorCarga && <ErrorCarga error={errorCarga} onReintentar={cargar} />}
+      <div className={errorCarga ? 'hidden' : 'rounded-md border'}>
         <Table>
           <TableHeader>
             <TableRow>

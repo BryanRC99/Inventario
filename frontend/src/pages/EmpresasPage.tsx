@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Plus, Pencil, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { ErrorCarga } from '@/components/error-carga'
+import { clasificarErrorCarga, type ErrorCarga as ErrorCargaTipo } from '@/lib/errores-api'
 import { Button } from '@/components/ui/button'
 import {
   Table,
@@ -26,6 +28,7 @@ import { coincide } from '@/lib/normalizar-texto'
 export default function EmpresasPage() {
   const [empresas, setEmpresas] = useState<Empresa[]>([])
   const [loading, setLoading] = useState(true)
+  const [errorCarga, setErrorCarga] = useState<ErrorCargaTipo | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [empresaEditando, setEmpresaEditando] = useState<Empresa | null>(null)
   const [empresaAEliminar, setEmpresaAEliminar] = useState<Empresa | null>(null)
@@ -33,10 +36,11 @@ export default function EmpresasPage() {
 
   const cargarEmpresas = async () => {
     setLoading(true)
+    setErrorCarga(null)
     try {
       setEmpresas(await listarEmpresas())
-    } catch {
-      toast.error('No se pudieron cargar las empresas')
+    } catch (err) {
+      setErrorCarga(clasificarErrorCarga(err))
     } finally {
       setLoading(false)
     }
@@ -101,7 +105,8 @@ export default function EmpresasPage() {
 
       <SearchInput value={busqueda} onChange={setBusqueda} placeholder="Buscar por nombre..." />
 
-      <div className="max-w-2xl rounded-md border">
+      {errorCarga && <ErrorCarga error={errorCarga} onReintentar={cargarEmpresas} />}
+      <div className={errorCarga ? 'hidden' : 'max-w-2xl rounded-md border'}>
         <Table>
           <TableHeader>
             <TableRow>

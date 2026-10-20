@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Plus, Pencil } from 'lucide-react'
 import { toast } from 'sonner'
+import { ErrorCarga } from '@/components/error-carga'
+import { clasificarErrorCarga, type ErrorCarga as ErrorCargaTipo } from '@/lib/errores-api'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -23,6 +25,7 @@ import {
 } from '@/api/usuarios'
 import { listarAreas, type Area } from '@/api/areas'
 import { listarEmpresas, type Empresa } from '@/api/empresas'
+import { mensajeErrorApi } from '@/lib/errores-api'
 import { SearchInput } from '@/components/search-input'
 import { coincide } from '@/lib/normalizar-texto'
 
@@ -31,6 +34,7 @@ export default function UsuariosPage() {
   const [areas, setAreas] = useState<Area[]>([])
   const [empresas, setEmpresas] = useState<Empresa[]>([])
   const [loading, setLoading] = useState(true)
+  const [errorCarga, setErrorCarga] = useState<ErrorCargaTipo | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [usuarioEditando, setUsuarioEditando] = useState<Usuario | null>(null)
   const [credencialesGeneradas, setCredencialesGeneradas] = useState<UsuarioConPassword | null>(null)
@@ -38,6 +42,7 @@ export default function UsuariosPage() {
 
   const cargarUsuarios = async () => {
     setLoading(true)
+    setErrorCarga(null)
     try {
       const [usuariosData, areasData, empresasData] = await Promise.all([
         listarUsuarios(),
@@ -47,8 +52,8 @@ export default function UsuariosPage() {
       setUsuarios(usuariosData)
       setAreas(areasData)
       setEmpresas(empresasData)
-    } catch {
-      toast.error('No se pudieron cargar los usuarios')
+    } catch (err) {
+      setErrorCarga(clasificarErrorCarga(err))
     } finally {
       setLoading(false)
     }
@@ -94,7 +99,8 @@ export default function UsuariosPage() {
         placeholder="Buscar por usuario, nombre o área..."
       />
 
-      <div className="rounded-md border">
+      {errorCarga && <ErrorCarga error={errorCarga} onReintentar={cargarUsuarios} />}
+      <div className={errorCarga ? 'hidden' : 'rounded-md border'}>
         <Table>
           <TableHeader>
             <TableRow>
@@ -142,6 +148,14 @@ export default function UsuariosPage() {
                 </TableCell>
                 <TableCell className="py-2 text-sm text-muted-foreground">
                   {u.empresa_nombre || '—'}
+                  {u.empresas_adicionales_nombres?.length > 0 && (
+                    <span
+                      className="ml-1 text-xs"
+                      title={u.empresas_adicionales_nombres.join(', ')}
+                    >
+                      +{u.empresas_adicionales_nombres.length}
+                    </span>
+                  )}
                 </TableCell>
                 <TableCell className="py-2">
                   <Badge variant={u.is_active ? 'default' : 'secondary'} className="text-xs">
@@ -180,9 +194,7 @@ export default function UsuariosPage() {
               setCredencialesGeneradas(creado)
             }
           } catch (err: any) {
-            const data = err?.response?.data
-            const mensaje = data?.username?.[0] || 'Error al crear usuario'
-            toast.error(mensaje)
+            toast.error(await mensajeErrorApi(err, 'No se pudo crear el usuario.'))
             throw err
           }
         }}
@@ -192,8 +204,8 @@ export default function UsuariosPage() {
             await actualizarUsuario(usuarioEditando.id, payload)
             toast.success('Usuario actualizado')
             await cargarUsuarios()
-          } catch {
-            toast.error('Error al actualizar usuario')
+          } catch (err) {
+            toast.error(await mensajeErrorApi(err, 'No se pudo actualizar el usuario.'))
             throw new Error('actualizar_fallo')
           }
         }}

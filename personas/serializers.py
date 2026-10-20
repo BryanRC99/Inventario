@@ -1,6 +1,7 @@
 from django.db import transaction
 from rest_framework import serializers
 
+from usuarios.alcance import es_admin, resolver_empresa_para_crear
 from usuarios.models import Usuario
 from usuarios.utils import generar_password_aleatoria
 
@@ -37,11 +38,12 @@ class PersonaSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         user = self.context['request'].user
-        es_admin = user.is_superuser or user.rol == 'admin'
-        if not es_admin:
-            if not user.empresa_id:
-                raise serializers.ValidationError('Tu usuario no tiene una empresa asignada.')
-            attrs['empresa'] = user.empresa  # el operador no elige empresa
+        if self.instance is None:
+            # Alta: el operador elige entre SUS empresas (o se usa la única que tiene).
+            attrs['empresa'] = resolver_empresa_para_crear(user, attrs.get('empresa'))
+        elif not es_admin(user):
+            # Edición: un no-Admin no mueve personas entre empresas (rompería sus custodias).
+            attrs.pop('empresa', None)
         documento = attrs.get('documento')
         if attrs.get('crear_acceso_consulta') and documento:
             if Usuario.objects.filter(username=documento).exists():

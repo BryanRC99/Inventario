@@ -1,14 +1,13 @@
 from django.db.models import Q
 
+from usuarios.alcance import es_admin, filtrar_por_empresas, ve_todo_en_sus_empresas
+
 
 def activos_visibles(user, queryset):
-    if user.is_superuser or user.rol == 'admin':
+    if es_admin(user):
         return queryset
 
-    if user.empresa_id:
-        queryset = queryset.filter(empresa_id=user.empresa_id)
-    else:
-        queryset = queryset.filter(empresa__isnull=True)
+    queryset = filtrar_por_empresas(user, queryset, 'empresa')
 
     if user.rol == 'consulta':
         persona = getattr(user, 'persona_vinculada', None)
@@ -17,6 +16,9 @@ def activos_visibles(user, queryset):
         return queryset.filter(
             custodias__persona=persona, custodias__fecha_fin__isnull=True
         ).distinct()
+
+    if ve_todo_en_sus_empresas(user):
+        return queryset
 
     q = Q(creado_por=user)
     if user.area_id:

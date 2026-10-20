@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Plus, Pencil, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { ErrorCarga } from '@/components/error-carga'
+import { clasificarErrorCarga, type ErrorCarga as ErrorCargaTipo } from '@/lib/errores-api'
 import { Button } from '@/components/ui/button'
 import {
   Table,
@@ -26,6 +28,7 @@ import { coincide } from '@/lib/normalizar-texto'
 export default function ProveedoresPage() {
   const [proveedores, setProveedores] = useState<Proveedor[]>([])
   const [loading, setLoading] = useState(true)
+  const [errorCarga, setErrorCarga] = useState<ErrorCargaTipo | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [proveedorEditando, setProveedorEditando] = useState<Proveedor | null>(null)
   const [proveedorAEliminar, setProveedorAEliminar] = useState<Proveedor | null>(null)
@@ -33,11 +36,12 @@ export default function ProveedoresPage() {
 
   const cargarProveedores = async () => {
     setLoading(true)
+    setErrorCarga(null)
     try {
       const data = await listarProveedores()
       setProveedores(data)
-    } catch {
-      toast.error('No se pudieron cargar los proveedores')
+    } catch (err) {
+      setErrorCarga(clasificarErrorCarga(err))
     } finally {
       setLoading(false)
     }
@@ -115,7 +119,8 @@ export default function ProveedoresPage() {
         placeholder="Buscar por nombre, RUC o contacto..."
       />
 
-      <div className="max-w-5xl rounded-md border">
+      {errorCarga && <ErrorCarga error={errorCarga} onReintentar={cargarProveedores} />}
+      <div className={errorCarga ? 'hidden' : 'max-w-5xl rounded-md border'}>
         <Table>
           <TableHeader>
             <TableRow>
