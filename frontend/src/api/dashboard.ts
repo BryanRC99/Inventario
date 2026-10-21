@@ -5,6 +5,7 @@ export interface DashboardData {
   custodias_activas: number
   en_mantenimiento: number
   garantias_por_vencer: number
+  actas_sin_escaneo: number
   por_estado: { estado: string; label: string; total: number }[]
   por_categoria: { categoria: string; total: number }[]
   por_ubicacion: { ubicacion: string; total: number }[]

@@ -130,3 +130,10 @@ CORS_ALLOW_ALL_ORIGINS = True
 # --- Archivos multimedia (PDFs de actas, adjuntos futuros) ---------
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# --- Escaneos de actas firmadas -----------------------------------
+# Carpeta PRIVADA: nunca se sirve por URL pública; solo la lee la API con sesión
+# y permiso. Debe incluirse en los respaldos del servidor junto con la base de datos.
+PRIVATE_MEDIA_ROOT = config('PRIVATE_MEDIA_ROOT', default=str(BASE_DIR / 'private_media'))
+ACTA_ESCANEO_MAX_BYTES = 10 * 1024 * 1024   # 10 MB por archivo
+ACTA_ESCANEO_MAX_ARCHIVOS = 10              # archivos activos por acta

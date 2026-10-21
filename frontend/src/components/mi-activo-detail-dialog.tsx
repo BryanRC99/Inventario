@@ -1,4 +1,5 @@
-import { FileText } from 'lucide-react'
+import { FileText, Paperclip } from 'lucide-react'
+import { ActaEscaneosDialog } from '@/components/acta-escaneos-dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -21,6 +22,7 @@ interface MiActivoDetailDialogProps {
 
 export function MiActivoDetailDialog({ open, onOpenChange, activo }: MiActivoDetailDialogProps) {
   const [actas, setActas] = useState<ActaEntrega[]>([])
+  const [actaEscaneo, setActaEscaneo] = useState<ActaEntrega | null>(null)
 
   useEffect(() => {
     if (open && activo) {
@@ -31,6 +33,7 @@ export function MiActivoDetailDialog({ open, onOpenChange, activo }: MiActivoDet
   if (!activo) return null
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
@@ -85,6 +88,13 @@ export function MiActivoDetailDialog({ open, onOpenChange, activo }: MiActivoDet
                   <p className="font-medium">{acta.tipo_display}</p>
                   <p className="text-xs text-muted-foreground">{acta.fecha}</p>
                 </div>
+                <div className="flex items-center gap-1">
+                  {acta.escaneos_activos > 0 && (
+                    <Button size="sm" variant="ghost" className="h-7" onClick={() => setActaEscaneo(acta)}>
+                      <Paperclip className="size-3.5" />
+                      Ver firmada
+                    </Button>
+                  )}
                 {acta.pdf && (
                   <Button
                     size="sm"
@@ -96,11 +106,18 @@ export function MiActivoDetailDialog({ open, onOpenChange, activo }: MiActivoDet
                     Ver PDF
                   </Button>
                 )}
+                </div>
               </div>
             ))}
           </div>
         </div>
       </DialogContent>
     </Dialog>
+      <ActaEscaneosDialog
+        open={!!actaEscaneo}
+        onOpenChange={(open) => !open && setActaEscaneo(null)}
+        acta={actaEscaneo}
+      />
+    </>
   )
 }

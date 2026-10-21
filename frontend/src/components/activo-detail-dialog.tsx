@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { FileText } from 'lucide-react'
+import { ActaEscaneosDialog } from '@/components/acta-escaneos-dialog'
+import { FileText, Paperclip } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -23,6 +24,7 @@ interface ActivoDetailDialogProps {
 export function ActivoDetailDialog({ open, onOpenChange, activo }: ActivoDetailDialogProps) {
   const [custodias, setCustodias] = useState<Custodia[]>([])
   const [actas, setActas] = useState<ActaEntrega[]>([])
+  const [actaEscaneo, setActaEscaneo] = useState<ActaEntrega | null>(null)
   const [mantenimientos, setMantenimientos] = useState<Mantenimiento[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -49,6 +51,7 @@ export function ActivoDetailDialog({ open, onOpenChange, activo }: ActivoDetailD
   const especificaciones = activo.especificaciones
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] max-w-lg overflow-y-auto">
         <DialogHeader>
@@ -165,6 +168,11 @@ export function ActivoDetailDialog({ open, onOpenChange, activo }: ActivoDetailD
                   <p className="font-medium">{acta.tipo_display}</p>
                   <p className="text-xs text-muted-foreground">{acta.fecha}</p>
                 </div>
+                <div className="flex items-center gap-1">
+                  <Button size="sm" variant="ghost" className="h-7" onClick={() => setActaEscaneo(acta)}>
+                    <Paperclip className="size-3.5" />
+                    {acta.escaneos_activos > 0 ? 'Ver firmada' : 'Subir firmada'}
+                  </Button>
                 {acta.pdf && (
                   <Button
                     size="sm"
@@ -176,6 +184,7 @@ export function ActivoDetailDialog({ open, onOpenChange, activo }: ActivoDetailD
                     Ver PDF
                   </Button>
                 )}
+                </div>
               </div>
             ))}
           </div>
@@ -199,5 +208,11 @@ export function ActivoDetailDialog({ open, onOpenChange, activo }: ActivoDetailD
         </div>
       </DialogContent>
     </Dialog>
+      <ActaEscaneosDialog
+        open={!!actaEscaneo}
+        onOpenChange={(open) => !open && setActaEscaneo(null)}
+        acta={actaEscaneo}
+      />
+    </>
   )
 }

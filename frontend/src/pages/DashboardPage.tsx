@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Boxes, ClipboardList, Wrench, AlertTriangle } from 'lucide-react'
+import { Boxes, ClipboardList, Wrench, AlertTriangle, FileWarning } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { Cell, Pie, PieChart, Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
 import { useAuth } from '@/context/AuthContext'
 import { ErrorCarga } from '@/components/error-carga'
@@ -84,7 +85,24 @@ export default function DashboardPage() {
       barra: 'bg-red-500',
       icono: 'bg-red-500/10 text-red-500',
     },
-  ]
+    {
+      titulo: 'Actas sin escaneo',
+      descripcion: 'Pendientes de respaldo digital',
+      valor: data?.actas_sin_escaneo ?? '—',
+      icon: FileWarning,
+      barra: 'bg-violet-500',
+      icono: 'bg-violet-500/10 text-violet-500',
+      href: '/actas-entrega?respaldo=pendientes',
+    },
+  ] as {
+    titulo: string
+    descripcion: string
+    valor: number | string
+    icon: typeof Boxes
+    barra: string
+    icono: string
+    href?: string
+  }[]
 
   return (
     <div className="flex flex-col gap-6">
@@ -95,9 +113,10 @@ export default function DashboardPage() {
         <p className="text-muted-foreground">Resumen general del inventario</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {resumen.map((item) => (
-          <Card key={item.titulo} className="relative overflow-hidden pt-0">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        {resumen.map((item) => {
+          const tarjeta = (
+          <Card className="relative h-full overflow-hidden pt-0">
             <div className={`absolute inset-x-0 top-0 h-1 ${item.barra}`} />
             <CardHeader className="flex flex-row items-center justify-between pt-5 pb-0">
               <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -112,7 +131,13 @@ export default function DashboardPage() {
               <p className="mt-1 text-xs text-muted-foreground">{item.descripcion}</p>
             </CardContent>
           </Card>
-        ))}
+          )
+          return item.href ? (
+            <Link key={item.titulo} to={item.href} className="block transition-opacity hover:opacity-90">{tarjeta}</Link>
+          ) : (
+            <div key={item.titulo}>{tarjeta}</div>
+          )
+        })}
       </div>
 
       {errorCarga && <ErrorCarga error={errorCarga} onReintentar={cargar} />}

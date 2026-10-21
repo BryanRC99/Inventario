@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { FileText, Plus } from 'lucide-react'
+import { FileText, Paperclip, Plus } from 'lucide-react'
+import { ActaEscaneosDialog } from '@/components/acta-escaneos-dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -26,6 +27,7 @@ interface CustodiaDetailDialogProps {
 
 export function CustodiaDetailDialog({ open, onOpenChange, custodia }: CustodiaDetailDialogProps) {
   const [actas, setActas] = useState<ActaEntrega[]>([])
+  const [actaEscaneo, setActaEscaneo] = useState<ActaEntrega | null>(null)
   const [loading, setLoading] = useState(true)
   const [nuevaActaOpen, setNuevaActaOpen] = useState(false)
 
@@ -107,6 +109,11 @@ export function CustodiaDetailDialog({ open, onOpenChange, custodia }: CustodiaD
                     <p className="font-medium">{acta.tipo_display}</p>
                     <p className="text-xs text-muted-foreground">{acta.fecha}</p>
                   </div>
+                  <div className="flex items-center gap-1">
+                    <Button size="sm" variant="ghost" className="h-7" onClick={() => setActaEscaneo(acta)}>
+                      <Paperclip className="size-3.5" />
+                      {acta.escaneos_activos > 0 ? 'Ver firmada' : 'Subir firmada'}
+                    </Button>
                   {acta.pdf && (
                     <Button
                       size="sm"
@@ -118,6 +125,7 @@ export function CustodiaDetailDialog({ open, onOpenChange, custodia }: CustodiaD
                       Ver PDF
                     </Button>
                   )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -142,6 +150,13 @@ export function CustodiaDetailDialog({ open, onOpenChange, custodia }: CustodiaD
           onSkip={() => setNuevaActaOpen(false)}
         />
       )}
+
+      <ActaEscaneosDialog
+        open={!!actaEscaneo}
+        onOpenChange={(open) => !open && setActaEscaneo(null)}
+        acta={actaEscaneo}
+        onCambio={cargarActas}
+      />
     </>
   )
 }

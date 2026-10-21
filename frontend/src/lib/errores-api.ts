@@ -15,6 +15,8 @@ const NOMBRES_CAMPO: Record<string, string> = {
   rol: 'Rol',
   area: 'Área',
   documento: 'Documento',
+  archivos: '',
+  motivo: 'Motivo',
 }
 
 function aplanar(data: unknown): string[] {
@@ -25,7 +27,10 @@ function aplanar(data: unknown): string[] {
     const obj = data as Record<string, unknown>
     if (typeof obj.detail === 'string') return [obj.detail]
     return Object.entries(obj).flatMap(([campo, valor]) =>
-      aplanar(valor).map((m) => `${NOMBRES_CAMPO[campo] ?? campo}: ${m}`),
+      aplanar(valor).map((m) => {
+        const nombre = NOMBRES_CAMPO[campo] ?? campo
+        return nombre ? `${nombre}: ${m}` : m
+      }),
     )
   }
   return []

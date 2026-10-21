@@ -69,3 +69,6 @@ desktop.ini
 *.temp
 *.swp
 *.swo
+# Escaneos de actas y respaldos generados (datos sensibles)
+private_media/
+respaldos/

@@ -270,6 +270,21 @@ class DashboardView(APIView):
         from .scoping import activos_visibles
 
         activos = activos_visibles(request.user, Activo.objects.all())
+
+        from django.db.models import Q
+
+        from actas.models import ActaEntrega
+        from actas.scoping import actas_visibles
+
+        # Actas sin ningún escaneo activo (el consulta no gestiona respaldos).
+        actas_sin_escaneo = 0
+        if request.user.rol != 'consulta':
+            actas_sin_escaneo = (
+                actas_visibles(request.user, ActaEntrega.objects.all())
+                .annotate(n=Count('escaneos', filter=Q(escaneos__eliminado=False), distinct=True))
+                .filter(n=0)
+                .count()
+            )
         custodias = custodias_visibles(request.user, Custodia.objects.all())
 
         limite_garantia = date.today() + timedelta(days=30)
@@ -287,6 +302,7 @@ class DashboardView(APIView):
         return Response(
             {
                 'total_activos': activos.count(),
+                'actas_sin_escaneo': actas_sin_escaneo,
                 'custodias_activas': custodias.filter(fecha_fin__isnull=True).count(),
                 'en_mantenimiento': activos.filter(estado='en_mantenimiento').count(),
                 'garantias_por_vencer': activos.filter(

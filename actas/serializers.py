@@ -8,7 +8,7 @@ from pathlib import Path
 from django.conf import settings
 from weasyprint import HTML
 
-from .models import ActaEntrega
+from .models import ActaEntrega, ActaEscaneo
 
 TEMPLATE_POR_TIPO = {
     'entrega': 'actas/acta_pdf.html',
@@ -31,6 +31,7 @@ class ActaEntregaSerializer(serializers.ModelSerializer):
     activo_codigo = serializers.CharField(source='activo.codigo_interno', read_only=True)
     persona_nombre = serializers.CharField(source='persona.nombre_completo', read_only=True)
     tipo_display = serializers.CharField(source='get_tipo_display', read_only=True)
+    escaneos_activos = serializers.SerializerMethodField()
 
     class Meta:
         model = ActaEntrega
@@ -48,8 +49,14 @@ class ActaEntregaSerializer(serializers.ModelSerializer):
             'pdf',
             'observaciones',
             'generado_por',
+            'escaneos_activos',
         ]
         read_only_fields = ['pdf', 'generado_por']
+
+    def get_escaneos_activos(self, obj):
+        # El listado ya trae el conteo anotado (sin consultas extra por fila).
+        n = getattr(obj, 'escaneos_activos', None)
+        return n if n is not None else obj.escaneos.filter(eliminado=False).count()
 
     def validate(self, attrs):
         from usuarios.alcance import validar_acceso
@@ -71,3 +78,18 @@ class ActaEntregaSerializer(serializers.ModelSerializer):
         instance = super().create(validated_data)
         generar_pdf_acta(instance)
         return instance
+
+
+class ActaEscaneoSerializer(serializers.ModelSerializer):
+    subido_por_nombre = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ActaEscaneo
+        fields = ['id', 'nombre_original', 'tipo_contenido', 'tamano', 'sha256', 'fecha_subida', 'subido_por', 'subido_por_nombre']
+        read_only_fields = fields
+
+    def get_subido_por_nombre(self, obj):
+        u = obj.subido_por
+        if not u:
+            return None
+        return f'{u.first_name} {u.last_name}'.strip() or u.username
