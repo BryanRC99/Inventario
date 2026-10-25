@@ -30,6 +30,16 @@ class ActivoViewSet(viewsets.ModelViewSet):
     filterset_class = ActivoFilter
     http_method_names = ['get', 'post', 'put', 'patch', 'head', 'options']
 
+    def get_permissions(self):
+        # El rol "consulta" solo puede LEER (listar y ver el detalle) los activos que tiene
+        # a su cargo: la pantalla "Mis activos" los necesita. activos_visibles ya limita el
+        # resultado a sus custodias activas. Cualquier otra acción (crear, editar, reportes,
+        # importar, etiquetas, dar de baja...) sigue bloqueada para este rol.
+        user = self.request.user
+        if self.action in ('list', 'retrieve') and user.is_authenticated and user.rol == 'consulta':
+            return [IsAuthenticated()]
+        return super().get_permissions()
+
     def get_queryset(self):
         from .scoping import activos_visibles
 
@@ -265,12 +275,21 @@ class DashboardView(APIView):
         from django.db.models import Count
 
         from custodia.models import Custodia
+        from actas.models import ActaEntrega
+        from actas.scoping import actas_visibles
         from custodia.scoping import custodias_visibles
 
         from .scoping import activos_visibles
 
         activos = activos_visibles(request.user, Activo.objects.all())
         custodias = custodias_visibles(request.user, Custodia.objects.all())
+
+        actas_sin_escaneo = (
+            actas_visibles(request.user, ActaEntrega.objects.all())
+            .exclude(escaneos__eliminado=False)
+            .distinct()
+            .count()
+        )
 
         limite_garantia = date.today() + timedelta(days=30)
 
@@ -289,6 +308,7 @@ class DashboardView(APIView):
                 'total_activos': activos.count(),
                 'custodias_activas': custodias.filter(fecha_fin__isnull=True).count(),
                 'en_mantenimiento': activos.filter(estado='en_mantenimiento').count(),
+                'actas_sin_escaneo': actas_sin_escaneo,
                 'garantias_por_vencer': activos.filter(
                     fecha_fin_garantia__isnull=False,
                     fecha_fin_garantia__gte=date.today(),

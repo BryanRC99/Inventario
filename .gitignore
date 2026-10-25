@@ -69,3 +69,9 @@ desktop.ini
 *.temp
 *.swp
 *.swo
+
+# ==========================================
+# ARCHIVOS PRIVADOS (nunca deben subirse a git: contienen datos personales)
+# ==========================================
+private_media/
+respaldos/

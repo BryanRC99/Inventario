@@ -8,7 +8,7 @@ from pathlib import Path
 from django.conf import settings
 from weasyprint import HTML
 
-from .models import ActaEntrega
+from .models import ActaEntrega, ActaEscaneo
 
 TEMPLATE_POR_TIPO = {
     'entrega': 'actas/acta_pdf.html',
@@ -31,6 +31,7 @@ class ActaEntregaSerializer(serializers.ModelSerializer):
     activo_codigo = serializers.CharField(source='activo.codigo_interno', read_only=True)
     persona_nombre = serializers.CharField(source='persona.nombre_completo', read_only=True)
     tipo_display = serializers.CharField(source='get_tipo_display', read_only=True)
+    escaneos_count = serializers.SerializerMethodField()
 
     class Meta:
         model = ActaEntrega
@@ -48,8 +49,14 @@ class ActaEntregaSerializer(serializers.ModelSerializer):
             'pdf',
             'observaciones',
             'generado_por',
+            'escaneos_count',
         ]
         read_only_fields = ['pdf', 'generado_por']
+
+    def get_escaneos_count(self, obj):
+        # El listado ya trae el conteo calculado en una sola consulta (ver la vista).
+        n = getattr(obj, 'escaneos_count', None)
+        return n if n is not None else obj.escaneos.filter(eliminado=False).count()
 
     def validate(self, attrs):
         from usuarios.alcance import validar_acceso
@@ -71,3 +78,40 @@ class ActaEntregaSerializer(serializers.ModelSerializer):
         instance = super().create(validated_data)
         generar_pdf_acta(instance)
         return instance
+
+
+def _nombre_usuario(usuario):
+    if not usuario:
+        return None
+    return usuario.get_full_name().strip() or usuario.username
+
+
+class ActaEscaneoSerializer(serializers.ModelSerializer):
+    """Metadatos del escaneo. A propósito NO incluye ninguna URL del archivo:
+    el contenido solo se obtiene por el endpoint autenticado."""
+
+    subido_por_nombre = serializers.SerializerMethodField()
+    eliminado_por_nombre = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ActaEscaneo
+        fields = [
+            'id',
+            'nombre_original',
+            'tipo_contenido',
+            'tamano',
+            'sha256',
+            'subido_por_nombre',
+            'fecha_subida',
+            'eliminado',
+            'eliminado_por_nombre',
+            'fecha_eliminacion',
+            'motivo_eliminacion',
+        ]
+        read_only_fields = fields
+
+    def get_subido_por_nombre(self, obj):
+        return _nombre_usuario(obj.subido_por)
+
+    def get_eliminado_por_nombre(self, obj):
+        return _nombre_usuario(obj.eliminado_por)

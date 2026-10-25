@@ -130,3 +130,14 @@ CORS_ALLOW_ALL_ORIGINS = True
 # --- Archivos multimedia (PDFs de actas, adjuntos futuros) ---------
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# --- Archivos PRIVADOS (actas firmadas y escaneadas) -----------------
+# Se guardan fuera de MEDIA_ROOT y sin URL pública: solo se entregan a través
+# de un endpoint autenticado (ver actas/views.py). En producción conviene
+# apuntarlos a una carpeta fuera del proyecto, con respaldo propio, p. ej.
+#   PRIVATE_MEDIA_ROOT=/var/inventario/archivos_privados
+PRIVATE_MEDIA_ROOT = Path(config('PRIVATE_MEDIA_ROOT', default=str(BASE_DIR / 'private_media')))
+ACTAS_ESCANEO_MAX_BYTES = config('ACTAS_ESCANEO_MAX_MB', default=10, cast=int) * 1024 * 1024
+ACTAS_ESCANEO_MAX_ARCHIVOS = config('ACTAS_ESCANEO_MAX_ARCHIVOS', default=10, cast=int)
+# Carpeta donde `manage.py respaldar_actas` deja los .zip de respaldo.
+RESPALDOS_ROOT = Path(config('RESPALDOS_ROOT', default=str(BASE_DIR / 'respaldos')))

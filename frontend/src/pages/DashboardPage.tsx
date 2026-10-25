@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { Boxes, ClipboardList, Wrench, AlertTriangle } from 'lucide-react'
+import { Boxes, ClipboardList, Wrench, AlertTriangle, FileWarning } from 'lucide-react'
 import { Cell, Pie, PieChart, Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
+import { Link } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { ErrorCarga } from '@/components/error-carga'
 import { clasificarErrorCarga, type ErrorCarga as ErrorCargaTipo } from '@/lib/errores-api'
@@ -114,6 +115,30 @@ export default function DashboardPage() {
           </Card>
         ))}
       </div>
+
+      {data && data.actas_sin_escaneo > 0 && usuario?.rol !== 'consulta' && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3">
+          <div className="flex items-center gap-3">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400">
+              <FileWarning className="size-4.5" />
+            </div>
+            <div>
+              <p className="text-sm font-medium">
+                {data.actas_sin_escaneo} acta(s) sin respaldo digital
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Escanea el documento firmado y súbelo para no depender solo del papel.
+              </p>
+            </div>
+          </div>
+          <Link
+            to="/actas-entrega?respaldo=pendientes"
+            className="inline-flex h-8 items-center rounded-md border bg-background px-3 text-xs font-medium hover:bg-muted"
+          >
+            Ver pendientes
+          </Link>
+        </div>
+      )}
 
       {errorCarga && <ErrorCarga error={errorCarga} onReintentar={cargar} />}
 
