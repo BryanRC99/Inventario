@@ -60,21 +60,66 @@ class ActivoViewSet(viewsets.ModelViewSet):
         response['Content-Disposition'] = 'attachment; filename="plantilla_activos.xlsx"'
         return response
 
-    @action(detail=False, methods=['post'])
-    def validar_importacion(self, request):
-        from .importacion import validar_archivo
+    # ------------------------------------------------------------------
+    # Importación masiva desde Excel
+    # ------------------------------------------------------------------
+    def _filas_importacion(self, request):
+        """Lee y valida el Excel subido. Lanza ValidationError (400) con un mensaje
+        claro si el archivo en conjunto no sirve."""
+        from django.conf import settings
+        from rest_framework.exceptions import ValidationError
+
+        from .importacion import ArchivoImportacionInvalido, validar_archivo
 
         archivo = request.FILES.get('archivo')
         if not archivo:
-            return Response({'detail': 'Debes subir un archivo.'}, status=status.HTTP_400_BAD_REQUEST)
+            raise ValidationError({'detail': 'Debes subir un archivo.'})
+        if not archivo.name.lower().endswith('.xlsx'):
+            raise ValidationError({'detail': 'El archivo debe ser un Excel (.xlsx) descargado de la plantilla.'})
+        if archivo.size > settings.IMPORTACION_MAX_BYTES:
+            maximo_mb = settings.IMPORTACION_MAX_BYTES // (1024 * 1024)
+            raise ValidationError({'detail': f'El archivo supera el tamaño máximo de {maximo_mb} MB.'})
 
         try:
-            filas = validar_archivo(archivo)
+            return validar_archivo(archivo)
+        except ArchivoImportacionInvalido as e:
+            raise ValidationError({'detail': str(e)})
         except Exception:
-            return Response(
-                {'detail': 'No se pudo leer el archivo. Verifica que sea el formato de la plantilla.'},
-                status=status.HTTP_400_BAD_REQUEST,
+            raise ValidationError(
+                {'detail': 'No se pudo leer el archivo. Verifica que sea el formato de la plantilla.'}
             )
+
+    def _empresa_para_importar(self, request):
+        """Empresa a la que pertenecerán TODOS los activos del archivo. Mismas reglas que al
+        crear un activo a mano: el admin elige; el operador elige entre las suyas (o se usa la única)."""
+        from django.core.exceptions import ValidationError as DjangoValidationError
+        from rest_framework.exceptions import ValidationError
+
+        from empresas.models import Empresa
+        from usuarios.alcance import resolver_empresa_para_crear
+
+        valor = request.data.get('empresa')
+        elegida = None
+        if valor:
+            try:
+                elegida = Empresa.objects.get(pk=str(valor).strip())
+            except (Empresa.DoesNotExist, DjangoValidationError, ValueError):
+                raise ValidationError({'empresa': ['La empresa seleccionada no existe.']})
+        return resolver_empresa_para_crear(request.user, elegida)
+
+    @staticmethod
+    def _aplanar_errores(errores):
+        """{'campo': ['mensaje']} -> ['Campo: mensaje'] para mostrarlo por fila."""
+        mensajes = []
+        for campo, valor in errores.items():
+            lista = valor if isinstance(valor, (list, tuple)) else [valor]
+            for m in lista:
+                mensajes.append(f'{campo}: {m}' if campo not in ('non_field_errors', 'detail') else str(m))
+        return mensajes
+
+    @action(detail=False, methods=['post'])
+    def validar_importacion(self, request):
+        filas = self._filas_importacion(request)
 
         return Response(
             {
@@ -90,13 +135,12 @@ class ActivoViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'])
     def confirmar_importacion(self, request):
-        from .importacion import validar_archivo
+        from rest_framework.exceptions import ValidationError
 
-        archivo = request.FILES.get('archivo')
-        if not archivo:
-            return Response({'detail': 'Debes subir un archivo.'}, status=status.HTTP_400_BAD_REQUEST)
+        # Primero la empresa y el archivo: si algo falla, no se crea nada.
+        empresa = self._empresa_para_importar(request)
+        filas = self._filas_importacion(request)
 
-        filas = validar_archivo(archivo)
         creados = []
         errores_finales = []
 
@@ -111,6 +155,7 @@ class ActivoViewSet(viewsets.ModelViewSet):
                     'nombre': datos['nombre'],
                     'categoria': datos['categoria'].id,
                     'ubicacion': datos['ubicacion'].id,
+                    'empresa': empresa.id,
                     'marca': datos['marca'],
                     'modelo': datos['modelo'],
                     'numero_serie': datos['numero_serie'],
@@ -122,12 +167,24 @@ class ActivoViewSet(viewsets.ModelViewSet):
                 },
                 context={'request': request},
             )
-            if serializer.is_valid():
-                serializer.save()
-                creados.append(f['fila'])
-            else:
-                errores_finales.append({'fila': f['fila'], 'errores': list(serializer.errors.values())})
+            try:
+                if serializer.is_valid():
+                    serializer.save()
+                    creados.append(f['fila'])
+                else:
+                    errores_finales.append(
+                        {'fila': f['fila'], 'errores': self._aplanar_errores(serializer.errors)}
+                    )
+            except ValidationError as e:
+                detalle = e.detail if isinstance(e.detail, dict) else {'detail': e.detail}
+                errores_finales.append({'fila': f['fila'], 'errores': self._aplanar_errores(detalle)})
+            except Exception:
+                # Una fila con problema inesperado no tumba el resto del archivo.
+                errores_finales.append(
+                    {'fila': f['fila'], 'errores': ['No se pudo guardar esta fila por un error inesperado.']}
+                )
 
+        errores_finales.sort(key=lambda e: e['fila'])
         return Response(
             {
                 'creados': len(creados),

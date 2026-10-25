@@ -139,5 +139,9 @@ MEDIA_ROOT = BASE_DIR / 'media'
 PRIVATE_MEDIA_ROOT = Path(config('PRIVATE_MEDIA_ROOT', default=str(BASE_DIR / 'private_media')))
 ACTAS_ESCANEO_MAX_BYTES = config('ACTAS_ESCANEO_MAX_MB', default=10, cast=int) * 1024 * 1024
 ACTAS_ESCANEO_MAX_ARCHIVOS = config('ACTAS_ESCANEO_MAX_ARCHIVOS', default=10, cast=int)
+# --- Importación masiva de activos (Excel) ------------------------------
+IMPORTACION_MAX_BYTES = config('IMPORTACION_MAX_MB', default=5, cast=int) * 1024 * 1024
+IMPORTACION_MAX_FILAS = config('IMPORTACION_MAX_FILAS', default=1000, cast=int)
+
 # Carpeta donde `manage.py respaldar_actas` deja los .zip de respaldo.
 RESPALDOS_ROOT = Path(config('RESPALDOS_ROOT', default=str(BASE_DIR / 'respaldos')))

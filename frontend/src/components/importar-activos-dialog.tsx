@@ -3,6 +3,14 @@ import { CheckCircle2, Download, FileSpreadsheet, Upload, XCircle } from 'lucide
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import {
   Dialog,
   DialogContent,
@@ -26,6 +34,8 @@ import {
   type ResultadoValidacion,
   type ResultadoImportacion,
 } from '@/api/activos'
+import { useAuth } from '@/context/AuthContext'
+import { mensajeErrorApi } from '@/lib/errores-api'
 
 interface ImportarActivosDialogProps {
   open: boolean
@@ -37,6 +47,12 @@ type Paso = 'subir' | 'previsualizar' | 'resultado'
 
 export function ImportarActivosDialog({ open, onOpenChange, onImportado }: ImportarActivosDialogProps) {
   const inputRef = useRef<HTMLInputElement>(null)
+  const { usuario } = useAuth()
+  // Todas las empresas si es admin; solo las suyas si es operador.
+  const empresas = usuario?.empresas ?? []
+  const [empresaElegida, setEmpresaElegida] = useState<string | null>(null)
+  // Con una sola empresa disponible no hay nada que elegir.
+  const empresaId = empresas.length === 1 ? empresas[0].id : empresaElegida
   const [archivo, setArchivo] = useState<File | null>(null)
   const [paso, setPaso] = useState<Paso>('subir')
   const [validando, setValidando] = useState(false)
@@ -78,26 +94,28 @@ export function ImportarActivosDialog({ open, onOpenChange, onImportado }: Impor
       const data = await validarImportacionActivos(archivo)
       setValidacion(data)
       setPaso('previsualizar')
-    } catch {
-      toast.error('No se pudo leer el archivo. Verifica que sea el formato de la plantilla.')
+    } catch (err) {
+      toast.error(
+        await mensajeErrorApi(err, 'No se pudo leer el archivo. Verifica que sea el formato de la plantilla.'),
+      )
     } finally {
       setValidando(false)
     }
   }
 
   const handleConfirmar = async () => {
-    if (!archivo) return
+    if (!archivo || !empresaId) return
     setConfirmando(true)
     try {
-      const data = await confirmarImportacionActivos(archivo)
+      const data = await confirmarImportacionActivos(archivo, empresaId)
       setResultado(data)
       setPaso('resultado')
       if (data.creados > 0) {
         toast.success(`${data.creados} activo(s) importado(s) correctamente`)
         onImportado()
       }
-    } catch {
-      toast.error('No se pudo completar la importación')
+    } catch (err) {
+      toast.error(await mensajeErrorApi(err, 'No se pudo completar la importación'))
     } finally {
       setConfirmando(false)
     }
@@ -184,6 +202,33 @@ export function ImportarActivosDialog({ open, onOpenChange, onImportado }: Impor
               </Table>
             </div>
 
+            {validacion.validas > 0 && (
+              <div className="grid gap-2">
+                <Label htmlFor="empresa-importacion">Empresa de los activos</Label>
+                {empresas.length === 1 ? (
+                  <p className="text-sm">{empresas[0].nombre}</p>
+                ) : (
+                  <Select value={empresaElegida ?? undefined} onValueChange={setEmpresaElegida}>
+                    <SelectTrigger id="empresa-importacion" className="w-full sm:w-72">
+                      <SelectValue placeholder="Selecciona una empresa">
+                        {empresas.find((e) => e.id === empresaElegida)?.nombre}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {empresas.map((e) => (
+                        <SelectItem key={e.id} value={e.id}>
+                          {e.nombre}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Todos los activos de este archivo se registrarán en esta empresa.
+                </p>
+              </div>
+            )}
+
             {validacion.validas === 0 && (
               <p className="text-sm text-muted-foreground">
                 No hay filas válidas para importar. Corrige el archivo y vuelve a intentar.
@@ -248,7 +293,7 @@ export function ImportarActivosDialog({ open, onOpenChange, onImportado }: Impor
               </Button>
               <Button
                 onClick={handleConfirmar}
-                disabled={!validacion || validacion.validas === 0 || confirmando}
+                disabled={!validacion || validacion.validas === 0 || !empresaId || confirmando}
               >
                 {confirmando ? 'Importando...' : `Importar ${validacion?.validas ?? 0} activo(s)`}
               </Button>
