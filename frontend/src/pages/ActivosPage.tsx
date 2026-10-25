@@ -414,15 +414,17 @@ export default function ActivosPage() {
                       <PackageX className="size-3.5" />
                     </Button>
                   )}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="size-7"
-                    onClick={() => abrirEditar(activo)}
-                    title="Editar"
-                  >
-                    <Pencil className="size-3.5" />
-                  </Button>
+                  {activo.estado !== 'dado_de_baja' && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-7"
+                      onClick={() => abrirEditar(activo)}
+                      title="Editar"
+                    >
+                      <Pencil className="size-3.5" />
+                    </Button>
+                  )}
                 </TableCell>
               </TableRow>
             ))}

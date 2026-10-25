@@ -245,10 +245,16 @@ class ActivoViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        motivo = request.data.get('motivo', '').strip()
+        motivo = request.data.get('motivo', '')
+        motivo = motivo.strip() if isinstance(motivo, str) else ''
         if not motivo:
             return Response(
                 {'detail': 'Debes indicar un motivo para dar de baja el activo.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if len(motivo) > 255:
+            return Response(
+                {'detail': 'El motivo no puede superar los 255 caracteres.'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 

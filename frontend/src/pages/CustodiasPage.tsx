@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Plus, Pencil, Eye, CheckCircle2, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
 import { ErrorCarga } from '@/components/error-carga'
-import { clasificarErrorCarga, type ErrorCarga as ErrorCargaTipo } from '@/lib/errores-api'
+import { clasificarErrorCarga, mensajeErrorApi, type ErrorCarga as ErrorCargaTipo } from '@/lib/errores-api'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -33,6 +33,7 @@ import { listarUbicaciones, type Ubicacion } from '@/api/ubicaciones'
 import { crearActa } from '@/api/actas'
 import { SearchInput } from '@/components/search-input'
 import { coincide } from '@/lib/normalizar-texto'
+import { hoyLocal } from '@/lib/fechas'
 
 export default function CustodiasPage() {
   const [custodias, setCustodias] = useState<Custodia[]>([])
@@ -124,13 +125,13 @@ export default function CustodiasPage() {
       await cerrarCustodia(custodiaAFinalizar.id, fechaFin, ubicacionDestino)
       toast.success('Custodia finalizada')
       await cargarTodo()
-    } catch {
-      toast.error('No se pudo finalizar la custodia')
+    } catch (err) {
+      toast.error(await mensajeErrorApi(err, 'No se pudo finalizar la custodia'))
     }
   }
 
   const handleReasignar = async (custodia: Custodia) => {
-    const hoy = new Date().toISOString().slice(0, 10)
+    const hoy = hoyLocal()
     try {
       await cerrarCustodia(custodia.id, hoy)
       toast.success('Custodia anterior cerrada, asigna al nuevo custodio')
@@ -138,8 +139,8 @@ export default function CustodiasPage() {
       setCustodiaEditando(null)
       setReasignandoActivoId(custodia.activo)
       setDialogOpen(true)
-    } catch {
-      toast.error('No se pudo cerrar la custodia actual')
+    } catch (err) {
+      toast.error(await mensajeErrorApi(err, 'No se pudo cerrar la custodia actual'))
     }
   }
 

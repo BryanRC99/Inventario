@@ -22,6 +22,7 @@ import { extraerMensajeError, type Custodia, type CustodiaInput } from '@/api/cu
 import type { Activo } from '@/api/activos'
 import type { Persona } from '@/api/personas'
 import type { Area } from '@/api/areas'
+import { hoyLocal } from '@/lib/fechas'
 
 interface CustodiaDialogProps {
   open: boolean
@@ -36,7 +37,7 @@ interface CustodiaDialogProps {
 
 type TitularTipo = 'persona' | 'area'
 
-const hoy = () => new Date().toISOString().slice(0, 10)
+const hoy = hoyLocal
 
 const valoresVacios: CustodiaInput = {
   activo: '',
@@ -129,7 +130,11 @@ export function CustodiaDialog({
 
             <div className="grid gap-2">
               <Label htmlFor="activo">Activo</Label>
-              <Select value={form.activo} onValueChange={(v) => { if (v !== null) set('activo', v); }}>
+              <Select
+                value={form.activo}
+                onValueChange={(v) => { if (v !== null) set('activo', v); }}
+                disabled={!!custodia}
+              >
                 <SelectTrigger id="activo" className="w-full">
                   <SelectValue placeholder="Selecciona un activo">
                     {activoSeleccionado
@@ -153,6 +158,7 @@ export function CustodiaDialog({
                 value={titularTipo}
                 onValueChange={(v) => cambiarTitularTipo(v as TitularTipo)}
                 className="flex gap-4"
+                disabled={!!custodia}
               >
                 <div className="flex items-center gap-2">
                   <RadioGroupItem value="persona" id="titular-persona" />
@@ -175,6 +181,7 @@ export function CustodiaDialog({
                 <Select
                   value={form.persona ?? undefined}
                   onValueChange={(v) => set('persona', v)}
+                  disabled={!!custodia}
                 >
                   <SelectTrigger id="persona" className="w-full">
                     <SelectValue placeholder="Selecciona una persona">
@@ -196,6 +203,7 @@ export function CustodiaDialog({
                 <Select
                   value={form.area ?? undefined}
                   onValueChange={(v) => set('area', v)}
+                  disabled={!!custodia}
                 >
                   <SelectTrigger id="area" className="w-full">
                     <SelectValue placeholder="Selecciona un área">
@@ -213,6 +221,13 @@ export function CustodiaDialog({
               </div>
             )}
 
+            {custodia && (
+              <p className="rounded-md bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+                El activo y el custodio no se pueden cambiar. Para entregarlo a otra persona o área,
+                finaliza esta custodia y crea una nueva.
+              </p>
+            )}
+
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="fecha_inicio">Fecha inicio</Label>
@@ -221,6 +236,7 @@ export function CustodiaDialog({
                   type="date"
                   value={form.fecha_inicio}
                   onChange={(e) => set('fecha_inicio', e.target.value)}
+                  max={hoy()}
                   required
                 />
               </div>
@@ -232,6 +248,8 @@ export function CustodiaDialog({
                   type="date"
                   value={form.fecha_fin ?? ''}
                   onChange={(e) => set('fecha_fin', e.target.value || null)}
+                  min={form.fecha_inicio || undefined}
+                  max={hoy()}
                 />
               </div>
             </div>

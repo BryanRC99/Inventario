@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { TIPOS_ACTA, type ActaEntregaInput, type TipoActa } from '@/api/actas'
+import { hoyLocal } from '@/lib/fechas'
 
 interface ActaDialogProps {
   open: boolean
@@ -34,7 +35,7 @@ interface ActaDialogProps {
   onSkip: () => void
 }
 
-const hoy = () => new Date().toISOString().slice(0, 10)
+const hoy = hoyLocal
 
 export function ActaDialog({
   open,

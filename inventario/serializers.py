@@ -1,4 +1,6 @@
 import re
+from decimal import Decimal
+
 from django.db import transaction
 from rest_framework import serializers
 
@@ -81,6 +83,73 @@ class ActivoSerializer(serializers.ModelSerializer):
             'fecha_baja',
             'area_creador',
         ]
+        extra_kwargs = {'valor_adquisicion': {'min_value': Decimal('0')}}
+
+    # ------------------------------------------------------------------
+    # Reglas de integridad. El estado "dado de baja", el cambio de ubicación y la
+    # categoría no son campos libres: tienen su propio flujo para que el historial
+    # (movimientos, custodias, etiquetas) siempre cuadre con la realidad.
+    # ------------------------------------------------------------------
+    def validate_estado(self, value):
+        ya_de_baja = self.instance is not None and self.instance.estado == Activo.Estado.DADO_DE_BAJA
+        if value == Activo.Estado.DADO_DE_BAJA and not ya_de_baja:
+            raise serializers.ValidationError(
+                'Para dar de baja un activo usa la opción "Dar de baja": así se registra el motivo '
+                'y se cierran sus custodias.'
+            )
+        return value
+
+    def validate_numero_serie(self, value):
+        value = (value or '').strip()
+        if not value:
+            return value
+        if self.instance is not None and self.instance.numero_serie.lower() == value.lower():
+            return value  # sin cambios: no se vuelve a comprobar
+        repetido = Activo.objects.filter(numero_serie__iexact=value)
+        if self.instance is not None:
+            repetido = repetido.exclude(pk=self.instance.pk)
+        if repetido.exists():
+            raise serializers.ValidationError('Ya existe un activo con ese número de serie.')
+        return value
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        instancia = self.instance
+
+        if instancia is not None:
+            if instancia.estado == Activo.Estado.DADO_DE_BAJA:
+                raise serializers.ValidationError('Un activo dado de baja no se puede modificar.')
+
+            categoria = attrs.get('categoria')
+            if categoria is not None and categoria.pk != instancia.categoria_id:
+                raise serializers.ValidationError({
+                    'categoria': (
+                        'La categoría no se puede cambiar una vez creado el activo, porque define su código '
+                        f'({instancia.codigo_interno}) y su etiqueta. Si te equivocaste, da de baja este activo '
+                        'y créalo de nuevo.'
+                    )
+                })
+
+            usuario = self.context['request'].user
+            empresa = attrs.get('empresa')
+            if (
+                (usuario.is_superuser or usuario.rol == 'admin')
+                and empresa is not None
+                and empresa.pk != instancia.empresa_id
+                and instancia.custodias.filter(fecha_fin__isnull=True).exists()
+            ):
+                raise serializers.ValidationError({
+                    'empresa': 'No se puede cambiar la empresa de un activo con custodias activas. '
+                               'Finaliza primero sus custodias.'
+                })
+
+        adquisicion = attrs.get('fecha_adquisicion', instancia.fecha_adquisicion if instancia else None)
+        garantia = attrs.get('fecha_fin_garantia', instancia.fecha_fin_garantia if instancia else None)
+        if adquisicion and garantia and garantia < adquisicion:
+            raise serializers.ValidationError({
+                'fecha_fin_garantia': 'La garantía no puede terminar antes de la fecha de adquisición.'
+            })
+        return attrs
 
     def generar_codigo_interno(self, categoria):
         prefijo = categoria.prefijo
@@ -118,9 +187,25 @@ class ActivoSerializer(serializers.ModelSerializer):
 
         return activo
 
+    @transaction.atomic
     def update(self, instance, validated_data):
+        from trazabilidad.utils import registrar_movimiento
+
         usuario = self.context['request'].user
         if not (usuario.is_superuser or usuario.rol == 'admin'):
             # Un no-Admin no puede cambiar la empresa de un activo.
             validated_data.pop('empresa', None)
-        return super().update(instance, validated_data)
+
+        ubicacion_anterior = instance.ubicacion
+        activo = super().update(instance, validated_data)
+
+        if activo.ubicacion_id != ubicacion_anterior.pk:
+            registrar_movimiento(
+                activo=activo,
+                tipo_evento='traslado',
+                usuario=usuario,
+                ubicacion_origen=ubicacion_anterior,
+                ubicacion_destino=activo.ubicacion,
+                observaciones='Cambio de ubicación al editar el activo.',
+            )
+        return activo
