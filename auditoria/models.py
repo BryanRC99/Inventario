@@ -11,6 +11,8 @@ class RegistroAuditoria(models.Model):
         LOGIN = 'login', 'Inicio de sesión'
         LOGIN_FALLIDO = 'login_fallido', 'Inicio de sesión fallido'
         LOGOUT = 'logout', 'Cierre de sesión'
+        CAMBIO_PERMISOS = 'cambio_permisos', 'Cambio de permisos'
+        VER_ESCANEO = 'ver_escaneo', 'Consulta de acta escaneada'
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     usuario = models.ForeignKey(    

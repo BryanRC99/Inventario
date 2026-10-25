@@ -36,6 +36,8 @@ const BADGE_POR_ACCION: Record<AccionAuditoria, 'default' | 'secondary' | 'destr
   login: 'outline',
   login_fallido: 'destructive',
   logout: 'outline',
+  cambio_permisos: 'secondary',
+  ver_escaneo: 'outline',
 }
 
 export default function AuditoriaPage() {

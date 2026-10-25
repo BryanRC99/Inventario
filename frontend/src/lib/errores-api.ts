@@ -15,6 +15,8 @@ const NOMBRES_CAMPO: Record<string, string> = {
   rol: 'Rol',
   area: 'Área',
   documento: 'Documento',
+  archivos: 'Archivos',
+  motivo: 'Motivo',
 }
 
 function aplanar(data: unknown): string[] {

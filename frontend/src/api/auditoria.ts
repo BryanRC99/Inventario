@@ -7,6 +7,8 @@ export type AccionAuditoria =
   | 'login'
   | 'login_fallido'
   | 'logout'
+  | 'cambio_permisos'
+  | 'ver_escaneo'
 
 export interface CambioCampo {
   antes: string | null
@@ -43,6 +45,8 @@ export const ACCIONES: { value: AccionAuditoria; label: string }[] = [
   { value: 'login', label: 'Inicio de sesión' },
   { value: 'login_fallido', label: 'Login fallido' },
   { value: 'logout', label: 'Cierre de sesión' },
+  { value: 'cambio_permisos', label: 'Cambio de permisos' },
+  { value: 'ver_escaneo', label: 'Consulta de acta escaneada' },
 ]
 
 export const MODELOS: string[] = [
@@ -55,6 +59,7 @@ export const MODELOS: string[] = [
   'Proveedor',
   'Area',
   'ActaEntrega',
+  'ActaEscaneo',
   'Mantenimiento',
 ]
 

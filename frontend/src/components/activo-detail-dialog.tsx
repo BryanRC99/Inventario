@@ -1,3 +1,4 @@
+import { BotonEscaneos } from '@/components/boton-escaneos'
 import { useEffect, useState } from 'react'
 import { FileText } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
@@ -165,17 +166,20 @@ export function ActivoDetailDialog({ open, onOpenChange, activo }: ActivoDetailD
                   <p className="font-medium">{acta.tipo_display}</p>
                   <p className="text-xs text-muted-foreground">{acta.fecha}</p>
                 </div>
-                {acta.pdf && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-7"
-                    onClick={() => window.open(acta.pdf!, '_blank')}
-                  >
-                    <FileText className="size-3.5" />
-                    Ver PDF
-                  </Button>
-                )}
+                <div className="flex items-center">
+                  {acta.pdf && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7"
+                      onClick={() => window.open(acta.pdf!, '_blank')}
+                    >
+                      <FileText className="size-3.5" />
+                      Ver PDF
+                    </Button>
+                  )}
+                  <BotonEscaneos acta={acta} />
+                </div>
               </div>
             ))}
           </div>
