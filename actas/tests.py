@@ -1,6 +1,7 @@
 import hashlib
 import io
 import os
+import sys
 import shutil
 import tempfile
 import zipfile
@@ -415,7 +416,8 @@ class ComandosTests(EscaneosBase):
         self.correr('respaldar_actas', '--destino', str(destino))
         zips = list(destino.glob('respaldo_actas_*.zip'))
         self.assertEqual(len(zips), 1)
-        self.assertEqual(oct(zips[0].stat().st_mode & 0o777), '0o600')
+        if sys.platform != 'win32':  # Windows no maneja permisos tipo Unix
+          self.assertEqual(oct(zips[0].stat().st_mode & 0o777), '0o600')
         with zipfile.ZipFile(zips[0]) as z:
             nombres = z.namelist()
             self.assertEqual(len([n for n in nombres if n.startswith('archivos/')]), 2)  # incluye el eliminado
