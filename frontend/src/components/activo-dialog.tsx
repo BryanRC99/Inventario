@@ -158,7 +158,11 @@ export function ActivoDialog({
 
             <div className="col-span-2 grid min-w-0 gap-2 sm:col-span-1">
               <Label htmlFor="categoria">Categoría</Label>
-              <Select value={form.categoria} onValueChange={(v) => { if (v !== null) set('categoria', v); }}>
+              <Select
+                value={form.categoria}
+                onValueChange={(v) => { if (v !== null) set('categoria', v); }}
+                disabled={!!activo}
+              >
                 <SelectTrigger id="categoria" className="w-full">
                   <SelectValue placeholder="Selecciona">
                     {categoriaSeleccionada?.nombre}
@@ -172,6 +176,11 @@ export function ActivoDialog({
                   ))}
                 </SelectContent>
               </Select>
+              {activo && (
+                <p className="text-xs text-muted-foreground">
+                  No se puede cambiar: la categoría define el código del activo.
+                </p>
+              )}
             </div>
 
             {mostrarEmpresa && (
@@ -260,7 +269,7 @@ export function ActivoDialog({
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  {ESTADOS_ACTIVO.map((e) => (
+                  {ESTADOS_ACTIVO.filter((e) => e.value !== 'dado_de_baja').map((e) => (
                     <SelectItem key={e.value} value={e.value}>
                       {e.label}
                     </SelectItem>

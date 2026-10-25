@@ -21,6 +21,7 @@ import { Textarea } from '@/components/ui/textarea'
 import type { Mantenimiento, MantenimientoInput } from '@/api/mantenimientos'
 import type { Activo } from '@/api/activos'
 import type { Proveedor } from '@/api/proveedores'
+import { hoyLocal } from '@/lib/fechas'
 
 interface MantenimientoDialogProps {
   open: boolean
@@ -31,7 +32,7 @@ interface MantenimientoDialogProps {
   onSubmit: (payload: MantenimientoInput) => Promise<void>
 }
 
-const hoy = () => new Date().toISOString().slice(0, 10)
+const hoy = hoyLocal
 
 const valoresVacios: MantenimientoInput = {
   activo: '',

@@ -20,6 +20,7 @@ import {
 import type { Custodia } from '@/api/custodias'
 import type { Ubicacion } from '@/api/ubicaciones'
 import type { Activo } from '@/api/activos'
+import { hoyLocal } from '@/lib/fechas'
 
 interface FinalizarCustodiaDialogProps {
   open: boolean
@@ -30,7 +31,7 @@ interface FinalizarCustodiaDialogProps {
   onConfirm: (fechaFin: string, ubicacionDestino: string) => Promise<void>
 }
 
-const hoy = () => new Date().toISOString().slice(0, 10)
+const hoy = hoyLocal
 
 export function FinalizarCustodiaDialog({
   open,
