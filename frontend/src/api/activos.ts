@@ -159,9 +159,13 @@ export async function validarImportacionActivos(archivo: File): Promise<Resultad
   return data
 }
 
-export async function confirmarImportacionActivos(archivo: File): Promise<ResultadoImportacion> {
+export async function confirmarImportacionActivos(
+  archivo: File,
+  empresaId?: string,
+): Promise<ResultadoImportacion> {
   const formData = new FormData()
   formData.append('archivo', archivo)
+  if (empresaId) formData.append('empresa', empresaId)
   const { data } = await api.post('/inventario/activos/confirmar_importacion/', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   })
