@@ -17,7 +17,7 @@ class ActivoFilter(django_filters.FilterSet):
     Valores inválidos (UUID mal formado, estado inexistente) devuelven 400 con
     el detalle por campo.
     """
-
+    
     empresa = django_filters.ModelMultipleChoiceFilter(queryset=Empresa.objects.all())
     categoria = django_filters.ModelMultipleChoiceFilter(queryset=Categoria.objects.all())
     ubicacion = django_filters.ModelMultipleChoiceFilter(queryset=Ubicacion.objects.all())

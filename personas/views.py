@@ -17,7 +17,11 @@ class PersonaViewSet(viewsets.ModelViewSet):
 
     def perform_destroy(self, instance):
         usuario = instance.usuario
-        super().perform_destroy(instance)
+        super().perform_destroy(instance)   
         if usuario:
             usuario.is_active = False
             usuario.save(update_fields=['is_active'])
+
+       
+            
+
