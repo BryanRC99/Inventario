@@ -15,6 +15,7 @@ from custodia.models import Custodia
 COLUMNAS = [
     'Código',
     'Nombre',
+    'Empresa',
     'Categoría',
     'Marca',
     'Modelo',
@@ -43,6 +44,7 @@ def _fila_activo(activo, custodios_por_id):
     return [
         activo.codigo_interno,
         activo.nombre,
+        activo.empresa.nombre if activo.empresa else '—',
         activo.categoria.nombre if activo.categoria else '—',
         activo.marca or '—',
         activo.modelo or '—',
@@ -112,6 +114,7 @@ def generar_reporte_pdf(activos, filtros=None):
         {
             'codigo': a.codigo_interno,
             'nombre': a.nombre,
+            'empresa': a.empresa.nombre if a.empresa else '—',
             'categoria': a.categoria.nombre if a.categoria else '—',
             'marca': a.marca or '—',
             'modelo': a.modelo or '—',

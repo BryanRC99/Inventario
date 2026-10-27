@@ -57,8 +57,7 @@
     font-size: 8.2px;
   }
   table.reporte tbody tr:nth-child(even) { background: #f9fafb; }
-  .mono { font-family: monospace; }
-  .codigo { font-family: monospace; font-weight: 700; }
+  .codigo { font-weight: 700; }
   .estado {
     display: inline-block;
     padding: 1.5px 6px;
@@ -90,6 +89,7 @@
       <tr>
         <th>Código</th>
         <th>Nombre</th>
+        <th>Empresa</th>
         <th>Categoría</th>
         <th>Marca</th>
         <th>Modelo</th>
@@ -104,10 +104,11 @@
       <tr>
         <td class="codigo">{{ f.codigo }}</td>
         <td>{{ f.nombre }}</td>
+        <td>{{ f.empresa }}</td>
         <td>{{ f.categoria }}</td>
         <td>{{ f.marca }}</td>
         <td>{{ f.modelo }}</td>
-        <td class="mono">{{ f.numero_serie }}</td>
+        <td>{{ f.numero_serie }}</td>
         <td>{{ f.ubicacion }}</td>
         <td><span class="estado">{{ f.estado }}</span></td>
         <td>{{ f.custodio }}</td>
