@@ -291,7 +291,7 @@ class ActivoViewSet(viewsets.ModelViewSet):
         from django_filters.rest_framework import DjangoFilterBackend
 
         backend = DjangoFilterBackend()
-        queryset = self.get_queryset().select_related('categoria', 'ubicacion', 'proveedor')
+        queryset = self.get_queryset().select_related('categoria', 'ubicacion', 'proveedor', 'empresa')
         # get_filterset puede lanzar ValidationError (-> 400 con detalle por campo).
         filterset = backend.get_filterset(self.request, queryset, self)
         queryset = backend.filter_queryset(self.request, queryset, self)
