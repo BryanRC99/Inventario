@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://10.10.10.101:8000/api'
+const API_URL = import.meta.env.VITE_API_URL || 'http://192.168.120.167:8000/api'
 
 export const api = axios.create({
   baseURL: API_URL,
@@ -18,7 +18,7 @@ api.interceptors.request.use((config) => {
 // Si el access token expiró (401), intenta renovarlo una sola vez
 // usando el refresh token antes de rendirse y mandar a login.
 let isRefreshing = false
-
+ 
 api.interceptors.response.use(  
   (response) => response,
   async (error) => {

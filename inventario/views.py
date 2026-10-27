@@ -348,7 +348,7 @@ class DashboardView(APIView):
         custodias = custodias_visibles(request.user, Custodia.objects.all())
 
         actas_sin_escaneo = (
-            actas_visibles(request.user, ActaEntrega.objects.all())
+            actas_visibles(request.user, ActaEntrega.objects.all()) 
             .exclude(escaneos__eliminado=False)
             .distinct()
             .count()
