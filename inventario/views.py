@@ -11,19 +11,16 @@ from .filters import ActivoFilter, describir_filtros
 from .models import Activo, Categoria, Ubicacion
 from .serializers import ActivoSerializer, CategoriaSerializer, UbicacionSerializer
 
-
 class CategoriaViewSet(viewsets.ModelViewSet):
     queryset = Categoria.objects.all()
     serializer_class = CategoriaSerializer
     permission_classes = [PermisoPorRolSinConsulta]
-
     
 class UbicacionViewSet(viewsets.ModelViewSet):
     queryset = Ubicacion.objects.select_related('ubicacion_padre').all()
     serializer_class = UbicacionSerializer
     permission_classes = [PermisoPorRolSinConsulta]
-
-
+    
 class ActivoViewSet(viewsets.ModelViewSet):
     serializer_class = ActivoSerializer
     permission_classes = [PermisoPorRolSinConsulta]
@@ -244,7 +241,7 @@ class ActivoViewSet(viewsets.ModelViewSet):
                 {'detail': 'Este activo ya está dado de baja.'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-
+        
         motivo = request.data.get('motivo', '')
         motivo = motivo.strip() if isinstance(motivo, str) else ''
         if not motivo:

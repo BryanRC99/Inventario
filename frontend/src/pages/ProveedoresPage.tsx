@@ -17,8 +17,8 @@ import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog'
 import {
   listarProveedores,
   crearProveedor,
-  actualizarProveedor,
-  eliminarProveedor,
+  actualizarProveedor, 
+  eliminarProveedor,  
   type Proveedor,
   type ProveedorInput,
 } from '@/api/proveedores'
