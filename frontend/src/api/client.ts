@@ -1,11 +1,13 @@
 import axios from 'axios'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://10.10.10.101:8000/api'
+const API_URL = import.meta.env.VITE_API_URL || '/api'
 
 export const api = axios.create({
   baseURL: API_URL,
 })
 
+// Si el access token expiró (401), intenta renovarlo una sola vez
+// usando el refresh token antes de rendirse y mandar a login.
 // Adjunta el access token a cada petición saliente
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('access_token')
@@ -15,10 +17,10 @@ api.interceptors.request.use((config) => {
   return config
 })
 
-// Si el access token expiró (401), intenta renovarlo una sola vez
-// usando el refresh token antes de rendirse y mandar a login.
 let isRefreshing = false
- 
+
+// El endpoint de login debe devolver su error de credenciales sin intentar refrescar.
+
 api.interceptors.response.use(  
   (response) => response,
   async (error) => {
