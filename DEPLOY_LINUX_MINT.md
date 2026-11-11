@@ -90,6 +90,26 @@ docker compose up -d --build        # reconstruir y actualizar la app
 docker compose down                 # apagar sin borrar datos
 ```
 
+## Actualizar una instalación existente
+
+Desde PowerShell en Windows, publica los cambios de esta función:
+
+```powershell
+git add DEPLOY_LINUX_MINT.md inventario/filters.py frontend/src/api/activos.ts frontend/src/pages/ActivosPage.tsx
+git commit -m "Agregar filtro de creador de activos"
+git push origin main
+```
+
+Cuando termine la subida, actualiza el servidor Mint desde la carpeta del proyecto:
+
+```bash
+git pull --ff-only origin main
+docker compose up -d --build
+docker compose ps
+```
+
+Para esta actualización del filtro de creador no hay cambios de base de datos ni debes volver a importar activos. Al terminar, cierra sesión en la web y vuelve a entrar si el navegador conserva la página anterior.
+
 No uses `docker compose down -v` para apagar: `-v` borra también los volúmenes con la base de datos y archivos.
 
 ## Datos y respaldos

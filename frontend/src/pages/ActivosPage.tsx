@@ -42,6 +42,14 @@ import { MultiSelectFilter } from '@/components/multi-select-filter'
 import { mensajeErrorApi, clasificarErrorCarga, type ErrorCarga as ErrorCargaTipo } from '@/lib/errores-api'
 import { ErrorCarga } from '@/components/error-carga'
 import { useAuth } from '@/context/AuthContext'
+import { listarUsuarios, type Usuario } from '@/api/usuarios'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 const BADGE_POR_ESTADO: Record<EstadoActivo, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   activo: 'default',
@@ -72,15 +80,19 @@ export default function ActivosPage() {
   const [fCategoria, setFCategoria] = useState<string[]>([])
   const [fUbicacion, setFUbicacion] = useState<string[]>([])
   const [fEstado, setFEstado] = useState<string[]>([])
+  const [fCreador, setFCreador] = useState('admin')
+  const [usuarios, setUsuarios] = useState<Usuario[]>([])
 
   // Admin filtra por cualquier empresa; los demás solo por las suyas (y solo si tienen varias).
   const empresasFiltro = usuario?.rol === 'admin' ? empresas : (usuario?.empresas ?? [])
-  const hayFiltros = fEmpresa.length + fCategoria.length + fUbicacion.length + fEstado.length > 0
+  const esAdmin = usuario?.rol === 'admin'
+  const hayFiltros = fEmpresa.length + fCategoria.length + fUbicacion.length + fEstado.length > 0 || (esAdmin && fCreador !== 'todos')
   const filtrosServidor: FiltrosActivos = {
     empresa: fEmpresa,
     categoria: fCategoria,
     ubicacion: fUbicacion,
     estado: fEstado as EstadoActivo[],
+    ...(esAdmin ? { creador: fCreador } : {}),
   }
   // Los reportes usan exactamente los mismos filtros que la tabla (+ la búsqueda de texto).
   const filtrosReporte: FiltrosActivos = { ...filtrosServidor, search: busqueda }
@@ -90,6 +102,7 @@ export default function ActivosPage() {
     setFCategoria([])
     setFUbicacion([])
     setFEstado([])
+    setFCreador('todos')
   }
 
   const handleExportarExcel = async () => {
@@ -132,6 +145,10 @@ export default function ActivosPage() {
       setUbicaciones(ubicacionesData)
       setProveedores(proveedoresData)
       setEmpresas(empresasData)
+      if (esAdmin) {
+        const usuariosData = await listarUsuarios().catch(() => [])
+        setUsuarios(usuariosData)
+      }
     } catch (err) {
       // Un 400 es un filtro inválido (mensaje claro en toast); el resto es un fallo de carga.
       if ((err as { response?: { status?: number } })?.response?.status === 400) {
@@ -145,7 +162,7 @@ export default function ActivosPage() {
   }
 
   // Recarga al montar y cada vez que cambia un filtro.
-  const claveFiltros = JSON.stringify([fEmpresa, fCategoria, fUbicacion, fEstado])
+  const claveFiltros = JSON.stringify([fEmpresa, fCategoria, fUbicacion, fEstado, esAdmin, fCreador])
   useEffect(() => {
     cargarTodo()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -273,6 +290,28 @@ export default function ActivosPage() {
             seleccion={fEmpresa}
             onChange={setFEmpresa}
           />
+        )}
+        {esAdmin && (
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-muted-foreground">Creador</span>
+            <Select value={fCreador} onValueChange={(v) => setFCreador(v ?? 'todos')}>
+              <SelectTrigger className="h-8 w-52 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="admin">Administradores (Sistemas)</SelectItem>
+                <SelectItem value="operador">Operadores</SelectItem>
+                <SelectItem value="consulta">Usuarios de consulta</SelectItem>
+                <SelectItem value="todos">Todos los creadores</SelectItem>
+                {usuarios.map((u) => (
+                  <SelectItem key={u.id} value={`usuario:${u.id}`}>
+                    {u.nombre_completo || u.username} ({u.rol})
+                  </SelectItem>
+                ))}
+                <SelectItem value="sin_creador">Sin creador</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         )}
         <MultiSelectFilter
           titulo="Categoría"

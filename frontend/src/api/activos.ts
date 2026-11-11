@@ -82,6 +82,7 @@ export interface FiltrosActivos {
   categoria?: string[]
   ubicacion?: string[]
   estado?: EstadoActivo[]
+  creador?: string
   search?: string
 }
 
@@ -94,6 +95,7 @@ function limpiarFiltros(filtros: FiltrosActivos = {}) {
     const valores = filtros[clave]
     if (valores && valores.length > 0) params[clave] = valores
   }
+  if (filtros.creador && filtros.creador !== 'todos') params.creador = filtros.creador
   const search = filtros.search?.trim()
   if (search) params.search = search.slice(0, 100)
   return params
