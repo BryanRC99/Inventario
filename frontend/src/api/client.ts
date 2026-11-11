@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, clearStoredSession } from './session'
 
 const API_URL = import.meta.env.VITE_API_URL || '/api'
 
@@ -10,7 +11,7 @@ export const api = axios.create({
 // usando el refresh token antes de rendirse y mandar a login.
 // Adjunta el access token a cada petición saliente
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('access_token')
+  const token = localStorage.getItem(ACCESS_TOKEN_KEY)
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
@@ -40,10 +41,10 @@ api.interceptors.response.use(
       originalRequest._retry = true
       isRefreshing = true
 
-      const refreshToken = localStorage.getItem('refresh_token')
+      const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY)
       if (!refreshToken) {
         isRefreshing = false
-        localStorage.clear()
+        clearStoredSession()
         window.location.href = '/login'
         return Promise.reject(error)
       }
@@ -52,13 +53,16 @@ api.interceptors.response.use(
         const { data } = await axios.post(`${API_URL}/auth/refresh/`, {
           refresh: refreshToken,
         })
-        localStorage.setItem('access_token', data.access)
+        localStorage.setItem(ACCESS_TOKEN_KEY, data.access)
+        if (data.refresh) {
+          localStorage.setItem(REFRESH_TOKEN_KEY, data.refresh)
+        }
         originalRequest.headers.Authorization = `Bearer ${data.access}`
         isRefreshing = false
         return api(originalRequest)
       } catch (refreshError) {
         isRefreshing = false
-        localStorage.clear()
+        clearStoredSession()
         window.location.href = '/login'
         return Promise.reject(refreshError)
       }

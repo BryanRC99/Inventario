@@ -2,6 +2,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status, viewsets
+from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from .models import Usuario
@@ -64,17 +65,34 @@ class UsuarioViewSet(viewsets.ModelViewSet):
 
 
 class LogoutView(APIView):
-    """POST /api/auth/logout/ -> solo registra el evento en auditoría."""
+    """Revoca el token de renovación y registra el cierre de sesión."""
 
-    permission_classes = [IsAuthenticated]
+    authentication_classes = []
+    permission_classes = [AllowAny]
 
     def post(self, request):
+        from rest_framework_simplejwt.exceptions import TokenError
+        from rest_framework_simplejwt.tokens import RefreshToken
+
         from auditoria.utils import registrar_auditoria
 
-        registrar_auditoria(
-            accion='logout',
-            modelo='Usuario',
-            objeto_id=request.user.id,
-            objeto_repr=request.user.username,
-        )
+        refresh_value = request.data.get('refresh')
+        if not refresh_value:
+            return Response({'detail': 'Sesión cerrada.'})
+
+        try:
+            refresh = RefreshToken(refresh_value)
+            usuario = Usuario.objects.filter(pk=refresh['user_id']).first()
+            refresh.blacklist()
+        except (TokenError, TypeError, ValueError):
+            return Response({'detail': 'Sesión cerrada.'})
+
+        if usuario:
+            registrar_auditoria(
+                accion='logout',
+                modelo='Usuario',
+                objeto_id=usuario.id,
+                objeto_repr=usuario.username,
+                usuario=usuario,
+            )
         return Response({'detail': 'Sesión cerrada.'})
