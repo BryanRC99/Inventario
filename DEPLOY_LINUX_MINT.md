@@ -92,11 +92,11 @@ docker compose down                 # apagar sin borrar datos
 
 ## Actualizar una instalación existente
 
-Desde PowerShell en Windows, publica los cambios de esta función:
+Desde PowerShell en Windows, publica los cambios de la función que estés subiendo. Para la paginación de activos y el nombre de quien entrega/recibe en las actas:
 
 ```powershell
-git add DEPLOY_LINUX_MINT.md inventario/filters.py frontend/src/api/activos.ts frontend/src/pages/ActivosPage.tsx
-git commit -m "Agregar filtro de creador de activos"
+git add DEPLOY_LINUX_MINT.md inventario/views.py actas/models.py actas/serializers.py actas/migrations/0004_acta_entregadores.py actas/templates/actas/acta_pdf.html actas/templates/actas/acta_devolucion_pdf.html actas/templates/actas/acta_traslado_pdf.html frontend/src/api/actas.ts frontend/src/api/activos.ts frontend/src/components/acta-dialog.tsx frontend/src/components/ui/pagination.tsx frontend/src/pages/ActivosPage.tsx
+git commit -m "Paginar activos y completar nombres en actas"
 git push origin main
 ```
 
@@ -108,7 +108,7 @@ docker compose up -d --build
 docker compose ps
 ```
 
-Para esta actualización del filtro de creador no hay cambios de base de datos ni debes volver a importar activos. Al terminar, cierra sesión en la web y vuelve a entrar si el navegador conserva la página anterior.
+Al reconstruir, Docker ejecuta las migraciones pendientes automáticamente. No debes volver a importar activos ni cambiar el archivo `.env`. Al terminar, recarga la página web.
 
 No uses `docker compose down -v` para apagar: `-v` borra también los volúmenes con la base de datos y archivos.
 

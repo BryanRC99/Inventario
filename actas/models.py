@@ -30,6 +30,8 @@ class ActaEntrega(models.Model):
     )
     fecha = models.DateField()
     tipo = models.CharField(max_length=20, choices=Tipo.choices)
+    entregado_por_nombre = models.CharField(max_length=150, blank=True, default='')
+    recibido_por_nombre = models.CharField(max_length=150, blank=True, default='')
     firma = models.TextField(
         blank=True,
         help_text='Firma capturada en pantalla, guardada como imagen en base64.',

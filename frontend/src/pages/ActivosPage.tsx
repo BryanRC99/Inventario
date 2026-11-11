@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Plus, Pencil, Eye, Tag, PackageX, Upload, FileSpreadsheet, FileText, FilterX } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
@@ -18,7 +18,7 @@ import { DarDeBajaDialog } from '@/components/dar-de-baja-dialog'
 import { ImportarActivosDialog } from '@/components/importar-activos-dialog'
 import { TamanoEtiquetaDialog } from '@/components/tamano-etiqueta-dialog'
 import {
-  listarActivos,
+  listarActivosPagina,
   crearActivo,
   actualizarActivo,
   obtenerEtiquetaPdf,
@@ -30,6 +30,7 @@ import {
   type FiltrosActivos,
   ESTADOS_ACTIVO,
   type EstadoActivo,
+  TAMANO_PAGINA_ACTIVOS,
 } from '@/api/activos'
 import { listarCategorias, type Categoria } from '@/api/categorias'
 import { listarUbicaciones, type Ubicacion } from '@/api/ubicaciones'
@@ -37,7 +38,6 @@ import { listarProveedores, type Proveedor } from '@/api/proveedores'
 import { listarEmpresas, type Empresa } from '@/api/empresas'
 import { obtenerEtiquetasLotePdf } from '@/api/activos'
 import { SearchInput } from '@/components/search-input'
-import { coincide } from '@/lib/normalizar-texto'
 import { MultiSelectFilter } from '@/components/multi-select-filter'
 import { mensajeErrorApi, clasificarErrorCarga, type ErrorCarga as ErrorCargaTipo } from '@/lib/errores-api'
 import { ErrorCarga } from '@/components/error-carga'
@@ -50,6 +50,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination'
 
 const BADGE_POR_ESTADO: Record<EstadoActivo, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   activo: 'default',
@@ -61,6 +70,8 @@ const BADGE_POR_ESTADO: Record<EstadoActivo, 'default' | 'secondary' | 'destruct
 export default function ActivosPage() {
   const { usuario } = useAuth()
   const [activos, setActivos] = useState<Activo[]>([])
+  const [totalActivos, setTotalActivos] = useState(0)
+  const [pagina, setPagina] = useState(1)
   const [categorias, setCategorias] = useState<Categoria[]>([])
   const [ubicaciones, setUbicaciones] = useState<Ubicacion[]>([])
   const [proveedores, setProveedores] = useState<Proveedor[]>([])
@@ -82,6 +93,7 @@ export default function ActivosPage() {
   const [fEstado, setFEstado] = useState<string[]>([])
   const [fCreador, setFCreador] = useState('admin')
   const [usuarios, setUsuarios] = useState<Usuario[]>([])
+  const catalogosCargados = useRef(false)
 
   // Admin filtra por cualquier empresa; los demás solo por las suyas (y solo si tienen varias).
   const empresasFiltro = usuario?.rol === 'admin' ? empresas : (usuario?.empresas ?? [])
@@ -92,6 +104,7 @@ export default function ActivosPage() {
     categoria: fCategoria,
     ubicacion: fUbicacion,
     estado: fEstado as EstadoActivo[],
+    search: busqueda,
     ...(esAdmin ? { creador: fCreador } : {}),
   }
   // Los reportes usan exactamente los mismos filtros que la tabla (+ la búsqueda de texto).
@@ -103,6 +116,7 @@ export default function ActivosPage() {
     setFUbicacion([])
     setFEstado([])
     setFCreador('todos')
+    setPagina(1)
   }
 
   const handleExportarExcel = async () => {
@@ -133,21 +147,28 @@ export default function ActivosPage() {
     setLoading(true)
     setErrorCarga(null)
     try {
-      const [activosData, categoriasData, ubicacionesData, proveedoresData, empresasData] = await Promise.all([
-        listarActivos(filtrosServidor),
-        listarCategorias(),
-        listarUbicaciones(),
-        listarProveedores(),
-        listarEmpresas(),
+      const [paginaActivos, catalogos] = await Promise.all([
+        listarActivosPagina(filtrosServidor, pagina),
+        catalogosCargados.current
+          ? Promise.resolve(null)
+          : Promise.all([
+              listarCategorias(),
+              listarUbicaciones(),
+              listarProveedores(),
+              listarEmpresas(),
+              esAdmin ? listarUsuarios().catch(() => []) : Promise.resolve([] as Usuario[]),
+            ]),
       ])
-      setActivos(activosData)
-      setCategorias(categoriasData)
-      setUbicaciones(ubicacionesData)
-      setProveedores(proveedoresData)
-      setEmpresas(empresasData)
-      if (esAdmin) {
-        const usuariosData = await listarUsuarios().catch(() => [])
+      setActivos(paginaActivos.results)
+      setTotalActivos(paginaActivos.count)
+      if (catalogos) {
+        const [categoriasData, ubicacionesData, proveedoresData, empresasData, usuariosData] = catalogos
+        setCategorias(categoriasData)
+        setUbicaciones(ubicacionesData)
+        setProveedores(proveedoresData)
+        setEmpresas(empresasData)
         setUsuarios(usuariosData)
+        catalogosCargados.current = true
       }
     } catch (err) {
       // Un 400 es un filtro inválido (mensaje claro en toast); el resto es un fallo de carga.
@@ -162,21 +183,19 @@ export default function ActivosPage() {
   }
 
   // Recarga al montar y cada vez que cambia un filtro.
-  const claveFiltros = JSON.stringify([fEmpresa, fCategoria, fUbicacion, fEstado, esAdmin, fCreador])
+  const claveFiltros = JSON.stringify([fEmpresa, fCategoria, fUbicacion, fEstado, esAdmin, fCreador, busqueda, pagina])
   useEffect(() => {
     cargarTodo()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [claveFiltros])
 
-  const activosFiltrados = activos.filter(
-    (a) =>
-      coincide(a.codigo_interno, busqueda) ||
-      coincide(a.nombre, busqueda) ||
-      coincide(a.categoria_nombre, busqueda) ||
-      coincide(a.modelo, busqueda) ||
-      coincide(a.numero_serie, busqueda) ||
-      coincide(a.marca, busqueda),
-  )
+  const activosFiltrados = activos
+  const totalPaginas = Math.max(1, Math.ceil(totalActivos / TAMANO_PAGINA_ACTIVOS))
+  const paginaInicio = totalActivos === 0 ? 0 : (pagina - 1) * TAMANO_PAGINA_ACTIVOS + 1
+  const paginaFin = Math.min(pagina * TAMANO_PAGINA_ACTIVOS, totalActivos)
+  const paginasVisibles = [...new Set([1, pagina - 1, pagina, pagina + 1, totalPaginas])]
+    .filter((p) => p >= 1 && p <= totalPaginas)
+    .sort((a, b) => a - b)
 
   const abrirCrear = () => {
     setActivoEditando(null)
@@ -231,10 +250,15 @@ export default function ActivosPage() {
   }
 
   const toggleSeleccionarTodos = () => {
-    if (seleccionados.size === activosFiltrados.length) {
-      setSeleccionados(new Set())
+    const todosSeleccionados = activosFiltrados.length > 0 && activosFiltrados.every((a) => seleccionados.has(a.id))
+    if (todosSeleccionados) {
+      setSeleccionados((prev) => {
+        const next = new Set(prev)
+        activosFiltrados.forEach((a) => next.delete(a.id))
+        return next
+      })
     } else {
-      setSeleccionados(new Set(activosFiltrados.map((a) => a.id)))
+      setSeleccionados((prev) => new Set([...prev, ...activosFiltrados.map((a) => a.id)]))
     }
   }
 
@@ -280,7 +304,7 @@ export default function ActivosPage() {
       <div className="flex flex-wrap items-center gap-2">
         <SearchInput
           value={busqueda}
-          onChange={setBusqueda}
+          onChange={(value) => { setBusqueda(value); setPagina(1) }}
           placeholder="Buscar por código, nombre, modelo, serie..."
         />
         {empresasFiltro.length > 1 && (
@@ -288,13 +312,13 @@ export default function ActivosPage() {
             titulo="Empresa"
             opciones={empresasFiltro.map((e) => ({ value: e.id, label: e.nombre }))}
             seleccion={fEmpresa}
-            onChange={setFEmpresa}
+            onChange={(value) => { setFEmpresa(value); setPagina(1) }}
           />
         )}
         {esAdmin && (
           <div className="flex items-center gap-1.5">
             <span className="text-xs text-muted-foreground">Creador</span>
-            <Select value={fCreador} onValueChange={(v) => setFCreador(v ?? 'todos')}>
+            <Select value={fCreador} onValueChange={(v) => { setFCreador(v ?? 'todos'); setPagina(1) }}>
               <SelectTrigger className="h-8 w-52 text-sm">
                 <SelectValue />
               </SelectTrigger>
@@ -317,19 +341,19 @@ export default function ActivosPage() {
           titulo="Categoría"
           opciones={categorias.map((c) => ({ value: c.id, label: c.nombre }))}
           seleccion={fCategoria}
-          onChange={setFCategoria}
+          onChange={(value) => { setFCategoria(value); setPagina(1) }}
         />
         <MultiSelectFilter
           titulo="Ubicación"
           opciones={ubicaciones.map((u) => ({ value: u.id, label: u.nombre }))}
           seleccion={fUbicacion}
-          onChange={setFUbicacion}
+          onChange={(value) => { setFUbicacion(value); setPagina(1) }}
         />
         <MultiSelectFilter
           titulo="Estado"
           opciones={ESTADOS_ACTIVO}
           seleccion={fEstado}
-          onChange={setFEstado}
+          onChange={(value) => { setFEstado(value); setPagina(1) }}
         />
         {hayFiltros && (
           <Button size="sm" variant="ghost" onClick={limpiarFiltros}>
@@ -338,7 +362,7 @@ export default function ActivosPage() {
           </Button>
         )}
         {!loading && (hayFiltros || busqueda) && (
-          <span className="text-xs text-muted-foreground">{activosFiltrados.length} resultado(s)</span>
+          <span className="text-xs text-muted-foreground">{totalActivos} resultado(s)</span>
         )}
       </div>
 
@@ -359,7 +383,7 @@ export default function ActivosPage() {
             <TableRow>
               <TableHead className="h-9 w-8">
                 <Checkbox
-                  checked={activosFiltrados.length > 0 && seleccionados.size === activosFiltrados.length}
+                  checked={activosFiltrados.length > 0 && activosFiltrados.every((a) => seleccionados.has(a.id))}
                   onCheckedChange={toggleSeleccionarTodos}
                 />
               </TableHead>
@@ -377,7 +401,7 @@ export default function ActivosPage() {
           <TableBody>
             {loading && (
               <TableRow>
-                <TableCell colSpan={9} className="py-6 text-center text-sm text-muted-foreground">
+                <TableCell colSpan={10} className="py-6 text-center text-sm text-muted-foreground">
                   Cargando...
                 </TableCell>
               </TableRow>
@@ -385,7 +409,7 @@ export default function ActivosPage() {
 
             {!loading && activosFiltrados.length === 0 && (
               <TableRow>
-                <TableCell colSpan={9} className="py-6 text-center text-sm text-muted-foreground">
+                <TableCell colSpan={10} className="py-6 text-center text-sm text-muted-foreground">
                   {busqueda || hayFiltros
                     ? 'No se encontraron activos con esos filtros.'
                     : 'No hay activos todavía. Registra el primero.'}
@@ -470,6 +494,32 @@ export default function ActivosPage() {
           </TableBody>
         </Table>
       </div>
+
+      {!loading && totalActivos > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <span className="text-sm text-muted-foreground">
+            Mostrando {paginaInicio}–{paginaFin} de {totalActivos}
+          </span>
+          {totalPaginas > 1 && (
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious onClick={() => setPagina((p) => Math.max(1, p - 1))} disabled={pagina === 1} />
+                </PaginationItem>
+                {paginasVisibles.map((p, index) => (
+                  <PaginationItem key={p}>
+                    {index > 0 && p - paginasVisibles[index - 1] > 1 && <PaginationEllipsis />}
+                    <PaginationLink isActive={p === pagina} onClick={() => setPagina(p)}>{p}</PaginationLink>
+                  </PaginationItem>
+                ))}
+                <PaginationItem>
+                  <PaginationNext onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))} disabled={pagina === totalPaginas} />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          )}
+        </div>
+      )}
 
       <ActivoDialog
         open={dialogOpen}

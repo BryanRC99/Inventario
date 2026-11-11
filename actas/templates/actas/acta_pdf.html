@@ -641,7 +641,7 @@
       <div class="firma-linea"></div>
 
       <div class="firma-nombre">
-        &nbsp;
+        {% if acta.entregado_por_nombre %}{{ acta.entregado_por_nombre }}{% else %}&nbsp;{% endif %}
       </div>
 
       <div class="firma-cargo">

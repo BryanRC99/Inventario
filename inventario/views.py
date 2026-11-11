@@ -4,12 +4,18 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.pagination import PageNumberPagination
 
 from usuarios.permissions import PermisoPorRolSinConsulta
 
 from .filters import ActivoFilter, describir_filtros
 from .models import Activo, Categoria, Ubicacion
 from .serializers import ActivoSerializer, CategoriaSerializer, UbicacionSerializer
+
+
+class ActivoPagination(PageNumberPagination):
+    page_size = 20
+    page_size_query_param = None
 
 class CategoriaViewSet(viewsets.ModelViewSet):
     queryset = Categoria.objects.all()
@@ -25,6 +31,7 @@ class ActivoViewSet(viewsets.ModelViewSet):
     serializer_class = ActivoSerializer
     permission_classes = [PermisoPorRolSinConsulta]
     filterset_class = ActivoFilter
+    pagination_class = ActivoPagination
     http_method_names = ['get', 'post', 'put', 'patch', 'head', 'options']
 
     def get_permissions(self):
@@ -40,7 +47,7 @@ class ActivoViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         from .scoping import activos_visibles
 
-        base = Activo.objects.select_related('categoria', 'ubicacion', 'proveedor')
+        base = Activo.objects.select_related('categoria', 'ubicacion', 'proveedor').order_by('-fecha_creacion', 'pk')
         return activos_visibles(self.request.user, base)
 
     @action(detail=False, methods=['get'])

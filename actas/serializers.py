@@ -46,6 +46,8 @@ class ActaEntregaSerializer(serializers.ModelSerializer):
             'fecha',
             'tipo',
             'tipo_display',
+            'entregado_por_nombre',
+            'recibido_por_nombre',
             'pdf',
             'observaciones',
             'generado_por',
@@ -70,6 +72,16 @@ class ActaEntregaSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 {'custodia': 'La custodia no corresponde al activo y la persona indicados.'}
             )
+        tipo = attrs.get('tipo', getattr(self.instance, 'tipo', None))
+        if tipo in (ActaEntrega.Tipo.ENTREGA, ActaEntrega.Tipo.TRASLADO):
+            if not (attrs.get('entregado_por_nombre') or '').strip():
+                raise serializers.ValidationError({'entregado_por_nombre': 'Indica quién entrega el activo.'})
+        elif tipo == ActaEntrega.Tipo.DEVOLUCION:
+            if not (attrs.get('recibido_por_nombre') or '').strip():
+                raise serializers.ValidationError({'recibido_por_nombre': 'Indica quién recibe el activo.'})
+        for field in ('entregado_por_nombre', 'recibido_por_nombre'):
+            if field in attrs:
+                attrs[field] = attrs[field].strip()
         return attrs
 
     @transaction.atomic

@@ -1,6 +1,7 @@
 import { api } from './client'
 
 export type EstadoActivo = 'activo' | 'en_mantenimiento' | 'dado_de_baja' | 'extraviado'
+export const TAMANO_PAGINA_ACTIVOS = 20
 
 export interface Activo {
   id: string
@@ -27,6 +28,13 @@ export interface Activo {
   fecha_creacion: string
   motivo_baja: string
   fecha_baja: string | null
+}
+
+export interface PaginaActivos {
+  count: number
+  next: string | null
+  previous: string | null
+  results: Activo[]
 }
 
 export type ActivoInput = {
@@ -102,8 +110,27 @@ function limpiarFiltros(filtros: FiltrosActivos = {}) {
 }
 
 export async function listarActivos(filtros?: FiltrosActivos): Promise<Activo[]> {
-  const { data } = await api.get('/inventario/activos/', {
-    params: limpiarFiltros(filtros),
+  const resultados: Activo[] = []
+  let page = 1
+  let totalPages = 1
+  do {
+    const { data } = await api.get<PaginaActivos>('/inventario/activos/', {
+      params: { ...limpiarFiltros(filtros), page },
+      paramsSerializer: serializarFiltros,
+    })
+    resultados.push(...data.results)
+    totalPages = Math.ceil(data.count / TAMANO_PAGINA_ACTIVOS)
+    page += 1
+  } while (page <= totalPages)
+  return resultados
+}
+
+export async function listarActivosPagina(
+  filtros: FiltrosActivos | undefined,
+  page: number,
+): Promise<PaginaActivos> {
+  const { data } = await api.get<PaginaActivos>('/inventario/activos/', {
+    params: { ...limpiarFiltros(filtros), page },
     paramsSerializer: serializarFiltros,
   })
   return data

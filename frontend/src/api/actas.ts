@@ -13,6 +13,8 @@ export interface ActaEntrega {
   fecha: string
   tipo: TipoActa
   tipo_display: string
+  entregado_por_nombre: string
+  recibido_por_nombre: string
   pdf: string | null
   observaciones: string
   generado_por: string | null
@@ -45,6 +47,8 @@ export type ActaEntregaInput = {
   custodia: string | null
   fecha: string
   tipo: TipoActa
+  entregado_por_nombre: string
+  recibido_por_nombre: string
   observaciones: string
 }
 

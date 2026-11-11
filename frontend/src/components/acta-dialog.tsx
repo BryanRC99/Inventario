@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -8,8 +8,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { Label } from '@/components/ui/label'
-import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
@@ -18,6 +16,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
 import { TIPOS_ACTA, type ActaEntregaInput, type TipoActa } from '@/api/actas'
 import { hoyLocal } from '@/lib/fechas'
 
@@ -53,7 +53,18 @@ export function ActaDialog({
   const [fecha, setFecha] = useState(hoy())
   const [tipo, setTipo] = useState<TipoActa>(tipoSugerido)
   const [observaciones, setObservaciones] = useState('')
+  const [entregadoPor, setEntregadoPor] = useState('')
+  const [recibidoPor, setRecibidoPor] = useState('')
   const [submitting, setSubmitting] = useState(false)
+
+  useEffect(() => {
+    if (!open) return
+    setFecha(hoy())
+    setTipo(tipoSugerido)
+    setObservaciones('')
+    setEntregadoPor('')
+    setRecibidoPor('')
+  }, [open, tipoSugerido])
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -65,6 +76,8 @@ export function ActaDialog({
         custodia: custodiaId,
         fecha,
         tipo,
+        entregado_por_nombre: entregadoPor,
+        recibido_por_nombre: recibidoPor,
         observaciones,
       })
       onOpenChange(false)
@@ -78,7 +91,9 @@ export function ActaDialog({
       <DialogContent className="max-w-lg">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Generar acta de entrega</DialogTitle>
+            <DialogTitle>
+              Generar acta de {TIPOS_ACTA.find((t) => t.value === tipo)?.label.toLowerCase()}
+            </DialogTitle>
             <DialogDescription>
               El PDF se genera al instante, con una línea en blanco para firmar al imprimir.
             </DialogDescription>
@@ -123,6 +138,32 @@ export function ActaDialog({
                 </Select>
               </div>
             </div>
+
+            {tipo === 'devolucion' ? (
+              <div className="grid gap-2">
+                <Label htmlFor="recibidoPor">Recibe</Label>
+                <Input
+                  id="recibidoPor"
+                  value={recibidoPor}
+                  onChange={(e) => setRecibidoPor(e.target.value)}
+                  maxLength={150}
+                  placeholder="Nombre de quien recibe el activo"
+                  required
+                />
+              </div>
+            ) : (
+              <div className="grid gap-2">
+                <Label htmlFor="entregadoPor">Entregado por</Label>
+                <Input
+                  id="entregadoPor"
+                  value={entregadoPor}
+                  onChange={(e) => setEntregadoPor(e.target.value)}
+                  maxLength={150}
+                  placeholder="Nombre de quien entrega el activo"
+                  required
+                />
+              </div>
+            )}
 
             <div className="grid gap-2">
               <Label htmlFor="observaciones">Observaciones (opcional)</Label>

@@ -170,8 +170,8 @@
     <div class="firma">
       <div class="espacio-firma"></div>
       <div class="firma-linea"></div>
-      <div class="firma-nombre">&nbsp;</div>
-      <div class="firma-cargo">Recibido por</div>
+      <div class="firma-nombre">{% if acta.recibido_por_nombre %}{{ acta.recibido_por_nombre }}{% else %}&nbsp;{% endif %}</div>
+      <div class="firma-cargo">Recibe</div>
     </div>
   </div>
 
