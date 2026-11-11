@@ -506,12 +506,14 @@ export default function ActivosPage() {
                 <PaginationItem>
                   <PaginationPrevious onClick={() => setPagina((p) => Math.max(1, p - 1))} disabled={pagina === 1} />
                 </PaginationItem>
-                {paginasVisibles.map((p, index) => (
+                {paginasVisibles.flatMap((p, index) => [
+                  ...(index > 0 && p - paginasVisibles[index - 1] > 1
+                    ? [<PaginationItem key={`ellipsis-${p}`}><PaginationEllipsis /></PaginationItem>]
+                    : []),
                   <PaginationItem key={p}>
-                    {index > 0 && p - paginasVisibles[index - 1] > 1 && <PaginationEllipsis />}
                     <PaginationLink isActive={p === pagina} onClick={() => setPagina(p)}>{p}</PaginationLink>
-                  </PaginationItem>
-                ))}
+                  </PaginationItem>,
+                ])}
                 <PaginationItem>
                   <PaginationNext onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))} disabled={pagina === totalPaginas} />
                 </PaginationItem>

@@ -8,11 +8,11 @@ export function Pagination({ className, ...props }: ComponentProps<'nav'>) {
 }
 
 export function PaginationContent({ className, ...props }: ComponentProps<'ul'>) {
-  return <ul className={cn('flex flex-row items-center gap-1', className)} {...props} />
+  return <ul className={cn('flex flex-row flex-nowrap items-center gap-1 whitespace-nowrap', className)} {...props} />
 }
 
-export function PaginationItem(props: ComponentProps<'li'>) {
-  return <li {...props} />
+export function PaginationItem({ className, ...props }: ComponentProps<'li'>) {
+  return <li className={cn('flex shrink-0 items-center', className)} {...props} />
 }
 
 interface PaginationLinkProps extends ButtonHTMLAttributes<HTMLButtonElement> {
