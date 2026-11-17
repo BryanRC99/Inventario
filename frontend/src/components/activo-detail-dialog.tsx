@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/dialog'
 import type { Activo } from '@/api/activos'
 import { listarCustodiasPorActivo, type Custodia } from '@/api/custodias'
-import { listarActasPorActivoAsignado, type ActaEntrega } from '@/api/actas'
+import { abrirPdfActa, listarActasPorActivoAsignado, type ActaEntrega } from '@/api/actas'
 import { listarMantenimientosPorActivo, type Mantenimiento } from '@/api/mantenimientos'
 
 interface ActivoDetailDialogProps {
@@ -172,7 +172,7 @@ export function ActivoDetailDialog({ open, onOpenChange, activo }: ActivoDetailD
                       size="sm"
                       variant="ghost"
                       className="h-7"
-                      onClick={() => window.open(acta.pdf!, '_blank')}
+                      onClick={() => void abrirPdfActa(acta.id)}
                     >
                       <FileText className="size-3.5" />
                       Ver PDF

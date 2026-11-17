@@ -125,6 +125,16 @@ REST_FRAMEWORK = {
     'EXCEPTION_HANDLER': 'config.exceptions.manejador_excepciones',
 }
 
+# Redis comparte el contador de intentos entre todos los procesos Gunicorn.
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': config('REDIS_URL', default='redis://redis:6379/1'),
+        'OPTIONS': {'CLIENT_CLASS': 'django_redis.client.DefaultClient'},
+        'TIMEOUT': 900,
+    }
+}
+
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),

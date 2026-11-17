@@ -1,6 +1,7 @@
 import uuid
 
 from django.conf import settings
+from django.core.files.storage import default_storage
 from django.db import IntegrityError, transaction
 from django.db.models import Count, OuterRef, Subquery
 from django.db.models.functions import Coalesce
@@ -46,6 +47,30 @@ class ActaEntregaViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
     def get_queryset(self):
         base = ActaEntrega.objects.select_related('activo', 'persona')
         return actas_visibles(self.request.user, base).annotate(escaneos_count=_conteo_escaneos())
+
+    @action(detail=True, methods=['get'], url_path='pdf')
+    def pdf(self, request, pk=None):
+        """Entrega el PDF generado solo a usuarios con acceso al acta."""
+        acta = self.get_object()
+        if not acta.pdf:
+            raise NotFound('Esta acta no tiene un PDF generado.')
+
+        # Los PDF nuevos viven en almacenamiento privado. El respaldo permite leer
+        # las actas antiguas que aún están en MEDIA_ROOT durante la transición.
+        almacen = acta.pdf.storage
+        if not almacen.exists(acta.pdf.name):
+            almacen = default_storage
+        try:
+            manejador = almacen.open(acta.pdf.name, 'rb')
+        except (FileNotFoundError, OSError, ValueError):
+            raise NotFound('El PDF no se encuentra en el servidor.')
+
+        respuesta = FileResponse(manejador, content_type='application/pdf')
+        respuesta['Content-Disposition'] = f'inline; filename="acta_{acta.pk}.pdf"'
+        respuesta['X-Content-Type-Options'] = 'nosniff'
+        respuesta['Cache-Control'] = 'private, no-store'
+        respuesta['Content-Security-Policy'] = "default-src 'none'; sandbox"
+        return respuesta
 
     # ------------------------------------------------------------------
     # Escaneos de actas firmadas

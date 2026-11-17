@@ -23,8 +23,20 @@ export default function LoginPage() {
     try {
       await login(username, password)
       navigate('/')
-    } catch {
-      setError('Usuario o contraseña incorrectos')
+    } catch (err) {
+      const error = err as {
+        response?: { status?: number; data?: { detail?: string } }
+      }
+      if (error.response?.status === 429 || error.response?.status === 503) {
+        setError(
+          error.response.data?.detail ??
+            (error.response.status === 429
+              ? 'Demasiados intentos. Espera unos minutos antes de volver a intentar.'
+              : 'El inicio de sesión no está disponible temporalmente.'),
+        )
+      } else {
+        setError('Usuario o contraseña incorrectos')
+      }
     } finally {
       setSubmitting(false)
     }

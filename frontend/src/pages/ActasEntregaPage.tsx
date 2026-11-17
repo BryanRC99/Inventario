@@ -13,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { listarActas, type ActaEntrega, type TipoActa } from '@/api/actas'
+import { abrirPdfActa, listarActas, type ActaEntrega, type TipoActa } from '@/api/actas'
 import { BotonEscaneos } from '@/components/boton-escaneos'
 import { SearchInput } from '@/components/search-input'
 import { coincide } from '@/lib/normalizar-texto'
@@ -168,7 +168,7 @@ export default function ActasEntregaPage() {
                       size="icon"
                       className="size-7"
                       title="Ver acta generada (PDF para imprimir)"
-                      onClick={() => window.open(acta.pdf!, '_blank')}
+                      onClick={() => void abrirPdfActa(acta.id)}
                     >
                       <FileText className="size-3.5" />
                     </Button>

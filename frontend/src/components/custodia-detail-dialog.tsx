@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dialog'
 import { ActaDialog } from '@/components/acta-dialog'
 import {
+  abrirPdfActa,
   crearActa,
   listarActasPorCustodia,
   type ActaEntrega,
@@ -114,7 +115,7 @@ export function CustodiaDetailDialog({ open, onOpenChange, custodia }: CustodiaD
                         size="sm"
                         variant="ghost"
                         className="h-7"
-                        onClick={() => window.open(acta.pdf!, '_blank')}
+                        onClick={() => void abrirPdfActa(acta.id)}
                       >
                         <FileText className="size-3.5" />
                         Ver PDF

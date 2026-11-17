@@ -1,4 +1,5 @@
 import { api } from './client'
+import { toast } from 'sonner'
 
 export type TipoActa = 'entrega' | 'devolucion' | 'traslado'
 
@@ -66,6 +67,35 @@ export async function listarActas(): Promise<ActaEntrega[]> {
 export async function crearActa(payload: ActaEntregaInput): Promise<ActaEntrega> {
   const { data } = await api.post('/actas/actas/', payload)
   return data
+}
+
+/** Obtiene el PDF autenticado y lo abre sin exponer una URL pública de media. */
+export async function abrirPdfActa(actaId: string): Promise<void> {
+  const ventana = window.open('about:blank', '_blank')
+  if (ventana) {
+    ventana.document.title = 'Cargando acta'
+    ventana.document.body.textContent = 'Cargando acta…'
+  }
+
+  try {
+    const { data } = await api.get<Blob>(`/actas/actas/${actaId}/pdf/`, {
+      responseType: 'blob',
+    })
+    const url = URL.createObjectURL(data)
+    if (ventana) {
+      ventana.location.href = url
+    } else {
+      const enlace = document.createElement('a')
+      enlace.href = url
+      enlace.target = '_blank'
+      enlace.rel = 'noopener'
+      enlace.click()
+    }
+    window.setTimeout(() => URL.revokeObjectURL(url), 5 * 60 * 1000)
+  } catch {
+    ventana?.close()
+    toast.error('No se pudo abrir el PDF. Verifica tu sesión y vuelve a intentarlo.')
+  }
 }
 
 export async function listarActasPorCustodia(custodiaId: string): Promise<ActaEntrega[]> {

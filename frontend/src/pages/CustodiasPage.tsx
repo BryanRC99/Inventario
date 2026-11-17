@@ -30,7 +30,7 @@ import { listarActivos, type Activo } from '@/api/activos'
 import { listarPersonas, type Persona } from '@/api/personas'
 import { listarAreas, type Area } from '@/api/areas'
 import { listarUbicaciones, type Ubicacion } from '@/api/ubicaciones'
-import { crearActa } from '@/api/actas'
+import { abrirPdfActa, crearActa } from '@/api/actas'
 import { SearchInput } from '@/components/search-input'
 import { coincide } from '@/lib/normalizar-texto'
 import { hoyLocal } from '@/lib/fechas'
@@ -308,7 +308,7 @@ export default function CustodiasPage() {
           onSubmit={async (payload) => {
             const acta = await crearActa(payload)
             toast.success('Acta generada')
-            if (acta.pdf) window.open(acta.pdf, '_blank')
+            if (acta.pdf) void abrirPdfActa(acta.id)
           }}
           onSkip={() => setCustodiaParaActa(null)}
         />

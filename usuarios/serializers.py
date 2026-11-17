@@ -1,5 +1,6 @@
 from django.db import transaction
 from rest_framework import serializers
+from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from empresas.models import Empresa
@@ -101,10 +102,11 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
     def validate(self, attrs):
         from auditoria.utils import registrar_auditoria
+        from .limitador_login import limpiar_intentos_login, registrar_fallo_login
 
         try:
             data = super().validate(attrs)
-        except Exception:
+        except AuthenticationFailed:
             # Login fallido: guardamos el username que se intentó usar,
             # aunque no exista o la contraseña esté mal, para poder
             # detectar ataques de fuerza bruta despues
@@ -113,8 +115,10 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
                 modelo='Usuario',
                 objeto_repr=attrs.get('username', ''),
             )
+            registrar_fallo_login(self.context['request'])
             raise
 
+        limpiar_intentos_login(self.context['request'])
         registrar_auditoria(
             accion='login',
             modelo='Usuario',

@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status, viewsets
 from rest_framework.permissions import AllowAny
+from rest_framework.status import HTTP_429_TOO_MANY_REQUESTS, HTTP_503_SERVICE_UNAVAILABLE
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from .models import Usuario
@@ -19,6 +20,33 @@ from .serializers import (
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
+
+    def post(self, request, *args, **kwargs):
+        from django_redis.exceptions import ConnectionInterrupted
+
+        from .limitador_login import bloqueo_restante
+
+        try:
+            espera = bloqueo_restante(request)
+        except ConnectionInterrupted:
+            return Response(
+                {'detail': 'El servicio de inicio de sesión no está disponible temporalmente.'},
+                status=HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        if espera:
+            respuesta = Response(
+                {'detail': 'Demasiados intentos fallidos. Intenta nuevamente en unos minutos.'},
+                status=HTTP_429_TOO_MANY_REQUESTS,
+            )
+            respuesta['Retry-After'] = str(espera)
+            return respuesta
+        try:
+            return super().post(request, *args, **kwargs)
+        except ConnectionInterrupted:
+            return Response(
+                {'detail': 'El servicio de inicio de sesión no está disponible temporalmente.'},
+                status=HTTP_503_SERVICE_UNAVAILABLE,
+            )
 
 
 class MeView(APIView):

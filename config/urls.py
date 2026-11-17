@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
+from django.http import HttpResponseNotFound
 from django.urls import path, include
 
 urlpatterns = [
@@ -18,6 +19,9 @@ urlpatterns = [
 ]
 
 if settings.DEBUG:
+    urlpatterns += [
+        path('media/actas/<path:ruta>', lambda request, ruta: HttpResponseNotFound()),
+    ]
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 handler404 = 'config.errores.error_404'
 handler500 = 'config.errores.error_500'

@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import type { Activo } from '@/api/activos'
-import { listarActasPorActivoAsignado } from '@/api/actas'
+import { abrirPdfActa, listarActasPorActivoAsignado } from '@/api/actas'
 import { useEffect, useState } from 'react'
 import type { ActaEntrega } from '@/api/actas'
 
@@ -92,7 +92,7 @@ export function MiActivoDetailDialog({ open, onOpenChange, activo }: MiActivoDet
                       size="sm"
                       variant="ghost"
                       className="h-7"
-                      onClick={() => window.open(acta.pdf!, '_blank')}
+                      onClick={() => void abrirPdfActa(acta.id)}
                     >
                       <FileText className="size-3.5" />
                       Ver PDF

@@ -1,6 +1,7 @@
 from io import BytesIO
 
 from django.core.files.base import ContentFile
+from django.urls import reverse
 from django.db import transaction
 from django.template.loader import render_to_string
 from rest_framework import serializers
@@ -32,6 +33,7 @@ class ActaEntregaSerializer(serializers.ModelSerializer):
     persona_nombre = serializers.CharField(source='persona.nombre_completo', read_only=True)
     tipo_display = serializers.CharField(source='get_tipo_display', read_only=True)
     escaneos_count = serializers.SerializerMethodField()
+    pdf = serializers.SerializerMethodField()
 
     class Meta:
         model = ActaEntrega
@@ -59,6 +61,11 @@ class ActaEntregaSerializer(serializers.ModelSerializer):
         # El listado ya trae el conteo calculado en una sola consulta (ver la vista).
         n = getattr(obj, 'escaneos_count', None)
         return n if n is not None else obj.escaneos.filter(eliminado=False).count()
+
+    def get_pdf(self, obj):
+        if not obj.pdf:
+            return None
+        return reverse('acta-pdf', kwargs={'pk': obj.pk})
 
     def validate(self, attrs):
         from usuarios.alcance import validar_acceso

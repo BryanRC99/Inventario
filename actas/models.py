@@ -36,7 +36,7 @@ class ActaEntrega(models.Model):
         blank=True,
         help_text='Firma capturada en pantalla, guardada como imagen en base64.',
     )
-    pdf = models.FileField(upload_to='actas/', null=True, blank=True)
+    pdf = models.FileField(storage=almacen_privado, upload_to='actas/', null=True, blank=True)
     observaciones = models.TextField(blank=True)
     generado_por = models.ForeignKey(
         settings.AUTH_USER_MODEL,
