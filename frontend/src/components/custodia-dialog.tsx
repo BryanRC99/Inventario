@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Button } from '@/components/ui/button'
+import { buttonVariants } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -10,6 +11,7 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import {
   Select,
@@ -23,6 +25,8 @@ import type { Activo } from '@/api/activos'
 import type { Persona } from '@/api/personas'
 import type { Area } from '@/api/areas'
 import { hoyLocal } from '@/lib/fechas'
+import { coincide } from '@/lib/normalizar-texto'
+import { cn } from '@/lib/utils'
 
 interface CustodiaDialogProps {
   open: boolean
@@ -30,6 +34,7 @@ interface CustodiaDialogProps {
   custodia: Custodia | null
   activoInicial?: string
   activos: Activo[]
+  custodias: Custodia[]
   personas: Persona[]
   areas: Area[]
   onSubmit: (payload: CustodiaInput) => Promise<void>
@@ -54,6 +59,7 @@ export function CustodiaDialog({
   custodia,
   activoInicial,
   activos,
+  custodias,
   personas,
   areas,
   onSubmit,
@@ -62,6 +68,8 @@ export function CustodiaDialog({
   const [titularTipo, setTitularTipo] = useState<TitularTipo>('persona')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [selectorActivoAbierto, setSelectorActivoAbierto] = useState(false)
+  const [busquedaActivo, setBusquedaActivo] = useState('')
 
   useEffect(() => {
     if (open) {
@@ -80,6 +88,7 @@ export function CustodiaDialog({
         setTitularTipo('persona')
       }
       setError('')
+      setBusquedaActivo('')
     }
   }, [open, custodia])
 
@@ -109,6 +118,21 @@ export function CustodiaDialog({
   const activoSeleccionado = activos.find((a) => a.id === form.activo)
   const personaSeleccionada = personas.find((p) => p.id === form.persona)
   const areaSeleccionada = areas.find((a) => a.id === form.area)
+  const activosCoincidentes = activos.filter((activo) =>
+    [
+      activo.codigo_interno,
+      activo.nombre,
+      activo.marca,
+      activo.modelo,
+      activo.numero_serie,
+      activo.categoria_nombre,
+      activo.empresa_nombre ?? '',
+      activo.ubicacion_nombre,
+    ].some((valor) => coincide(valor, busquedaActivo)),
+  )
+
+  const custodiaActivaDe = (activoId: string) =>
+    custodias.find((custodia) => custodia.activo === activoId && custodia.activa)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -130,26 +154,71 @@ export function CustodiaDialog({
 
             <div className="grid gap-2">
               <Label htmlFor="activo">Activo</Label>
-              <Select
-                value={form.activo}
-                onValueChange={(v) => { if (v !== null) set('activo', v); }}
-                disabled={!!custodia}
-              >
-                <SelectTrigger id="activo" className="w-full">
-                  <SelectValue placeholder="Selecciona un activo">
+              <Popover open={selectorActivoAbierto} onOpenChange={setSelectorActivoAbierto}>
+                <PopoverTrigger
+                  id="activo"
+                  disabled={!!custodia}
+                  className={cn(buttonVariants({ variant: 'outline', size: 'default' }), 'w-full justify-between font-normal')}
+                >
+                  <span className="truncate text-left">
                     {activoSeleccionado
                       ? `${activoSeleccionado.codigo_interno} — ${activoSeleccionado.nombre}`
-                      : undefined}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {activos.map((a) => (
-                    <SelectItem key={a.id} value={a.id}>
-                      {a.codigo_interno} — {a.nombre}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                      : 'Busca por código, nombre, serie...'}
+                  </span>
+                  <span aria-hidden="true" className="ml-2 opacity-50">⌄</span>
+                </PopoverTrigger>
+                <PopoverContent align="start" className="w-[min(32rem,calc(100vw-2rem))] gap-2 p-2">
+                  <Input
+                    autoFocus
+                    value={busquedaActivo}
+                    onChange={(e) => setBusquedaActivo(e.target.value)}
+                    placeholder="Código, nombre, serie, marca, empresa..."
+                    aria-label="Buscar activo"
+                  />
+                  <div className="max-h-72 overflow-y-auto">
+                    {activosCoincidentes.length === 0 ? (
+                      <p className="px-3 py-5 text-center text-sm text-muted-foreground">
+                        No hay activos que coincidan con la búsqueda.
+                      </p>
+                    ) : activosCoincidentes.map((activo) => {
+                      const custodiaActual = custodiaActivaDe(activo.id)
+                      const dadoDeBaja = activo.estado === 'dado_de_baja'
+                      const bloqueado = dadoDeBaja || Boolean(custodiaActual && activo.categoria_requiere_custodio_unico)
+                      const titular = custodiaActual?.persona_nombre || custodiaActual?.area_nombre
+                      return (
+                        <button
+                          key={activo.id}
+                          type="button"
+                          disabled={bloqueado}
+                          onClick={() => {
+                            set('activo', activo.id)
+                            setSelectorActivoAbierto(false)
+                          }}
+                          className="flex w-full flex-col gap-0.5 rounded-sm px-3 py-2 text-left text-sm outline-none hover:bg-accent hover:text-accent-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          <span className="font-medium">
+                            <span className="font-mono text-xs">{activo.codigo_interno}</span>
+                            {' — '}{activo.nombre}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                          {[activo.marca, activo.modelo, activo.numero_serie && `Serie: ${activo.numero_serie}`,
+                              activo.empresa_nombre, activo.ubicacion_nombre].filter(Boolean).join(' · ') || 'Sin detalles adicionales'}
+                          </span>
+                          {dadoDeBaja && (
+                            <span className="text-xs text-destructive">Activo dado de baja; no se puede asignar.</span>
+                          )}
+                          {custodiaActual && (
+                            <span className="text-xs text-amber-700 dark:text-amber-400">
+                              {bloqueado ? 'Ya asignado' : 'También tiene custodia activa'}
+                              {titular ? ` a ${titular}` : ''}
+                            </span>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
 
             <div className="grid gap-2">

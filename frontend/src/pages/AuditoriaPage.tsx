@@ -22,6 +22,15 @@ import {
 } from '@/components/ui/table'
 import { AuditoriaDetailDialog } from '@/components/auditoria-detail-dialog'
 import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination'
+import {
   listarAuditoria,
   ACCIONES,
   MODELOS,
@@ -45,8 +54,10 @@ export default function AuditoriaPage() {
   const [loading, setLoading] = useState(true)
   const [errorCarga, setErrorCarga] = useState<ErrorCargaTipo | null>(null)
   const [detalle, setDetalle] = useState<RegistroAuditoria | null>(null)
+  const [totalRegistros, setTotalRegistros] = useState(0)
+  const [pagina, setPagina] = useState(1)
 
-  const [filtroUsuario, setFiltroUsuario] = useState('')
+  const [busqueda, setBusqueda] = useState('')
   const [filtroAccion, setFiltroAccion] = useState('todos')
   const [filtroModelo, setFiltroModelo] = useState('todos')
   const [filtroDesde, setFiltroDesde] = useState('')
@@ -57,13 +68,14 @@ export default function AuditoriaPage() {
     setErrorCarga(null)
     try {
       const data = await listarAuditoria({
-        usuario_username: filtroUsuario || undefined,
+        search: busqueda || undefined,
         accion: filtroAccion !== 'todos' ? filtroAccion : undefined,
         modelo: filtroModelo !== 'todos' ? filtroModelo : undefined,
         fecha_hora_after: filtroDesde || undefined,
         fecha_hora_before: filtroHasta || undefined,
-      })
-      setRegistros(data)
+      }, pagina)
+      setRegistros(data.results)
+      setTotalRegistros(data.count)
     } catch (err) {
       setErrorCarga(clasificarErrorCarga(err))
     } finally {
@@ -72,15 +84,14 @@ export default function AuditoriaPage() {
   }
 
   useEffect(() => {
-    cargar()
-  }, [filtroAccion, filtroModelo, filtroDesde, filtroHasta])
-
-  // Búsqueda por usuario con un pequeño debounce manual para no
-  // disparar una petición por cada tecla.
-  useEffect(() => {
-    const t = setTimeout(cargar, 400)
+    const t = setTimeout(cargar, 350)
     return () => clearTimeout(t)
-  }, [filtroUsuario])
+  }, [busqueda, filtroAccion, filtroModelo, filtroDesde, filtroHasta, pagina])
+
+  const totalPaginas = Math.max(1, Math.ceil(totalRegistros / 20))
+  const paginasVisibles = [...new Set([1, pagina - 1, pagina, pagina + 1, totalPaginas])]
+    .filter((p) => p >= 1 && p <= totalPaginas)
+    .sort((a, b) => a - b)
 
   return (
     <div className="flex flex-col gap-4">
@@ -91,18 +102,18 @@ export default function AuditoriaPage() {
 
       <div className="flex flex-wrap items-end gap-3">
         <div className="grid gap-1.5">
-          <label className="text-xs text-muted-foreground">Usuario</label>
+          <label className="text-xs text-muted-foreground">Buscar en registros</label>
           <Input
-            value={filtroUsuario}
-            onChange={(e) => setFiltroUsuario(e.target.value)}
-            placeholder="Buscar usuario..."
-            className="h-8 w-40 text-sm"
+            value={busqueda}
+            onChange={(e) => { setBusqueda(e.target.value); setPagina(1) }}
+            placeholder="Usuario, registro, IP, módulo..."
+            className="h-8 w-64 text-sm"
           />
         </div>
 
         <div className="grid gap-1.5">
           <label className="text-xs text-muted-foreground">Acción</label>
-          <Select value={filtroAccion} onValueChange={(v) => setFiltroAccion(v ?? '')}>
+          <Select value={filtroAccion} onValueChange={(v) => { setFiltroAccion(v ?? ''); setPagina(1) }}>
             <SelectTrigger className="h-8 w-40 text-sm">
               <SelectValue />
             </SelectTrigger>
@@ -119,7 +130,7 @@ export default function AuditoriaPage() {
 
         <div className="grid gap-1.5">
           <label className="text-xs text-muted-foreground">Módulo</label>
-          <Select value={filtroModelo} onValueChange={(v) => setFiltroModelo(v ?? '')}>
+          <Select value={filtroModelo} onValueChange={(v) => { setFiltroModelo(v ?? ''); setPagina(1) }}>
             <SelectTrigger className="h-8 w-40 text-sm">
               <SelectValue />
             </SelectTrigger>
@@ -139,7 +150,7 @@ export default function AuditoriaPage() {
           <Input
             type="date"
             value={filtroDesde}
-            onChange={(e) => setFiltroDesde(e.target.value)}
+            onChange={(e) => { setFiltroDesde(e.target.value); setPagina(1) }}
             className="h-8 w-36 text-sm"
           />
         </div>
@@ -149,11 +160,39 @@ export default function AuditoriaPage() {
           <Input
             type="date"
             value={filtroHasta}
-            onChange={(e) => setFiltroHasta(e.target.value)}
+            onChange={(e) => { setFiltroHasta(e.target.value); setPagina(1) }}
             className="h-8 w-36 text-sm"
           />
         </div>
       </div>
+
+      {!loading && totalRegistros > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <span className="text-sm text-muted-foreground">
+            Mostrando {(pagina - 1) * 20 + 1}–{Math.min(pagina * 20, totalRegistros)} de {totalRegistros} registros
+          </span>
+          {totalPaginas > 1 && (
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious onClick={() => setPagina((p) => Math.max(1, p - 1))} disabled={pagina === 1} />
+                </PaginationItem>
+                {paginasVisibles.flatMap((p, index) => [
+                  ...(index > 0 && p - paginasVisibles[index - 1] > 1
+                    ? [<PaginationItem key={`ellipsis-${p}`}><PaginationEllipsis /></PaginationItem>]
+                    : []),
+                  <PaginationItem key={p}>
+                    <PaginationLink isActive={p === pagina} onClick={() => setPagina(p)}>{p}</PaginationLink>
+                  </PaginationItem>,
+                ])}
+                <PaginationItem>
+                  <PaginationNext onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))} disabled={pagina === totalPaginas} />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          )}
+        </div>
+      )}
 
       {errorCarga && <ErrorCarga error={errorCarga} onReintentar={cargar} />}
       <div className={errorCarga ? 'hidden' : 'rounded-md border'}>

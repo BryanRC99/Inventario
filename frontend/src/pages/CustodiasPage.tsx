@@ -274,6 +274,7 @@ export default function CustodiasPage() {
         custodia={custodiaEditando}
         activoInicial={reasignandoActivoId ?? undefined}
         activos={activos}
+        custodias={custodias}
         personas={personas}
         areas={areas}
         onSubmit={handleSubmit}

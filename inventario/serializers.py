@@ -35,6 +35,9 @@ class UbicacionSerializer(serializers.ModelSerializer):
 
 class ActivoSerializer(serializers.ModelSerializer):
     categoria_nombre = serializers.CharField(source='categoria.nombre', read_only=True)
+    categoria_requiere_custodio_unico = serializers.BooleanField(
+        source='categoria.requiere_custodio_unico', read_only=True
+    )
     ubicacion_nombre = serializers.CharField(source='ubicacion.nombre', read_only=True)
     proveedor_nombre = serializers.CharField(
         source='proveedor.nombre', read_only=True, default=None
@@ -52,6 +55,7 @@ class ActivoSerializer(serializers.ModelSerializer):
             'codigo_interno',
             'categoria',
             'categoria_nombre',
+            'categoria_requiere_custodio_unico',
             'nombre',
             'numero_serie',
             'marca',

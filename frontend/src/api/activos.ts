@@ -8,6 +8,7 @@ export interface Activo {
   codigo_interno: string
   categoria: string
   categoria_nombre: string
+  categoria_requiere_custodio_unico: boolean
   nombre: string
   numero_serie: string
   marca: string

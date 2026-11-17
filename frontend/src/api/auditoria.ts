@@ -31,11 +31,18 @@ export interface RegistroAuditoria {
 }
 
 export interface FiltrosAuditoria {
+  search?: string
   accion?: string
   modelo?: string
-  usuario_username?: string
   fecha_hora_after?: string
   fecha_hora_before?: string
+}
+
+export interface PaginaAuditoria {
+  count: number
+  next: string | null
+  previous: string | null
+  results: RegistroAuditoria[]
 }
 
 export const ACCIONES: { value: AccionAuditoria; label: string }[] = [
@@ -63,11 +70,12 @@ export const MODELOS: string[] = [
   'Mantenimiento',
 ]
 
-export async function listarAuditoria(filtros: FiltrosAuditoria): Promise<RegistroAuditoria[]> {
+export async function listarAuditoria(filtros: FiltrosAuditoria, page = 1): Promise<PaginaAuditoria> {
   const params: Record<string, string> = {}
   Object.entries(filtros).forEach(([k, v]) => {
     if (v) params[k] = v
   })
+  params.page = String(page)
   const { data } = await api.get('/auditoria/registros/', { params })
   return data
 }
