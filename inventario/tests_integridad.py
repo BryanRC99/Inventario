@@ -39,6 +39,36 @@ class IntegridadActivosTests(APITestCase):
         datos.update(extra)
         return datos
 
+    def test_eliminar_activo_solo_admin_y_bloquear_si_tiene_custodia_activa(self):
+        persona = Persona.objects.create(
+            nombres='Juan', apellidos='Pérez', documento='1700000009', empresa=self.e1,
+        )
+        Custodia.objects.create(
+            activo=self.activo, persona=persona, fecha_inicio=datetime.date(2026, 11, 18),
+        )
+
+        respuesta = self.client.delete(f'{URL}{self.activo.id}/')
+        self.assertEqual(respuesta.status_code, 409)
+        self.assertIn('custodia activa', respuesta.json()['detail'])
+        self.assertTrue(Activo.objects.filter(pk=self.activo.pk).exists())
+
+        eliminable = Activo.objects.create(
+            codigo_interno='LAP-002', categoria=self.cat, nombre='Activo sin historial',
+            ubicacion=self.ub1, empresa=self.e1, creado_por=self.admin,
+        )
+        Movimiento.objects.create(activo=eliminable, tipo_evento=Movimiento.TipoEvento.CREACION)
+
+        self.client.force_authenticate(self.operador)
+        respuesta = self.client.delete(f'{URL}{eliminable.id}/')
+        self.assertEqual(respuesta.status_code, 403)
+        self.assertTrue(Activo.objects.filter(pk=eliminable.pk).exists())
+
+        self.client.force_authenticate(self.admin)
+        respuesta = self.client.delete(f'{URL}{eliminable.id}/')
+        self.assertEqual(respuesta.status_code, 204)
+        self.assertFalse(Activo.objects.filter(pk=eliminable.pk).exists())
+        self.assertFalse(Movimiento.objects.filter(activo_id=eliminable.pk).exists())
+
     # ------------------------------------------------------------------ estado / baja
     def test_no_se_puede_crear_un_activo_ya_dado_de_baja(self):
         r = self.client.post(URL, self.payload(numero_serie='', estado='dado_de_baja'), format='json')

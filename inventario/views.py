@@ -32,7 +32,7 @@ class ActivoViewSet(viewsets.ModelViewSet):
     permission_classes = [PermisoPorRolSinConsulta]
     filterset_class = ActivoFilter
     pagination_class = ActivoPagination
-    http_method_names = ['get', 'post', 'put', 'patch', 'head', 'options']
+    http_method_names = ['get', 'post', 'put', 'patch', 'delete', 'head', 'options']
 
     def get_permissions(self):
         # El rol "consulta" solo puede LEER (listar y ver el detalle) los activos que tiene
@@ -49,6 +49,49 @@ class ActivoViewSet(viewsets.ModelViewSet):
 
         base = Activo.objects.select_related('categoria', 'ubicacion', 'proveedor').order_by('-fecha_creacion', 'pk')
         return activos_visibles(self.request.user, base)
+
+    @transaction.atomic
+    def destroy(self, request, *args, **kwargs):
+        from actas.models import ActaEntrega
+        from custodia.models import Custodia
+        from trazabilidad.models import Mantenimiento, Movimiento
+
+        activo = self.get_object()
+        activo = Activo.objects.select_for_update().get(pk=activo.pk)
+
+        if Custodia.objects.filter(activo=activo, fecha_fin__isnull=True).exists():
+            return Response(
+                {'detail': 'No se puede eliminar: el activo tiene una custodia activa. Finaliza la custodia primero.'},
+                status=status.HTTP_409_CONFLICT,
+            )
+        if Custodia.objects.filter(activo=activo).exists():
+            return Response(
+                {'detail': 'No se puede eliminar: el activo tiene historial de custodias. Usa “Dar de baja” para conservarlo.'},
+                status=status.HTTP_409_CONFLICT,
+            )
+        if ActaEntrega.objects.filter(activo=activo).exists():
+            return Response(
+                {'detail': 'No se puede eliminar: el activo tiene actas asociadas. Usa “Dar de baja” para conservar el historial.'},
+                status=status.HTTP_409_CONFLICT,
+            )
+        if Mantenimiento.objects.filter(activo=activo).exists():
+            return Response(
+                {'detail': 'No se puede eliminar: el activo tiene mantenimientos registrados. Usa “Dar de baja” para conservar el historial.'},
+                status=status.HTTP_409_CONFLICT,
+            )
+
+        movimientos = Movimiento.objects.filter(activo=activo)
+        if movimientos.exclude(tipo_evento=Movimiento.TipoEvento.CREACION).exists():
+            return Response(
+                {'detail': 'No se puede eliminar: el activo tiene movimientos posteriores a su creación. Usa “Dar de baja” para conservar el historial.'},
+                status=status.HTTP_409_CONFLICT,
+            )
+
+        # El movimiento inicial también protege al activo por FK. Se elimina solo
+        # cuando no hay ningún otro historial asociado; la señal de auditoría deja
+        # constancia de la creación y de la eliminación del activo.
+        movimientos.filter(tipo_evento=Movimiento.TipoEvento.CREACION).delete()
+        return super().destroy(request, *args, **kwargs)
 
     @action(detail=False, methods=['get'])
     def plantilla_importacion(self, request):

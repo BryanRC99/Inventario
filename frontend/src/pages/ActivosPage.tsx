@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Plus, Pencil, Eye, Tag, PackageX, Upload, FileSpreadsheet, FileText, FilterX } from 'lucide-react'
+import { Plus, Pencil, Eye, Tag, PackageX, Upload, FileSpreadsheet, FileText, FilterX, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -15,12 +15,14 @@ import {
 import { ActivoDialog } from '@/components/activo-dialog'
 import { ActivoDetailDialog } from '@/components/activo-detail-dialog'
 import { DarDeBajaDialog } from '@/components/dar-de-baja-dialog'
+import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog'
 import { ImportarActivosDialog } from '@/components/importar-activos-dialog'
 import { TamanoEtiquetaDialog } from '@/components/tamano-etiqueta-dialog'
 import {
   listarActivosPagina,
   crearActivo,
   actualizarActivo,
+  eliminarActivo,
   obtenerEtiquetaPdf,
   darDeBajaActivo,
   descargarReporteExcel,
@@ -81,6 +83,7 @@ export default function ActivosPage() {
   const [activoEditando, setActivoEditando] = useState<Activo | null>(null)
   const [activoDetalle, setActivoDetalle] = useState<Activo | null>(null)
   const [activoParaBaja, setActivoParaBaja] = useState<Activo | null>(null)
+  const [activoParaEliminar, setActivoParaEliminar] = useState<Activo | null>(null)
   const [busqueda, setBusqueda] = useState('')
   const [importarOpen, setImportarOpen] = useState(false)
   const [seleccionados, setSeleccionados] = useState<Set<string>>(new Set())
@@ -273,6 +276,18 @@ export default function ActivosPage() {
     }
   }
 
+  const handleEliminarActivo = async () => {
+    if (!activoParaEliminar) return
+    try {
+      await eliminarActivo(activoParaEliminar.id)
+      toast.success('Activo eliminado')
+      setActivoParaEliminar(null)
+      await cargarTodo()
+    } catch (err) {
+      toast.error(await mensajeErrorApi(err, 'No se pudo eliminar el activo.'))
+    }
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
@@ -395,7 +410,7 @@ export default function ActivosPage() {
               <TableHead className="h-9 text-xs">Empresa</TableHead>
               <TableHead className="h-9 text-xs">Ubicación</TableHead>
               <TableHead className="h-9 text-xs">Estado</TableHead>
-              <TableHead className="h-9 w-32 text-right text-xs">Acciones</TableHead>
+              <TableHead className="h-9 w-40 text-right text-xs">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -477,6 +492,18 @@ export default function ActivosPage() {
                       <PackageX className="size-3.5" />
                     </Button>
                   )}
+                  {esAdmin && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-7 text-destructive hover:text-destructive"
+                      onClick={() => setActivoParaEliminar(activo)}
+                      title="Eliminar activo"
+                      aria-label={`Eliminar ${activo.codigo_interno}`}
+                    >
+                      <Trash2 className="size-3.5" />
+                    </Button>
+                  )}
                   {activo.estado !== 'dado_de_baja' && (
                     <Button
                       variant="ghost"
@@ -545,6 +572,18 @@ export default function ActivosPage() {
         onOpenChange={(open) => !open && setActivoParaBaja(null)}
         activo={activoParaBaja}
         onConfirm={handleDarDeBaja}
+      />
+
+      <ConfirmDeleteDialog
+        open={!!activoParaEliminar}
+        onOpenChange={(open) => !open && setActivoParaEliminar(null)}
+        titulo="¿Eliminar este activo?"
+        descripcion={
+          activoParaEliminar
+            ? `Se eliminará ${activoParaEliminar.codigo_interno} — ${activoParaEliminar.nombre}. Solo es posible si no tiene custodias, actas, mantenimientos ni movimientos posteriores.`
+            : ''
+        }
+        onConfirm={() => void handleEliminarActivo()}
       />
 
       <ImportarActivosDialog
