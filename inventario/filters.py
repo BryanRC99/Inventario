@@ -59,6 +59,7 @@ class ActivoFilter(django_filters.FilterSet):
             return queryset
         return queryset.filter(
             Q(codigo_interno__icontains=value)
+            | Q(etiqueta_origen__icontains=value)
             | Q(nombre__icontains=value)
             | Q(marca__icontains=value)
             | Q(modelo__icontains=value)

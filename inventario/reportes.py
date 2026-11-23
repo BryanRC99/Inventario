@@ -14,12 +14,14 @@ from custodia.models import Custodia
 # Mismas columnas para Excel y PDF, así los dos reportes siempre coinciden.
 COLUMNAS = [
     'Código',
+    'Etiqueta de origen',
     'Nombre',
     'Empresa',
     'Categoría',
     'Marca',
     'Modelo',
     'N° Serie',
+    'Color',
     'Ubicación',
     'Estado',
     'Custodio actual',
@@ -43,12 +45,14 @@ def _custodios_actuales(activos):
 def _fila_activo(activo, custodios_por_id):
     return [
         activo.codigo_interno,
+        activo.etiqueta_origen or '—',
         activo.nombre,
         activo.empresa.nombre if activo.empresa else '—',
         activo.categoria.nombre if activo.categoria else '—',
         activo.marca or '—',
         activo.modelo or '—',
         activo.numero_serie or '—',
+        activo.color or '—',
         activo.ubicacion.nombre if activo.ubicacion else '—',
         activo.get_estado_display(),
         custodios_por_id.get(activo.id, 'Sin asignar'),
@@ -113,12 +117,14 @@ def generar_reporte_pdf(activos, filtros=None):
     filas = [
         {
             'codigo': a.codigo_interno,
+            'etiqueta_origen': a.etiqueta_origen or '—',
             'nombre': a.nombre,
             'empresa': a.empresa.nombre if a.empresa else '—',
             'categoria': a.categoria.nombre if a.categoria else '—',
             'marca': a.marca or '—',
             'modelo': a.modelo or '—',
             'numero_serie': a.numero_serie or '—',
+            'color': a.color or '—',
             'ubicacion': a.ubicacion.nombre if a.ubicacion else '—',
             'estado': a.get_estado_display(),
             'custodio': custodios_por_id.get(a.id, 'Sin asignar'),

@@ -37,13 +37,13 @@ class ReportesActivosTests(APITestCase):
     def test_excel_incluye_la_columna_empresa(self):
         hoja = self.hoja()
         encabezado = [c.value for c in hoja[1]]
-        self.assertEqual(encabezado[:4], ['Código', 'Nombre', 'Empresa', 'Categoría'])
-        filas = {f[0].value: f[2].value for f in hoja.iter_rows(min_row=2)}
+        self.assertEqual(encabezado[:5], ['Código', 'Etiqueta de origen', 'Nombre', 'Empresa', 'Categoría'])
+        filas = {f[0].value: f[3].value for f in hoja.iter_rows(min_row=2)}
         self.assertEqual(filas, {'LAP-001': 'Antoisafood', 'LAP-002': 'Jasafood', 'LAP-003': '—'})
 
     def test_excel_filtrado_por_empresa_solo_trae_esa_empresa(self):
         hoja = self.hoja({'empresa': str(self.e2.id)})
-        self.assertEqual([(f[0].value, f[2].value) for f in hoja.iter_rows(min_row=2)], [('LAP-002', 'Jasafood')])
+        self.assertEqual([(f[0].value, f[3].value) for f in hoja.iter_rows(min_row=2)], [('LAP-002', 'Jasafood')])
 
     def test_pdf_se_genera_y_la_plantilla_no_usa_letra_monoespaciada(self):
         r = self.client.get(f'{URL}reporte_pdf/')

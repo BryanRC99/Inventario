@@ -206,6 +206,8 @@ class ActivoViewSet(viewsets.ModelViewSet):
                     'marca': datos['marca'],
                     'modelo': datos['modelo'],
                     'numero_serie': datos['numero_serie'],
+                    'etiqueta_origen': datos['etiqueta_origen'],
+                    'color': datos['color'],
                     'estado': datos['estado'],
                     'proveedor': datos['proveedor'].id if datos.get('proveedor') else None,
                     'fecha_adquisicion': datos['fecha_adquisicion'],

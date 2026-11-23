@@ -320,7 +320,7 @@ export default function ActivosPage() {
         <SearchInput
           value={busqueda}
           onChange={(value) => { setBusqueda(value); setPagina(1) }}
-          placeholder="Buscar por código, nombre, modelo, serie..."
+          placeholder="Buscar por código, etiqueta, nombre, modelo, serie..."
         />
         {empresasFiltro.length > 1 && (
           <MultiSelectFilter
@@ -403,6 +403,7 @@ export default function ActivosPage() {
                 />
               </TableHead>
               <TableHead className="h-9 text-xs">Código</TableHead>
+              <TableHead className="h-9 text-xs">Etiqueta de origen</TableHead>
               <TableHead className="h-9 text-xs">Nombre</TableHead>
               <TableHead className="h-9 text-xs">Modelo</TableHead>
               <TableHead className="h-9 text-xs">N° Serie</TableHead>
@@ -416,7 +417,7 @@ export default function ActivosPage() {
           <TableBody>
             {loading && (
               <TableRow>
-                <TableCell colSpan={10} className="py-6 text-center text-sm text-muted-foreground">
+                <TableCell colSpan={11} className="py-6 text-center text-sm text-muted-foreground">
                   Cargando...
                 </TableCell>
               </TableRow>
@@ -424,7 +425,7 @@ export default function ActivosPage() {
 
             {!loading && activosFiltrados.length === 0 && (
               <TableRow>
-                <TableCell colSpan={10} className="py-6 text-center text-sm text-muted-foreground">
+                <TableCell colSpan={11} className="py-6 text-center text-sm text-muted-foreground">
                   {busqueda || hayFiltros
                     ? 'No se encontraron activos con esos filtros.'
                     : 'No hay activos todavía. Registra el primero.'}
@@ -441,6 +442,9 @@ export default function ActivosPage() {
                   />
                 </TableCell>
                 <TableCell className="py-2 text-sm font-mono">{activo.codigo_interno}</TableCell>
+                <TableCell className="py-2 text-sm font-mono text-muted-foreground">
+                  {activo.etiqueta_origen || '—'}
+                </TableCell>
                 <TableCell className="py-2 text-sm font-medium">{activo.nombre}</TableCell>
                 <TableCell className="py-2 text-sm text-muted-foreground">
                   {activo.modelo || '—'}

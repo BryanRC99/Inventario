@@ -53,6 +53,7 @@ class ActivoSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'codigo_interno',
+            'etiqueta_origen',
             'categoria',
             'categoria_nombre',
             'categoria_requiere_custodio_unico',
@@ -60,6 +61,7 @@ class ActivoSerializer(serializers.ModelSerializer):
             'numero_serie',
             'marca',
             'modelo',
+            'color',
             'fecha_adquisicion',
             'valor_adquisicion',
             'proveedor',
@@ -116,6 +118,21 @@ class ActivoSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('Ya existe un activo con ese número de serie.')
         return value
 
+    def validate_etiqueta_origen(self, value):
+        value = (value or '').strip()
+        if not value:
+            return value
+        value = value.upper()
+        repetida = Activo.objects.filter(etiqueta_origen__iexact=value)
+        if self.instance is not None:
+            repetida = repetida.exclude(pk=self.instance.pk)
+        if repetida.exists():
+            raise serializers.ValidationError('Ya existe un activo con esa etiqueta de origen.')
+        return value
+
+    def validate_color(self, value):
+        return (value or '').strip()
+
     def validate(self, attrs):
         attrs = super().validate(attrs)
         instancia = self.instance
@@ -128,8 +145,8 @@ class ActivoSerializer(serializers.ModelSerializer):
             if categoria is not None and categoria.pk != instancia.categoria_id:
                 raise serializers.ValidationError({
                     'categoria': (
-                        'La categoría no se puede cambiar una vez creado el activo, porque define su código '
-                        f'({instancia.codigo_interno}) y su etiqueta. Si te equivocaste, da de baja este activo '
+                            'La categoría no se puede cambiar una vez creado el activo, porque define su código interno '
+                            f'({instancia.codigo_interno}). Si te equivocaste, da de baja este activo '
                         'y créalo de nuevo.'
                     )
                 })

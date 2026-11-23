@@ -90,25 +90,34 @@ docker compose up -d --build        # reconstruir y actualizar la app
 docker compose down                 # apagar sin borrar datos
 ```
 
-## Actualizar una instalación existente
+## Actualizar la instalación existente: etiqueta de origen y color
 
-Desde PowerShell en Windows, publica los cambios de la función que estés subiendo. Para el selector de activos en custodias y la búsqueda/paginación de auditoría:
+Antes de actualizar, haz un respaldo reciente de la base. Desde Linux Mint, en la carpeta del proyecto:
+
+```bash
+docker compose exec -T db sh -c 'pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB"' > respaldo_antes_etiqueta_origen.sql
+```
+
+Desde PowerShell en Windows, publica únicamente los archivos de este cambio:
 
 ```powershell
-git add DEPLOY_LINUX_MINT.md inventario/serializers.py frontend/src/api/activos.ts frontend/src/components/custodia-dialog.tsx frontend/src/pages/CustodiasPage.tsx auditoria/views.py frontend/src/api/auditoria.ts frontend/src/pages/AuditoriaPage.tsx
-git commit -m "Mejorar búsqueda de activos y auditoría"
+git add DEPLOY_LINUX_MINT.md inventario/models.py inventario/migrations/0010_activo_etiqueta_origen_color.py inventario/serializers.py inventario/filters.py inventario/importacion.py inventario/views.py inventario/etiquetas.py inventario/reportes.py inventario/templates/inventario/etiqueta_pdf.html inventario/templates/inventario/etiqueta_pequena_pdf.html inventario/templates/inventario/etiquetas_lote_pdf.html inventario/templates/inventario/reporte_activos_pdf.html inventario/tests_importacion.py inventario/tests_reportes.py frontend/src/api/activos.ts frontend/src/components/activo-detail-dialog.tsx frontend/src/components/activo-dialog.tsx frontend/src/components/importar-activos-dialog.tsx frontend/src/components/mi-activo-detail-dialog.tsx frontend/src/pages/ActivosPage.tsx frontend/src/pages/MisActivosPage.tsx
+git commit -m "Agregar etiqueta de origen y color a activos"
 git push origin main
 ```
 
-Cuando termine la subida, actualiza el servidor Mint desde la carpeta del proyecto:
+Después, desde Linux Mint:
 
 ```bash
+cd ~/Documentos/Proyectos_Programacion/Inventario
 git pull --ff-only origin main
 docker compose up -d --build
 docker compose ps
+docker compose logs --tail=100 backend
+docker compose exec backend python manage.py showmigrations inventario
 ```
 
-No hay cambios de base de datos ni debes volver a importar activos o cambiar `.env`. Al terminar, recarga la página web.
+El contenedor de backend aplica la migración `0010` al arrancar. En `showmigrations` debe aparecer marcada. No ejecutes `docker compose down -v`: elimina los volúmenes con la base y los archivos. Después del despliegue, crea o confirma las categorías y ubicaciones indicadas en el resumen de la migración antes de importar los Excel.
 
 No uses `docker compose down -v` para apagar: `-v` borra también los volúmenes con la base de datos y archivos.
 

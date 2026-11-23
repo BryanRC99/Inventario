@@ -43,7 +43,7 @@ def _logo_uri_para_empresa(empresa):
 
 
 def generar_pdf_etiqueta(activo, tamano='normal'):
-    qr_base64 = generar_qr_base64(activo.codigo_interno)
+    qr_base64 = generar_qr_base64(activo.codigo_etiqueta)
     template = 'inventario/etiqueta_pdf.html' if tamano == 'normal' else 'inventario/etiqueta_pequena_pdf.html'
 
     html_string = render_to_string(
@@ -60,7 +60,7 @@ def generar_pdf_etiquetas_lote(activos, tamano='normal'):
     items = [
         {
             'activo': a,
-            'qr_base64': generar_qr_base64(a.codigo_interno),
+            'qr_base64': generar_qr_base64(a.codigo_etiqueta),
             'logo_uri': _logo_uri_para_empresa(a.empresa),
         }
         for a in activos

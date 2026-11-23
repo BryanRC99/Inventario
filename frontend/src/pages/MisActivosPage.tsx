@@ -47,6 +47,7 @@ export default function MisActivosPage() {
   const activosFiltrados = activos.filter(
     (a) =>
       coincide(a.codigo_interno, busqueda) ||
+      coincide(a.etiqueta_origen, busqueda) ||
       coincide(a.nombre, busqueda) ||
       coincide(a.categoria_nombre, busqueda),
   )

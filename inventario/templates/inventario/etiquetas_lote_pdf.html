@@ -37,14 +37,14 @@
     {% if tamano == 'pequena' %}
     <div class="etiqueta">
       <img class="qr" src="data:image/png;base64,{{ item.qr_base64 }}" alt="QR">
-      <div class="codigo">{{ item.activo.codigo_interno }}</div>
+      <div class="codigo">{{ item.activo.codigo_etiqueta }}</div>
     </div>
     {% else %}
     <div class="etiqueta">
       <div class="izquierda">
         <img class="qr" src="data:image/png;base64,{{ item.qr_base64 }}" alt="QR">
         <div class="informacion">
-          <div class="codigo">{{ item.activo.codigo_interno }}</div>
+          <div class="codigo">{{ item.activo.codigo_etiqueta }}</div>
           <div class="nombre">{{ item.activo.nombre }}</div>
         </div>
       </div>

@@ -6,6 +6,7 @@ export const TAMANO_PAGINA_ACTIVOS = 20
 export interface Activo {
   id: string
   codigo_interno: string
+  etiqueta_origen: string
   categoria: string
   categoria_nombre: string
   categoria_requiere_custodio_unico: boolean
@@ -13,6 +14,7 @@ export interface Activo {
   numero_serie: string
   marca: string
   modelo: string
+  color: string
   fecha_adquisicion: string | null
   valor_adquisicion: string | null
   proveedor: string | null
@@ -40,10 +42,12 @@ export interface PaginaActivos {
 
 export type ActivoInput = {
   categoria: string
+  etiqueta_origen: string
   nombre: string
   numero_serie: string
   marca: string
   modelo: string
+  color: string
   fecha_adquisicion: string | null
   valor_adquisicion: string | null
   proveedor: string | null
@@ -61,9 +65,11 @@ export interface FilaValidacion {
   datos_mostrar: {
     nombre: string
     categoria: string
+    etiqueta_origen: string
     ubicacion: string
     marca: string
     modelo: string
+    color: string
   }
 }
 

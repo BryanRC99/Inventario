@@ -173,6 +173,7 @@ export function ImportarActivosDialog({ open, onOpenChange, onImportado }: Impor
                   <TableRow>
                     <TableHead className="h-8 text-xs">Fila</TableHead>
                     <TableHead className="h-8 text-xs">Nombre</TableHead>
+                    <TableHead className="h-8 text-xs">Etiqueta de origen</TableHead>
                     <TableHead className="h-8 text-xs">Categoría</TableHead>
                     <TableHead className="h-8 text-xs">Estado</TableHead>
                     <TableHead className="h-8 text-xs">Detalle</TableHead>
@@ -183,6 +184,9 @@ export function ImportarActivosDialog({ open, onOpenChange, onImportado }: Impor
                     <TableRow key={f.fila}>
                       <TableCell className="py-1.5 text-sm">{f.fila}</TableCell>
                       <TableCell className="py-1.5 text-sm">{f.datos_mostrar.nombre || '—'}</TableCell>
+                      <TableCell className="py-1.5 text-sm font-mono">
+                        {f.datos_mostrar.etiqueta_origen || '—'}
+                      </TableCell>
                       <TableCell className="py-1.5 text-sm text-muted-foreground">
                         {f.datos_mostrar.categoria || '—'}
                       </TableCell>

@@ -88,12 +88,14 @@
     <thead>
       <tr>
         <th>Código</th>
+        <th>Etiqueta de origen</th>
         <th>Nombre</th>
         <th>Empresa</th>
         <th>Categoría</th>
         <th>Marca</th>
         <th>Modelo</th>
         <th>N° Serie</th>
+        <th>Color</th>
         <th>Ubicación</th>
         <th>Estado</th>
         <th>Custodio actual</th>
@@ -103,12 +105,14 @@
       {% for f in filas %}
       <tr>
         <td class="codigo">{{ f.codigo }}</td>
+        <td>{{ f.etiqueta_origen }}</td>
         <td>{{ f.nombre }}</td>
         <td>{{ f.empresa }}</td>
         <td>{{ f.categoria }}</td>
         <td>{{ f.marca }}</td>
         <td>{{ f.modelo }}</td>
         <td>{{ f.numero_serie }}</td>
+        <td>{{ f.color }}</td>
         <td>{{ f.ubicacion }}</td>
         <td><span class="estado">{{ f.estado }}</span></td>
         <td>{{ f.custodio }}</td>

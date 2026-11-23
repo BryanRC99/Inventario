@@ -2,6 +2,8 @@ import uuid
 
 from django.conf import settings
 from django.db import models
+from django.db.models import Q
+from django.db.models.functions import Lower
 
 
 class Categoria(models.Model):
@@ -63,11 +65,13 @@ class Activo(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     codigo_interno = models.CharField(max_length=30, unique=True)
+    etiqueta_origen = models.CharField(max_length=100, blank=True)
     categoria = models.ForeignKey(Categoria, on_delete=models.PROTECT, related_name='activos')
     nombre = models.CharField(max_length=150)
     numero_serie = models.CharField(max_length=100, blank=True)
     marca = models.CharField(max_length=100, blank=True)
     modelo = models.CharField(max_length=100, blank=True)
+    color = models.CharField(max_length=80, blank=True)
     fecha_adquisicion = models.DateField(null=True, blank=True)
     valor_adquisicion = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     proveedor = models.ForeignKey(
@@ -112,6 +116,17 @@ class Activo(models.Model):
         ordering = ['-fecha_creacion']
         verbose_name = 'Activo'
         verbose_name_plural = 'Activos'
+        constraints = [
+            models.UniqueConstraint(
+                Lower('etiqueta_origen'),
+                condition=~Q(etiqueta_origen=''),
+                name='uniq_activo_etiqueta_origen_ci',
+            ),
+        ]
 
     def __str__(self):
         return f'{self.codigo_interno} - {self.nombre}'
+
+    @property
+    def codigo_etiqueta(self):
+        return self.etiqueta_origen or self.codigo_interno

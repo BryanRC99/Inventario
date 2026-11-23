@@ -48,10 +48,12 @@ interface ActivoDialogProps {
 
 const valoresVacios: ActivoInput = {
   categoria: '',
+  etiqueta_origen: '',
   nombre: '',
   numero_serie: '',
   marca: '',
   modelo: '',
+  color: '',
   fecha_adquisicion: null,
   valor_adquisicion: null,
   proveedor: null,
@@ -87,10 +89,12 @@ export function ActivoDialog({
         activo
           ? {
               categoria: activo.categoria,
+              etiqueta_origen: activo.etiqueta_origen,
               nombre: activo.nombre,
               numero_serie: activo.numero_serie,
               marca: activo.marca,
               modelo: activo.modelo,
+              color: activo.color,
               fecha_adquisicion: activo.fecha_adquisicion,
               valor_adquisicion: activo.valor_adquisicion,
               proveedor: activo.proveedor,
@@ -178,7 +182,7 @@ export function ActivoDialog({
               </Select>
               {activo && (
                 <p className="text-xs text-muted-foreground">
-                  No se puede cambiar: la categoría define el código del activo.
+                  No se puede cambiar: la categoría define el código interno del activo.
                 </p>
               )}
             </div>
@@ -226,6 +230,17 @@ export function ActivoDialog({
             </div>
 
             <div className="col-span-2 grid min-w-0 gap-2 sm:col-span-1">
+              <Label htmlFor="etiqueta_origen">Etiqueta de origen (opcional)</Label>
+              <Input
+                id="etiqueta_origen"
+                className="w-full"
+                value={form.etiqueta_origen}
+                onChange={(e) => set('etiqueta_origen', e.target.value)}
+                placeholder="F0001"
+              />
+            </div>
+
+            <div className="col-span-2 grid min-w-0 gap-2 sm:col-span-1">
               <Label htmlFor="marca">Marca</Label>
               <Input
                 id="marca"
@@ -233,6 +248,17 @@ export function ActivoDialog({
                 value={form.marca}
                 onChange={(e) => set('marca', e.target.value)}
                 placeholder="Dell"
+              />
+            </div>
+
+            <div className="col-span-2 grid min-w-0 gap-2 sm:col-span-1">
+              <Label htmlFor="color">Color (opcional)</Label>
+              <Input
+                id="color"
+                className="w-full"
+                value={form.color}
+                onChange={(e) => set('color', e.target.value)}
+                placeholder="Negro"
               />
             </div>
 

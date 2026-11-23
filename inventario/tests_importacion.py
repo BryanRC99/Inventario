@@ -32,8 +32,10 @@ def excel(filas, encabezado=None, nombre='activos.xlsx'):
 
 
 def fila(nombre='Laptop Dell', categoria='Laptop', ubicacion='Oficina Sistemas', marca='Dell', modelo='5440',
-         serie=None, estado=None, proveedor=None, f_adq=None, valor=None, f_gar=None):
-    return [nombre, categoria, ubicacion, marca, modelo, serie, estado, proveedor, f_adq, valor, f_gar]
+         serie=None, estado=None, proveedor=None, f_adq=None, valor=None, f_gar=None,
+         etiqueta_origen=None, color=None):
+    return [nombre, categoria, ubicacion, marca, modelo, serie, estado, proveedor, f_adq, valor, f_gar,
+            etiqueta_origen, color]
 
 
 class ImportacionActivosTests(APITestCase):
@@ -86,6 +88,22 @@ class ImportacionActivosTests(APITestCase):
         r = self.confirmar(excel([fila('Con serie', serie=123456.0)]), self.e1)
         self.assertEqual(r.json()['creados'], 1, r.content)
         self.assertEqual(Activo.objects.get(nombre='Con serie').numero_serie, '123456')
+
+    def test_importa_etiqueta_origen_y_color_y_busca_por_etiqueta(self):
+        self.client.force_authenticate(self.admin)
+        r = self.confirmar(excel([fila('Activo etiquetado', etiqueta_origen='f0001', color='Rojo')]), self.e1)
+        self.assertEqual(r.json()['creados'], 1, r.content)
+        activo = Activo.objects.get(nombre='Activo etiquetado')
+        self.assertEqual(activo.etiqueta_origen, 'F0001')
+        self.assertEqual(activo.color, 'Rojo')
+        self.assertEqual(activo.codigo_etiqueta, 'F0001')
+        buscados = self.client.get(URL, {'search': 'F0001'})
+        resultados = buscados.json().get('results', buscados.json())
+        self.assertEqual([a['etiqueta_origen'] for a in resultados], ['F0001'])
+
+        repetida = self.validar(excel([fila('Otra fila', etiqueta_origen='f0001')]))
+        self.assertFalse(repetida.json()['filas'][0]['valido'])
+        self.assertIn('ya está registrada', ' '.join(repetida.json()['filas'][0]['errores']))
 
     def test_validar_no_crea_nada(self):
         self.client.force_authenticate(self.admin)

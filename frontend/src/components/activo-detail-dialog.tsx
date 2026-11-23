@@ -66,11 +66,17 @@ export function ActivoDetailDialog({ open, onOpenChange, activo }: ActivoDetailD
               <span className="text-muted-foreground">Categoría</span>
               <span>{activo.categoria_nombre}</span>
 
+              <span className="text-muted-foreground">Etiqueta de origen</span>
+              <span className="font-mono">{activo.etiqueta_origen || '—'}</span>
+
               <span className="text-muted-foreground">Marca / Modelo</span>
               <span>{activo.marca || '—'} {activo.modelo || ''}</span>
 
               <span className="text-muted-foreground">N° de serie</span>
               <span>{activo.numero_serie || '—'}</span>
+
+              <span className="text-muted-foreground">Color</span>
+              <span>{activo.color || '—'}</span>
 
               <span className="text-muted-foreground">Ubicación actual</span>
               <span>{activo.ubicacion_nombre}</span>

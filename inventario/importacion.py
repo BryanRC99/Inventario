@@ -31,6 +31,8 @@ COLUMNAS = [
     'Fecha adquisicion (AAAA-MM-DD)',
     'Valor adquisicion',
     'Fecha fin garantia (AAAA-MM-DD)',
+    'Etiqueta de origen',
+    'Color',
 ]
 
 # Un activo "dado de baja" exige motivo y cierre de custodias: se hace con la opción
@@ -41,7 +43,8 @@ ESTADOS_IMPORTABLES = {
     if valor != Activo.Estado.DADO_DE_BAJA
 }
 
-LARGO_MAX = {'nombre': 150, 'marca': 100, 'modelo': 100, 'numero_serie': 100}
+LARGO_MAX = {'nombre': 150, 'marca': 100, 'modelo': 100, 'numero_serie': 100,
+             'etiqueta_origen': 100, 'color': 80}
 VALOR_MAX = Decimal('10000000000')  # límite de DecimalField(max_digits=12, decimal_places=2)
 FILAS_VACIAS_TOLERADAS = 2000  # filas vacías (con formato) que se toleran leer después de las llenas
 
@@ -73,6 +76,7 @@ for _valor, _etiqueta in ESTADOS_IMPORTABLES.items():
     _ESTADO_POR_CLAVE[_clave_estado(_etiqueta)] = _valor
 
 _ENCABEZADOS_ESPERADOS = [_normalizar(c) for c in COLUMNAS]
+_ENCABEZADOS_ANTERIORES = _ENCABEZADOS_ESPERADOS[:-2]
 
 
 def generar_plantilla_excel():
@@ -123,6 +127,8 @@ def generar_plantilla_excel():
         '9. No se repite un número de serie: si ya existe en el sistema o está dos veces en el archivo, esa fila se rechaza.',
         '10. Para dar de baja un activo usa la opción "Dar de baja" del sistema; no se puede importar como dado de baja.',
         '11. Al importar elegirás la empresa a la que pertenecen todos los activos del archivo.',
+            '12. "Etiqueta de origen" es opcional; si se llena, debe ser única en todo el sistema.',
+            '13. "Color" es opcional y acepta hasta 80 caracteres.',
         '',
         'Valores válidos para "Estado" (si lo dejas vacío se usa "activo"):',
     ]
@@ -212,8 +218,10 @@ def _leer_filas(archivo):
         encabezado = next(filas, None)
         if encabezado is None:
             raise ArchivoImportacionInvalido('El archivo está vacío.')
-        encontrados = [_normalizar(c) for c in (list(encabezado) + [None] * len(COLUMNAS))[: len(COLUMNAS)]]
-        if encontrados != _ENCABEZADOS_ESPERADOS:
+        encontrados = [_normalizar(c) for c in encabezado]
+        while encontrados and not encontrados[-1]:
+            encontrados.pop()
+        if encontrados not in (_ENCABEZADOS_ESPERADOS, _ENCABEZADOS_ANTERIORES):
             raise ArchivoImportacionInvalido(
                 'El archivo no tiene los encabezados de la plantilla. Descarga la plantilla de nuevo '
                 'y no modifiques ni reordenes la primera fila de la hoja "Activos".'
@@ -270,11 +278,17 @@ def validar_archivo(archivo):
 
     filas_resultado = []
     series_vistas = {}
+    etiquetas_origen_archivo = {}
+    etiquetas_origen_existentes = {
+        etiqueta.lower() for etiqueta in Activo.objects.exclude(etiqueta_origen='')
+        .values_list('etiqueta_origen', flat=True)
+    }
 
     for idx, fila in crudas:
         (
             nombre, categoria_nombre, ubicacion_nombre, marca, modelo, numero_serie,
             estado, proveedor_nombre, fecha_adq, valor_adq, fecha_garantia,
+            etiqueta_origen, color,
         ) = (list(fila) + [None] * len(COLUMNAS))[: len(COLUMNAS)]
 
         errores = []
@@ -283,6 +297,8 @@ def validar_archivo(archivo):
             'marca': _limpiar(marca),
             'modelo': _limpiar(modelo),
             'numero_serie': _limpiar(numero_serie),
+            'etiqueta_origen': _limpiar(etiqueta_origen).upper(),
+            'color': _limpiar(color),
         }
 
         if not datos['nombre']:
@@ -290,9 +306,22 @@ def validar_archivo(archivo):
         for campo, etiqueta in (
             ('nombre', 'El nombre'), ('marca', 'La marca'),
             ('modelo', 'El modelo'), ('numero_serie', 'El número de serie'),
+            ('etiqueta_origen', 'La etiqueta de origen'), ('color', 'El color'),
         ):
             if len(datos[campo]) > LARGO_MAX[campo]:
                 errores.append(f'{etiqueta} no puede superar los {LARGO_MAX[campo]} caracteres')
+
+        etiqueta_key = datos['etiqueta_origen'].lower()
+        if etiqueta_key:
+            if etiqueta_key in etiquetas_origen_existentes:
+                errores.append(f'La etiqueta de origen "{datos["etiqueta_origen"]}" ya está registrada en el sistema')
+            elif etiqueta_key in etiquetas_origen_archivo:
+                errores.append(
+                    f'La etiqueta de origen "{datos["etiqueta_origen"]}" está repetida '
+                    f'(también en la fila {etiquetas_origen_archivo[etiqueta_key]})'
+                )
+            else:
+                etiquetas_origen_archivo[etiqueta_key] = idx
 
         cat_key = _normalizar(categoria_nombre)
         if not cat_key:
@@ -371,6 +400,8 @@ def validar_archivo(archivo):
                     'ubicacion': _limpiar(ubicacion_nombre),
                     'marca': datos['marca'],
                     'modelo': datos['modelo'],
+                    'etiqueta_origen': datos['etiqueta_origen'],
+                    'color': datos['color'],
                 },
                 'datos': datos,
             }
