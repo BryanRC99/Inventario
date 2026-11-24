@@ -12,7 +12,8 @@ import {
 } from '@/components/ui/table'
 import { listarMovimientos, type Movimiento, type TipoEvento } from '@/api/movimientos'
 import { SearchInput } from '@/components/search-input'
-import { coincide } from '@/lib/normalizar-texto'
+import { PaginacionTabla } from '@/components/paginacion-tabla'
+import { TAMANO_PAGINA_HISTORIAL } from '@/api/paginacion'
 
 const BADGE_POR_EVENTO: Record<TipoEvento, 'default' | 'secondary' | 'outline' | 'destructive'> = {
   creacion: 'outline',
@@ -26,30 +27,36 @@ const BADGE_POR_EVENTO: Record<TipoEvento, 'default' | 'secondary' | 'outline' |
 
 export default function MovimientosPage() {
   const [movimientos, setMovimientos] = useState<Movimiento[]>([])
+  const [total, setTotal] = useState(0)
+  const [pagina, setPagina] = useState(1)
   const [loading, setLoading] = useState(true)
   const [errorCarga, setErrorCarga] = useState<ErrorCargaTipo | null>(null)
   const [busqueda, setBusqueda] = useState('')
-
-  const cargar = () => {
-    setLoading(true)
-    setErrorCarga(null)
-    listarMovimientos()
-      .then(setMovimientos)
-      .catch((err) => setErrorCarga(clasificarErrorCarga(err)))
-      .finally(() => setLoading(false))
-  }
+  const [recarga, setRecarga] = useState(0)
 
   useEffect(() => {
-    cargar()
-  }, [])
-
-  const movimientosFiltrados = movimientos.filter(
-    (mov) =>
-      coincide(mov.activo_nombre, busqueda) ||
-      coincide(mov.activo_codigo, busqueda) ||
-      coincide(mov.tipo_evento_display, busqueda) ||
-      coincide(mov.usuario_username, busqueda),
-  )
+    let vigente = true
+    setLoading(true)
+    setErrorCarga(null)
+    const timer = window.setTimeout(() => {
+      listarMovimientos(pagina, busqueda)
+        .then((respuesta) => {
+          if (!vigente) return
+          setMovimientos(respuesta.results)
+          setTotal(respuesta.count)
+        })
+        .catch((err) => {
+          if (vigente) setErrorCarga(clasificarErrorCarga(err))
+        })
+        .finally(() => {
+          if (vigente) setLoading(false)
+        })
+    }, 250)
+    return () => {
+      vigente = false
+      window.clearTimeout(timer)
+    }
+  }, [pagina, busqueda, recarga])
 
   return (
     <div className="flex flex-col gap-4">
@@ -62,11 +69,11 @@ export default function MovimientosPage() {
 
       <SearchInput
         value={busqueda}
-        onChange={setBusqueda}
+        onChange={(value) => { setBusqueda(value); setPagina(1) }}
         placeholder="Buscar por activo, evento o usuario..."
       />
 
-      {errorCarga && <ErrorCarga error={errorCarga} onReintentar={cargar} />}
+      {errorCarga && <ErrorCarga error={errorCarga} onReintentar={() => setRecarga((n) => n + 1)} />}
       <div className={errorCarga ? 'hidden' : 'rounded-md border'}>
         <Table>
           <TableHeader>
@@ -87,7 +94,7 @@ export default function MovimientosPage() {
               </TableRow>
             )}
 
-            {!loading && movimientosFiltrados.length === 0 && (
+            {!loading && movimientos.length === 0 && (
               <TableRow>
                 <TableCell colSpan={5} className="py-6 text-center text-sm text-muted-foreground">
                   {busqueda
@@ -97,7 +104,7 @@ export default function MovimientosPage() {
               </TableRow>
             )}
 
-            {movimientosFiltrados.map((mov) => (
+            {!loading && movimientos.map((mov) => (
               <TableRow key={mov.id}>
                 <TableCell className="py-2 text-sm text-muted-foreground">
                   {new Date(mov.fecha_hora).toLocaleString('es-EC', {
@@ -107,7 +114,7 @@ export default function MovimientosPage() {
                 </TableCell>
                 <TableCell className="py-2 text-sm">
                   <span className="font-mono text-xs text-muted-foreground">
-                    {mov.activo_codigo}
+                    {mov.activo_etiqueta_origen || mov.activo_codigo}
                   </span>{' '}
                   {mov.activo_nombre}
                 </TableCell>
@@ -127,6 +134,15 @@ export default function MovimientosPage() {
           </TableBody>
         </Table>
       </div>
+      {!loading && !errorCarga && (
+        <PaginacionTabla
+          pagina={pagina}
+          total={total}
+          tamanoPagina={TAMANO_PAGINA_HISTORIAL}
+          cargando={loading}
+          onCambiarPagina={setPagina}
+        />
+      )}
     </div>
   )
 }

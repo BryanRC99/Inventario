@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Button } from '@/components/ui/button'
+import { buttonVariants } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -19,15 +20,16 @@ import {
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import type { Mantenimiento, MantenimientoInput } from '@/api/mantenimientos'
-import type { Activo } from '@/api/activos'
+import { listarActivosPagina, obtenerActivo, type Activo } from '@/api/activos'
 import type { Proveedor } from '@/api/proveedores'
 import { hoyLocal } from '@/lib/fechas'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { cn } from '@/lib/utils'
 
 interface MantenimientoDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   mantenimiento: Mantenimiento | null
-  activos: Activo[]
   proveedores: Proveedor[]
   onSubmit: (payload: MantenimientoInput) => Promise<void>
 }
@@ -48,12 +50,19 @@ export function MantenimientoDialog({
   open,
   onOpenChange,
   mantenimiento,
-  activos,
   proveedores,
   onSubmit,
 }: MantenimientoDialogProps) {
   const [form, setForm] = useState<MantenimientoInput>(valoresVacios)
   const [submitting, setSubmitting] = useState(false)
+  const [selectorActivoAbierto, setSelectorActivoAbierto] = useState(false)
+  const [busquedaActivo, setBusquedaActivo] = useState('')
+  const [activosEncontrados, setActivosEncontrados] = useState<Activo[]>([])
+  const [activoElegido, setActivoElegido] = useState<Activo | null>(null)
+  const [paginaActivos, setPaginaActivos] = useState(1)
+  const [totalActivos, setTotalActivos] = useState(0)
+  const [buscandoActivos, setBuscandoActivos] = useState(false)
+  const [errorBusquedaActivos, setErrorBusquedaActivos] = useState('')
 
   useEffect(() => {
     if (open) {
@@ -70,13 +79,61 @@ export function MantenimientoDialog({
             }
           : valoresVacios,
       )
+      setActivoElegido(null)
+      setBusquedaActivo('')
+      setSelectorActivoAbierto(false)
+      setPaginaActivos(1)
+      setActivosEncontrados([])
+      setTotalActivos(0)
+      setErrorBusquedaActivos('')
     }
   }, [open, mantenimiento])
+
+  useEffect(() => {
+    if (!open || !mantenimiento) return
+    let vigente = true
+    obtenerActivo(mantenimiento.activo)
+      .then((activo) => { if (vigente) setActivoElegido(activo) })
+      .catch(() => {})
+    return () => { vigente = false }
+  }, [open, mantenimiento])
+
+  useEffect(() => {
+    if (!open || !selectorActivoAbierto) return
+    let vigente = true
+    const timer = window.setTimeout(async () => {
+      setBuscandoActivos(true)
+      setErrorBusquedaActivos('')
+      try {
+        const pagina = await listarActivosPagina(
+          { search: busquedaActivo.trim() || undefined },
+          paginaActivos,
+        )
+        if (!vigente) return
+        setActivosEncontrados((actuales) => {
+          if (paginaActivos === 1) return pagina.results
+          const idsActuales = new Set(actuales.map((activo) => activo.id))
+          return [...actuales, ...pagina.results.filter((activo) => !idsActuales.has(activo.id))]
+        })
+        setTotalActivos(pagina.count)
+      } catch {
+        if (vigente) setErrorBusquedaActivos('No se pudieron buscar activos. Intenta de nuevo.')
+      } finally {
+        if (vigente) setBuscandoActivos(false)
+      }
+    }, 250)
+    return () => {
+      vigente = false
+      window.clearTimeout(timer)
+    }
+  }, [open, selectorActivoAbierto, busquedaActivo, paginaActivos])
 
   const set = <K extends keyof MantenimientoInput>(key: K, value: MantenimientoInput[K]) =>
     setForm((f) => ({ ...f, [key]: value }))
 
-  const activoSeleccionado = activos.find((a) => a.id === form.activo)
+  const activoSeleccionado = activoElegido?.id === form.activo
+    ? activoElegido
+    : activosEncontrados.find((a) => a.id === form.activo)
   const proveedorSeleccionado = proveedores.find((p) => p.id === form.proveedor)
 
   const handleSubmit = async (e: FormEvent) => {
@@ -104,22 +161,82 @@ export function MantenimientoDialog({
           <div className="flex flex-col gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="activo">Activo</Label>
-              <Select value={form.activo} onValueChange={(v) => { if (v !== null) set('activo', v); }}>
-                <SelectTrigger id="activo" className="w-full">
-                  <SelectValue placeholder="Selecciona un activo">
+              <Popover open={selectorActivoAbierto} onOpenChange={setSelectorActivoAbierto}>
+                <PopoverTrigger
+                  id="activo"
+                  className={cn(buttonVariants({ variant: 'outline', size: 'default' }), 'w-full justify-between font-normal')}
+                >
+                  <span className="truncate text-left">
                     {activoSeleccionado
-                      ? `${activoSeleccionado.codigo_interno} — ${activoSeleccionado.nombre}`
-                      : undefined}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {activos.map((a) => (
-                    <SelectItem key={a.id} value={a.id}>
-                      {a.codigo_interno} — {a.nombre}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                      ? `${activoSeleccionado.etiqueta_origen || activoSeleccionado.codigo_interno} — ${activoSeleccionado.nombre}`
+                      : 'Busca por código, etiqueta, nombre o serie...'}
+                  </span>
+                  <span aria-hidden="true" className="ml-2 opacity-50">⌄</span>
+                </PopoverTrigger>
+                <PopoverContent align="start" className="w-[min(32rem,calc(100vw-2rem))] gap-2 p-2">
+                  <Input
+                    autoFocus
+                    value={busquedaActivo}
+                    onChange={(e) => {
+                      setBusquedaActivo(e.target.value)
+                      setPaginaActivos(1)
+                      setActivosEncontrados([])
+                      setTotalActivos(0)
+                    }}
+                    placeholder="Código, etiqueta, nombre, serie, empresa..."
+                    aria-label="Buscar activo para mantenimiento"
+                  />
+                  <div className="max-h-72 overflow-y-auto">
+                    {buscandoActivos && activosEncontrados.length === 0 ? (
+                      <p className="px-3 py-5 text-center text-sm text-muted-foreground">Buscando activos...</p>
+                    ) : errorBusquedaActivos ? (
+                      <p className="px-3 py-5 text-center text-sm text-destructive">{errorBusquedaActivos}</p>
+                    ) : activosEncontrados.length === 0 ? (
+                      <p className="px-3 py-5 text-center text-sm text-muted-foreground">
+                        No hay activos que coincidan con la búsqueda.
+                      </p>
+                    ) : activosEncontrados.map((activo) => (
+                      <button
+                        key={activo.id}
+                        type="button"
+                        onClick={() => {
+                          set('activo', activo.id)
+                          setActivoElegido(activo)
+                          setSelectorActivoAbierto(false)
+                        }}
+                        className="flex w-full flex-col gap-0.5 rounded-sm px-3 py-2 text-left text-sm outline-none hover:bg-accent hover:text-accent-foreground"
+                      >
+                        <span className="font-medium">
+                          <span className="font-mono text-xs">
+                            {activo.etiqueta_origen || activo.codigo_interno}
+                          </span>{' — '}{activo.nombre}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {[activo.marca, activo.modelo, activo.numero_serie && `Serie: ${activo.numero_serie}`,
+                            activo.empresa_nombre, activo.ubicacion_nombre].filter(Boolean).join(' · ')}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                  {activosEncontrados.length > 0 && (
+                    <div className="flex items-center justify-between border-t px-1 pt-2 text-xs text-muted-foreground">
+                      <span>{activosEncontrados.length} de {totalActivos} resultado(s)</span>
+                      {activosEncontrados.length < totalActivos && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-2"
+                          disabled={buscandoActivos}
+                          onClick={() => setPaginaActivos((pagina) => pagina + 1)}
+                        >
+                          {buscandoActivos ? 'Cargando...' : 'Cargar más'}
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </PopoverContent>
+              </Popover>
             </div>
 
             <div className="grid gap-2">

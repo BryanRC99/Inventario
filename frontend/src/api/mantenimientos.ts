@@ -1,10 +1,12 @@
 import { api } from './client'
+import type { Pagina } from './paginacion'
 
 export interface Mantenimiento {
   id: string
   activo: string
   activo_nombre: string
   activo_codigo: string
+  activo_etiqueta_origen: string
   proveedor: string | null
   proveedor_nombre: string | null
   fecha: string
@@ -24,8 +26,13 @@ export type MantenimientoInput = {
   proxima_fecha_programada: string | null
 }
 
-export async function listarMantenimientos(): Promise<Mantenimiento[]> {
-  const { data } = await api.get('/trazabilidad/mantenimientos/')
+export async function listarMantenimientos(
+  page: number,
+  search: string,
+): Promise<Pagina<Mantenimiento>> {
+  const { data } = await api.get('/trazabilidad/mantenimientos/', {
+    params: { page, ...(search.trim() ? { search: search.trim().slice(0, 100) } : {}) },
+  })
   return data
 }
 
@@ -47,6 +54,16 @@ export async function eliminarMantenimiento(id: string): Promise<void> {
 }
 
 export async function listarMantenimientosPorActivo(activoId: string): Promise<Mantenimiento[]> {
-  const { data } = await api.get('/trazabilidad/mantenimientos/', { params: { activo: activoId } })
-  return data
+  const resultados: Mantenimiento[] = []
+  let page = 1
+  let haySiguiente = true
+  while (haySiguiente) {
+    const { data } = await api.get<Pagina<Mantenimiento>>('/trazabilidad/mantenimientos/', {
+      params: { activo: activoId, page },
+    })
+    resultados.push(...data.results)
+    haySiguiente = data.next !== null
+    page += 1
+  }
+  return resultados
 }

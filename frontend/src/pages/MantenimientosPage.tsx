@@ -20,50 +20,54 @@ import {
   type Mantenimiento,
   type MantenimientoInput,
 } from '@/api/mantenimientos'
-import { listarActivos, type Activo } from '@/api/activos'
 import { listarProveedores, type Proveedor } from '@/api/proveedores'
 import { SearchInput } from '@/components/search-input'
-import { coincide } from '@/lib/normalizar-texto'
+import { PaginacionTabla } from '@/components/paginacion-tabla'
+import { TAMANO_PAGINA_HISTORIAL } from '@/api/paginacion'
 
 export default function MantenimientosPage() {
   const [mantenimientos, setMantenimientos] = useState<Mantenimiento[]>([])
-  const [activos, setActivos] = useState<Activo[]>([])
+  const [total, setTotal] = useState(0)
+  const [pagina, setPagina] = useState(1)
   const [proveedores, setProveedores] = useState<Proveedor[]>([])
   const [loading, setLoading] = useState(true)
   const [errorCarga, setErrorCarga] = useState<ErrorCargaTipo | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [mantenimientoEditando, setMantenimientoEditando] = useState<Mantenimiento | null>(null)
   const [busqueda, setBusqueda] = useState('')
-
-  const cargarTodo = async () => {
-    setLoading(true)
-    setErrorCarga(null)
-    try {
-      const [mantenimientosData, activosData, proveedoresData] = await Promise.all([
-        listarMantenimientos(),
-        listarActivos(),
-        listarProveedores(),
-      ])
-      setMantenimientos(mantenimientosData)
-      setActivos(activosData)
-      setProveedores(proveedoresData)
-    } catch (err) {
-      setErrorCarga(clasificarErrorCarga(err))
-    } finally {
-      setLoading(false)
-    }
-  }
+  const [recarga, setRecarga] = useState(0)
 
   useEffect(() => {
-    cargarTodo()
-  }, [])
+    let vigente = true
+    setLoading(true)
+    setErrorCarga(null)
+    const timer = window.setTimeout(() => {
+      listarMantenimientos(pagina, busqueda)
+        .then((respuesta) => {
+          if (!vigente) return
+          setMantenimientos(respuesta.results)
+          setTotal(respuesta.count)
+        })
+        .catch((err) => {
+          if (vigente) setErrorCarga(clasificarErrorCarga(err))
+        })
+        .finally(() => {
+          if (vigente) setLoading(false)
+        })
+    }, 250)
+    return () => {
+      vigente = false
+      window.clearTimeout(timer)
+    }
+  }, [pagina, busqueda, recarga])
 
-  const mantenimientosFiltrados = mantenimientos.filter(
-    (m) =>
-      coincide(m.activo_nombre, busqueda) ||
-      coincide(m.activo_codigo, busqueda) ||
-      coincide(m.descripcion_problema, busqueda),
-  )
+  useEffect(() => {
+    let vigente = true
+    listarProveedores()
+      .then((data) => { if (vigente) setProveedores(data) })
+      .catch(() => { if (vigente) toast.error('No se pudieron cargar los proveedores') })
+    return () => { vigente = false }
+  }, [])
 
   const abrirCrear = () => {
     setMantenimientoEditando(null)
@@ -84,7 +88,7 @@ export default function MantenimientosPage() {
         await crearMantenimiento(payload)
         toast.success('Mantenimiento registrado')
       }
-      await cargarTodo()
+      setRecarga((n) => n + 1)
     } catch {
       toast.error('Ocurrió un error al guardar')
     }
@@ -105,11 +109,11 @@ export default function MantenimientosPage() {
 
       <SearchInput
         value={busqueda}
-        onChange={setBusqueda}
+        onChange={(value) => { setBusqueda(value); setPagina(1) }}
         placeholder="Buscar por activo o problema..."
       />
 
-      {errorCarga && <ErrorCarga error={errorCarga} onReintentar={cargarTodo} />}
+      {errorCarga && <ErrorCarga error={errorCarga} onReintentar={() => setRecarga((n) => n + 1)} />}
       <div className={errorCarga ? 'hidden' : 'rounded-md border'}>
         <Table>
           <TableHeader>
@@ -131,7 +135,7 @@ export default function MantenimientosPage() {
               </TableRow>
             )}
 
-            {!loading && mantenimientosFiltrados.length === 0 && (
+            {!loading && mantenimientos.length === 0 && (
               <TableRow>
                 <TableCell colSpan={6} className="py-6 text-center text-sm text-muted-foreground">
                   {busqueda
@@ -141,10 +145,12 @@ export default function MantenimientosPage() {
               </TableRow>
             )}
 
-            {mantenimientosFiltrados.map((m) => (
+            {!loading && mantenimientos.map((m) => (
               <TableRow key={m.id}>
                 <TableCell className="py-2 text-sm">
-                  <span className="font-mono text-xs text-muted-foreground">{m.activo_codigo}</span>{' '}
+                  <span className="font-mono text-xs text-muted-foreground">
+                    {m.activo_etiqueta_origen || m.activo_codigo}
+                  </span>{' '}
                   {m.activo_nombre}
                 </TableCell>
                 <TableCell className="py-2 max-w-56 truncate text-sm text-muted-foreground">
@@ -173,12 +179,20 @@ export default function MantenimientosPage() {
           </TableBody>
         </Table>
       </div>
+      {!loading && !errorCarga && (
+        <PaginacionTabla
+          pagina={pagina}
+          total={total}
+          tamanoPagina={TAMANO_PAGINA_HISTORIAL}
+          cargando={loading}
+          onCambiarPagina={setPagina}
+        />
+      )}
 
       <MantenimientoDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         mantenimiento={mantenimientoEditando}
-        activos={activos}
         proveedores={proveedores}
         onSubmit={handleSubmit}
       />

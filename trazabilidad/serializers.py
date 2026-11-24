@@ -7,6 +7,7 @@ from .models import Mantenimiento, Movimiento
 class MovimientoSerializer(serializers.ModelSerializer):
     activo_nombre = serializers.CharField(source='activo.nombre', read_only=True)
     activo_codigo = serializers.CharField(source='activo.codigo_interno', read_only=True)
+    activo_etiqueta_origen = serializers.CharField(source='activo.etiqueta_origen', read_only=True)
     tipo_evento_display = serializers.CharField(source='get_tipo_evento_display', read_only=True)
     usuario_username = serializers.CharField(source='usuario.username', read_only=True, default=None)
     ubicacion_origen_nombre = serializers.CharField(
@@ -23,6 +24,7 @@ class MovimientoSerializer(serializers.ModelSerializer):
             'activo',
             'activo_nombre',
             'activo_codigo',
+            'activo_etiqueta_origen',
             'tipo_evento',
             'tipo_evento_display',
             'usuario',
@@ -44,6 +46,7 @@ class MovimientoSerializer(serializers.ModelSerializer):
 class MantenimientoSerializer(serializers.ModelSerializer):
     activo_nombre = serializers.CharField(source='activo.nombre', read_only=True)
     activo_codigo = serializers.CharField(source='activo.codigo_interno', read_only=True)
+    activo_etiqueta_origen = serializers.CharField(source='activo.etiqueta_origen', read_only=True)
     proveedor_nombre = serializers.CharField(
         source='proveedor.nombre', read_only=True, default=None
     )
@@ -55,6 +58,7 @@ class MantenimientoSerializer(serializers.ModelSerializer):
             'activo',
             'activo_nombre',
             'activo_codigo',
+            'activo_etiqueta_origen',
             'proveedor',
             'proveedor_nombre',
             'fecha',

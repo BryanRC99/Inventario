@@ -1,4 +1,5 @@
 import { api } from './client'
+import type { Pagina } from './paginacion'
 
 export type TipoEvento =
   | 'creacion'
@@ -14,6 +15,7 @@ export interface Movimiento {
   activo: string
   activo_nombre: string
   activo_codigo: string
+  activo_etiqueta_origen: string
   tipo_evento: TipoEvento
   tipo_evento_display: string
   usuario: string | null
@@ -26,7 +28,12 @@ export interface Movimiento {
   observaciones: string
 }
 
-export async function listarMovimientos(): Promise<Movimiento[]> {
-  const { data } = await api.get('/trazabilidad/movimientos/')
+export async function listarMovimientos(
+  page: number,
+  search: string,
+): Promise<Pagina<Movimiento>> {
+  const { data } = await api.get('/trazabilidad/movimientos/', {
+    params: { page, ...(search.trim() ? { search: search.trim().slice(0, 100) } : {}) },
+  })
   return data
 }
