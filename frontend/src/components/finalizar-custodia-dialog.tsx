@@ -19,14 +19,13 @@ import {
 } from '@/components/ui/select'
 import type { Custodia } from '@/api/custodias'
 import type { Ubicacion } from '@/api/ubicaciones'
-import type { Activo } from '@/api/activos'
 import { hoyLocal } from '@/lib/fechas'
 
 interface FinalizarCustodiaDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   custodia: Custodia | null
-  activo: Activo | null // para saber la ubicación actual y sugerirla como default
+  ubicacionActual: string
   ubicaciones: Ubicacion[]
   onConfirm: (fechaFin: string, ubicacionDestino: string) => Promise<void>
 }
@@ -37,7 +36,7 @@ export function FinalizarCustodiaDialog({
   open,
   onOpenChange,
   custodia,
-  activo,
+  ubicacionActual,
   ubicaciones,
   onConfirm,
 }: FinalizarCustodiaDialogProps) {
@@ -50,9 +49,9 @@ export function FinalizarCustodiaDialog({
       setFechaFin(hoy())
       // Sugiere la ubicación actual del activo como punto de partida,
       // pero queda totalmente editable.
-      setUbicacionDestino(activo?.ubicacion ?? '')
+      setUbicacionDestino(ubicacionActual)
     }
-  }, [open, activo])
+  }, [open, ubicacionActual])
 
   if (!custodia) return null
 

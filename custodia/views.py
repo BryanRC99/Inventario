@@ -16,5 +16,7 @@ class CustodiaViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         from .scoping import custodias_visibles
 
-        base = Custodia.objects.select_related('activo', 'persona', 'activo__categoria')
+        base = Custodia.objects.select_related(
+            'activo', 'activo__categoria', 'activo__ubicacion', 'persona', 'area'
+        )
         return custodias_visibles(self.request.user, base)

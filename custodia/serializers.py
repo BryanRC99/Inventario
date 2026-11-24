@@ -11,6 +11,7 @@ import copy
 class CustodiaSerializer(serializers.ModelSerializer):
     activo_nombre = serializers.CharField(source='activo.nombre', read_only=True)
     activo_codigo = serializers.CharField(source='activo.codigo_interno', read_only=True)
+    activo_ubicacion = serializers.UUIDField(source='activo.ubicacion_id', read_only=True)
     persona_nombre = serializers.CharField(
         source='persona.nombre_completo', read_only=True, default=None
     )
@@ -27,6 +28,7 @@ class CustodiaSerializer(serializers.ModelSerializer):
             'activo',
             'activo_nombre',
             'activo_codigo',
+            'activo_ubicacion',
             'persona',
             'persona_nombre',
             'area',

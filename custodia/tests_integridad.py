@@ -44,6 +44,14 @@ class IntegridadCustodiasTests(APITestCase):
         datos.update(extra)
         return self.client.post(URL, datos, format='json')
 
+    def test_lista_incluye_ubicacion_del_activo_para_finalizar_sin_cargar_todo_el_inventario(self):
+        creada = self.crear()
+        self.assertEqual(creada.status_code, 201, creada.content)
+        respuesta = self.client.get(URL)
+        self.assertEqual(respuesta.status_code, 200)
+        custodia = next(item for item in respuesta.json() if item['id'] == creada.json()['id'])
+        self.assertEqual(custodia['activo_ubicacion'], str(self.ub.id))
+
     # ------------------------------------------------------------------ inmutables
     def test_no_se_puede_cambiar_activo_persona_o_area_de_una_custodia(self):
         c = self.crear().json()

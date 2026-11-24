@@ -65,6 +65,8 @@ class ActivoFilter(django_filters.FilterSet):
             | Q(modelo__icontains=value)
             | Q(numero_serie__icontains=value)
             | Q(categoria__nombre__icontains=value)
+            | Q(empresa__nombre__icontains=value)
+            | Q(ubicacion__nombre__icontains=value)
         )
 
     def is_valid(self):

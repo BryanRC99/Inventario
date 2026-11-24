@@ -21,11 +21,10 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { extraerMensajeError, type Custodia, type CustodiaInput } from '@/api/custodias'
-import type { Activo } from '@/api/activos'
+import { listarActivosPagina, obtenerActivo, type Activo } from '@/api/activos'
 import type { Persona } from '@/api/personas'
 import type { Area } from '@/api/areas'
 import { hoyLocal } from '@/lib/fechas'
-import { coincide } from '@/lib/normalizar-texto'
 import { cn } from '@/lib/utils'
 
 interface CustodiaDialogProps {
@@ -33,7 +32,6 @@ interface CustodiaDialogProps {
   onOpenChange: (open: boolean) => void
   custodia: Custodia | null
   activoInicial?: string
-  activos: Activo[]
   custodias: Custodia[]
   personas: Persona[]
   areas: Area[]
@@ -58,7 +56,6 @@ export function CustodiaDialog({
   onOpenChange,
   custodia,
   activoInicial,
-  activos,
   custodias,
   personas,
   areas,
@@ -70,10 +67,17 @@ export function CustodiaDialog({
   const [submitting, setSubmitting] = useState(false)
   const [selectorActivoAbierto, setSelectorActivoAbierto] = useState(false)
   const [busquedaActivo, setBusquedaActivo] = useState('')
+  const [activosEncontrados, setActivosEncontrados] = useState<Activo[]>([])
+  const [activoElegido, setActivoElegido] = useState<Activo | null>(null)
+  const [paginaActivos, setPaginaActivos] = useState(1)
+  const [totalActivos, setTotalActivos] = useState(0)
+  const [buscandoActivos, setBuscandoActivos] = useState(false)
+  const [errorBusquedaActivos, setErrorBusquedaActivos] = useState('')
 
   useEffect(() => {
     if (open) {
       if (custodia) {
+        setActivoElegido(null)
         setForm({
           activo: custodia.activo,
           persona: custodia.persona,
@@ -84,6 +88,7 @@ export function CustodiaDialog({
         })
         setTitularTipo(custodia.persona ? 'persona' : 'area')
       } else {
+        setActivoElegido(null)
         setForm({ ...valoresVacios, activo: activoInicial ?? '' })
         setTitularTipo('persona')
       }
@@ -91,6 +96,52 @@ export function CustodiaDialog({
       setBusquedaActivo('')
     }
   }, [open, custodia])
+
+  useEffect(() => {
+    if (!open || !activoInicial) return
+    let vigente = true
+    obtenerActivo(activoInicial)
+      .then((activo) => {
+        if (vigente) {
+          setActivoElegido(activo)
+        }
+      })
+      .catch(() => {
+        // La selección inicial se valida también al guardar en el servidor.
+      })
+    return () => { vigente = false }
+  }, [open, activoInicial])
+
+  useEffect(() => {
+    if (!open || !selectorActivoAbierto) return
+    let vigente = true
+    const timer = window.setTimeout(async () => {
+      setBuscandoActivos(true)
+      setErrorBusquedaActivos('')
+      try {
+        const pagina = await listarActivosPagina(
+          { search: busquedaActivo.trim() || undefined },
+          paginaActivos,
+        )
+        if (!vigente) return
+        setActivosEncontrados((actuales) => {
+          if (paginaActivos === 1) return pagina.results
+          const idsActuales = new Set(actuales.map((activo) => activo.id))
+          return [...actuales, ...pagina.results.filter((activo) => !idsActuales.has(activo.id))]
+        })
+        setTotalActivos(pagina.count)
+      } catch {
+        if (vigente) setErrorBusquedaActivos('No se pudieron buscar activos. Intenta de nuevo.')
+      } finally {
+        if (vigente) setBuscandoActivos(false)
+      }
+    }, 250)
+
+    return () => {
+      vigente = false
+      window.clearTimeout(timer)
+    }
+  }, [open, selectorActivoAbierto, busquedaActivo, paginaActivos])
 
   const set = <K extends keyof CustodiaInput>(key: K, value: CustodiaInput[K]) =>
     setForm((f) => ({ ...f, [key]: value }))
@@ -115,22 +166,11 @@ export function CustodiaDialog({
     }
   }
 
-  const activoSeleccionado = activos.find((a) => a.id === form.activo)
+  const activoSeleccionado = activoElegido?.id === form.activo
+    ? activoElegido
+    : activosEncontrados.find((a) => a.id === form.activo)
   const personaSeleccionada = personas.find((p) => p.id === form.persona)
   const areaSeleccionada = areas.find((a) => a.id === form.area)
-  const activosCoincidentes = activos.filter((activo) =>
-    [
-      activo.codigo_interno,
-      activo.nombre,
-      activo.marca,
-      activo.modelo,
-      activo.numero_serie,
-      activo.categoria_nombre,
-      activo.empresa_nombre ?? '',
-      activo.ubicacion_nombre,
-    ].some((valor) => coincide(valor, busquedaActivo)),
-  )
-
   const custodiaActivaDe = (activoId: string) =>
     custodias.find((custodia) => custodia.activo === activoId && custodia.activa)
 
@@ -162,8 +202,10 @@ export function CustodiaDialog({
                 >
                   <span className="truncate text-left">
                     {activoSeleccionado
-                      ? `${activoSeleccionado.codigo_interno} — ${activoSeleccionado.nombre}`
-                      : 'Busca por código, nombre, serie...'}
+                      ? `${activoSeleccionado.etiqueta_origen || activoSeleccionado.codigo_interno} — ${activoSeleccionado.nombre}`
+                      : custodia?.activo === form.activo
+                        ? `${custodia.activo_codigo} — ${custodia.activo_nombre}`
+                        : 'Busca por código, etiqueta, nombre o serie...'}
                   </span>
                   <span aria-hidden="true" className="ml-2 opacity-50">⌄</span>
                 </PopoverTrigger>
@@ -171,16 +213,29 @@ export function CustodiaDialog({
                   <Input
                     autoFocus
                     value={busquedaActivo}
-                    onChange={(e) => setBusquedaActivo(e.target.value)}
-                    placeholder="Código, nombre, serie, marca, empresa..."
+                    onChange={(e) => {
+                      setBusquedaActivo(e.target.value)
+                      setPaginaActivos(1)
+                      setActivosEncontrados([])
+                      setTotalActivos(0)
+                    }}
+                    placeholder="Código, etiqueta, nombre, serie, empresa..."
                     aria-label="Buscar activo"
                   />
                   <div className="max-h-72 overflow-y-auto">
-                    {activosCoincidentes.length === 0 ? (
+                    {buscandoActivos && activosEncontrados.length === 0 ? (
+                      <p className="px-3 py-5 text-center text-sm text-muted-foreground">
+                        Buscando activos...
+                      </p>
+                    ) : errorBusquedaActivos ? (
+                      <p className="px-3 py-5 text-center text-sm text-destructive">
+                        {errorBusquedaActivos}
+                      </p>
+                    ) : activosEncontrados.length === 0 ? (
                       <p className="px-3 py-5 text-center text-sm text-muted-foreground">
                         No hay activos que coincidan con la búsqueda.
                       </p>
-                    ) : activosCoincidentes.map((activo) => {
+                    ) : activosEncontrados.map((activo) => {
                       const custodiaActual = custodiaActivaDe(activo.id)
                       const dadoDeBaja = activo.estado === 'dado_de_baja'
                       const bloqueado = dadoDeBaja || Boolean(custodiaActual && activo.categoria_requiere_custodio_unico)
@@ -192,12 +247,15 @@ export function CustodiaDialog({
                           disabled={bloqueado}
                           onClick={() => {
                             set('activo', activo.id)
+                            setActivoElegido(activo)
                             setSelectorActivoAbierto(false)
                           }}
                           className="flex w-full flex-col gap-0.5 rounded-sm px-3 py-2 text-left text-sm outline-none hover:bg-accent hover:text-accent-foreground disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           <span className="font-medium">
-                            <span className="font-mono text-xs">{activo.codigo_interno}</span>
+                            <span className="font-mono text-xs">
+                              {activo.etiqueta_origen || activo.codigo_interno}
+                            </span>
                             {' — '}{activo.nombre}
                           </span>
                           <span className="text-xs text-muted-foreground">
@@ -217,6 +275,23 @@ export function CustodiaDialog({
                       )
                     })}
                   </div>
+                  {activosEncontrados.length > 0 && (
+                    <div className="flex items-center justify-between border-t px-1 pt-2 text-xs text-muted-foreground">
+                      <span>{activosEncontrados.length} de {totalActivos} resultado(s)</span>
+                      {activosEncontrados.length < totalActivos && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-2"
+                          disabled={buscandoActivos}
+                          onClick={() => setPaginaActivos((pagina) => pagina + 1)}
+                        >
+                          {buscandoActivos ? 'Cargando...' : 'Cargar más'}
+                        </Button>
+                      )}
+                    </div>
+                  )}
                 </PopoverContent>
               </Popover>
             </div>

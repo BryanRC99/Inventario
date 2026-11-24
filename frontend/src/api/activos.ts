@@ -143,6 +143,11 @@ export async function listarActivosPagina(
   return data
 }
 
+export async function obtenerActivo(id: string): Promise<Activo> {
+  const { data } = await api.get(`/inventario/activos/${id}/`)
+  return data
+}
+
 export async function crearActivo(payload: ActivoInput): Promise<Activo> {
   const { data } = await api.post('/inventario/activos/', payload)
   return data

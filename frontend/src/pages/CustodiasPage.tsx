@@ -26,7 +26,6 @@ import {
   type Custodia,
   type CustodiaInput,
 } from '@/api/custodias'
-import { listarActivos, type Activo } from '@/api/activos'
 import { listarPersonas, type Persona } from '@/api/personas'
 import { listarAreas, type Area } from '@/api/areas'
 import { listarUbicaciones, type Ubicacion } from '@/api/ubicaciones'
@@ -37,7 +36,6 @@ import { hoyLocal } from '@/lib/fechas'
 
 export default function CustodiasPage() {
   const [custodias, setCustodias] = useState<Custodia[]>([])
-  const [activos, setActivos] = useState<Activo[]>([])
   const [personas, setPersonas] = useState<Persona[]>([])
   const [areas, setAreas] = useState<Area[]>([])
   const [ubicaciones, setUbicaciones] = useState<Ubicacion[]>([])
@@ -55,16 +53,14 @@ export default function CustodiasPage() {
     setLoading(true)
     setErrorCarga(null)
     try {
-      const [custodiasData, activosData, personasData, areasData, ubicacionesData] =
+      const [custodiasData, personasData, areasData, ubicacionesData] =
         await Promise.all([
           listarCustodias(),
-          listarActivos(),
           listarPersonas(),
           listarAreas(),
           listarUbicaciones(),
         ])
       setCustodias(custodiasData)
-      setActivos(activosData)
       setPersonas(personasData)
       setAreas(areasData)
       setUbicaciones(ubicacionesData)
@@ -273,7 +269,6 @@ export default function CustodiasPage() {
         }}
         custodia={custodiaEditando}
         activoInicial={reasignandoActivoId ?? undefined}
-        activos={activos}
         custodias={custodias}
         personas={personas}
         areas={areas}
@@ -284,7 +279,7 @@ export default function CustodiasPage() {
         open={!!custodiaAFinalizar}
         onOpenChange={(open) => !open && setCustodiaAFinalizar(null)}
         custodia={custodiaAFinalizar}
-        activo={activos.find((a) => a.id === custodiaAFinalizar?.activo) ?? null}
+        ubicacionActual={custodiaAFinalizar?.activo_ubicacion ?? ''}
         ubicaciones={ubicaciones}
         onConfirm={handleFinalizar}
       />

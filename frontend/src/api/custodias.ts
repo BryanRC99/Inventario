@@ -7,6 +7,7 @@ export interface Custodia {
   activo: string
   activo_nombre: string
   activo_codigo: string
+  activo_ubicacion: string
   persona: string | null
   persona_nombre: string | null
   area: string | null
